@@ -214,6 +214,7 @@
   <button class="tab-btn" data-tab="settle">⑥ 決済清算書</button>
   <button class="tab-btn" data-tab="settle2">⑦ 決済のご案内</button>
   <button class="tab-btn" data-tab="initial">⑧ 初期費用一覧表</button>
+  <button class="tab-btn" data-tab="history">⑨ 歷史記錄・存檔</button>
 </nav>
 
 <div class="wrap">
@@ -913,6 +914,36 @@
       <p class="no-print" style="font-size:11.5px;color:#888;">※差し引きお支払額は、明細の合計から手付金（定金）を差し引いて自動計算されます。</p>
     </div>
     <div id="initialOutput"></div>
+  </div>
+
+  <!-- ================= ⑨ 歷史記錄・存檔 ================= -->
+  <div class="panel" id="panel-history">
+    <div class="side-form">
+      <fieldset>
+        <legend>儲存目前畫面的資料</legend>
+        <div class="row">
+          <div class="field wide"><label>記錄名稱（留空的話會自動用物件名／客戶名稱）</label><input id="hist_label" placeholder="例：菅原６丁目戸建"></div>
+        </div>
+        <div class="toolbar no-print" style="margin-top:6px;">
+          <button class="btn" onclick="saveToHistory()">💾 存到歷史記錄（存在這台瀏覽器裡・不含照片）</button>
+          <button class="btn secondary" onclick="exportToFile()">⬇ 匯出成檔案（含照片・存到電腦）</button>
+        </div>
+        <p style="font-size:11.5px;color:#888;">※「存到歷史記錄」只會留在這台電腦、這個瀏覽器裡（不含照片）。如果要在別台電腦使用，或需要保留照片，請用「匯出成檔案」。</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>匯入檔案（例如別台電腦存的檔案）</legend>
+        <input type="file" id="hist_import_file" accept=".json">
+        <p style="font-size:11.5px;color:#888;margin-top:6px;">※選擇之前用「匯出成檔案」存的檔案，會連照片一起把所有欄位還原回來。</p>
+      </fieldset>
+    </div>
+
+    <div class="side-form">
+      <fieldset>
+        <legend>這台瀏覽器裡儲存的歷史記錄</legend>
+        <div id="historyList" style="font-size:13px;"></div>
+      </fieldset>
+    </div>
   </div>
 
   </div><!-- /.preview-wrap -->
@@ -2110,6 +2141,163 @@ function generateInitial(){
     </div>
   `;
 }
+
+/* =========================================================================
+   ⑨ 歷史記錄・存檔／読み込み
+   ========================================================================= */
+const HISTORY_KEY = 'gbToolHistory';
+const HISTORY_MAX = 30;
+
+/* すべてのフォーム項目（input / select / textarea で id を持つもの）を集める。
+   パスワードゲートや歴史記録自体の入力欄は除外する。 */
+function getAllFormValues(){
+  const data = {};
+  document.querySelectorAll('input[id], select[id], textarea[id]').forEach(el=>{
+    if(el.id === 'gatePassword' || el.id === 'hist_label' || el.id === 'hist_import_file') return;
+    if(el.type === 'file') return;
+    if(el.type === 'checkbox'){
+      data[el.id] = { __checkbox: true, value: el.checked };
+    } else {
+      data[el.id] = el.value;
+    }
+  });
+  return data;
+}
+
+function setAllFormValues(data){
+  Object.keys(data).forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    const v = data[id];
+    if(v && typeof v === 'object' && v.__checkbox){
+      el.checked = v.value;
+      el.dispatchEvent(new Event('change', {bubbles:true}));
+    } else {
+      el.value = v;
+    }
+  });
+  if(document.getElementById('txn_mode')) toggleMode();
+  if(document.getElementById('k_same_owner')) toggleOwner();
+}
+
+function guessRecordLabel(){
+  const manual = $('hist_label');
+  if(manual) return manual;
+  const mode = document.getElementById('txn_mode') ? document.getElementById('txn_mode').value : '売買';
+  if(mode === '賃貸' && $('r_name')) return $('r_name');
+  if($('f_name')) return $('f_name');
+  if($('mg_name')) return $('mg_name');
+  if($('s2_client')) return $('s2_client');
+  if($('sc_client')) return $('sc_client');
+  if($('ic_client')) return $('ic_client');
+  return '無題の記録';
+}
+
+function loadHistoryArray(){
+  try{
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  }catch(e){ return []; }
+}
+
+function saveToHistory(){
+  const label = guessRecordLabel();
+  const record = {
+    id: Date.now(),
+    label: label,
+    savedAt: new Date().toLocaleString('ja-JP'),
+    data: getAllFormValues()
+  };
+  let list = loadHistoryArray();
+  list.unshift(record);
+  if(list.length > HISTORY_MAX) list = list.slice(0, HISTORY_MAX);
+  try{
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+    alert('已將「' + label + '」存到歷史記錄。');
+  }catch(e){
+    alert('儲存失敗（可能是瀏覽器儲存空間已滿）。請先刪除一些舊的記錄再試一次。');
+  }
+  renderHistoryList();
+}
+
+function loadHistoryRecord(id){
+  const list = loadHistoryArray();
+  const record = list.find(r => r.id === id);
+  if(!record) return;
+  setAllFormValues(record.data);
+  document.querySelector('.tab-btn[data-tab="form"]').click();
+  alert('已載入「' + record.label + '」。因為不含照片／圖面，需要的話請重新上傳。');
+}
+
+function deleteHistoryRecord(id){
+  if(!confirm('確定要刪除這筆記錄嗎？刪除後無法復原。')) return;
+  let list = loadHistoryArray();
+  list = list.filter(r => r.id !== id);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+  renderHistoryList();
+}
+
+function renderHistoryList(){
+  const container = document.getElementById('historyList');
+  if(!container) return;
+  const list = loadHistoryArray();
+  if(list.length === 0){
+    container.innerHTML = '<p style="color:#888;">目前還沒有儲存的記錄。</p>';
+    return;
+  }
+  container.innerHTML = list.map(r => `
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #eee;padding:8px 0;">
+      <div><b>${r.label}</b><br><span style="font-size:11px;color:#888;">${r.savedAt}</span></div>
+      <div>
+        <button class="btn small secondary" onclick="loadHistoryRecord(${r.id})">載入</button>
+        <button class="btn small danger" onclick="deleteHistoryRecord(${r.id})">刪除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ---------- ファイルとして保存／読み込み（写真も含む・PC本体に保存） ---------- */
+function exportToFile(){
+  const payload = {
+    savedAt: new Date().toISOString(),
+    formValues: getAllFormValues(),
+    photoStore: photoStore,
+    planStore: planStore
+  };
+  const label = guessRecordLabel();
+  const blob = new Blob([JSON.stringify(payload)], {type:'application/json'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = label + '-保存データ.json';
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
+
+document.getElementById('hist_import_file').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try{
+      const payload = JSON.parse(ev.target.result);
+      setAllFormValues(payload.formValues || {});
+      if(Array.isArray(payload.photoStore)){
+        photoStore.length = 0;
+        payload.photoStore.forEach(p=>photoStore.push(p));
+      }
+      if(Array.isArray(payload.planStore)){
+        planStore.length = 0;
+        payload.planStore.forEach(p=>planStore.push(p));
+      }
+      renderThumbs();
+      document.querySelector('.tab-btn[data-tab="form"]').click();
+      alert('檔案已匯入完成。');
+    }catch(err){
+      alert('這個檔案無法讀取，請確認是不是正確的存檔資料檔案。');
+    }
+  };
+  reader.readAsText(file);
+});
+
+renderHistoryList();
 </script>
 </body>
 </html>
