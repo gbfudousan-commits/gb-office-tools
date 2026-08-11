@@ -1,0 +1,2115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>物件資料・媒介契約書 生成工具</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root{
+    --navy:#14a8db; --navy-dark:#0b7da3; --gold:#b8892f; --line:#c9d2dc; --bg:#f4f6f9;
+  }
+  *{box-sizing:border-box;}
+  body{font-family:"Hiragino Sans","Yu Gothic","Noto Sans JP","Microsoft JhengHei",sans-serif;margin:0;background:var(--bg);color:#222;}
+  header{background:var(--navy);color:#fff;padding:16px 24px;}
+  header h1{margin:0;font-size:20px;}
+  header p{margin:4px 0 0;font-size:12px;opacity:.8;}
+  nav{display:flex;background:var(--navy-dark);}
+  nav button{flex:1;padding:12px;border:none;background:transparent;color:#cfd8e3;cursor:pointer;font-size:14px;border-bottom:3px solid transparent;}
+  nav button.active{color:#fff;border-bottom-color:var(--gold);background:rgba(255,255,255,.06);}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px;}
+  .preview-wrap{max-width:1300px;margin:0 auto;padding:20px;overflow-x:auto;}
+  .side-form{max-width:900px;margin:0 auto 20px;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  fieldset{border:1px solid var(--line);border-radius:8px;margin-bottom:16px;background:#fff;padding:14px 18px;}
+  legend{font-weight:bold;color:var(--navy);padding:0 8px;font-size:14px;}
+  .row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;}
+  .field{display:flex;flex-direction:column;flex:1;min-width:160px;}
+  .field.small{flex:0 0 100px;min-width:100px;}
+  .field.wide{flex:1 1 100%;}
+  label{font-size:12px;color:#555;margin-bottom:3px;}
+  input,select,textarea{padding:6px 8px;border:1px solid var(--line);border-radius:5px;font-size:13px;font-family:inherit;}
+  textarea{resize:vertical;min-height:50px;}
+  .dyn-row{display:flex;gap:8px;margin-bottom:6px;align-items:center;}
+  .dyn-row input{flex:1;}
+  .btn{background:var(--navy);color:#fff;border:none;padding:8px 16px;border-radius:5px;cursor:pointer;font-size:13px;}
+  .btn.secondary{background:#fff;color:var(--navy);border:1px solid var(--navy);}
+  .btn.small{padding:4px 10px;font-size:12px;}
+  .btn.danger{background:#a33;}
+  .toolbar{display:flex;gap:10px;margin:14px 0;flex-wrap:wrap;}
+  .photo-thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .photo-thumbs .thumb{position:relative;width:90px;}
+  .photo-thumbs img{width:90px;height:70px;object-fit:cover;border-radius:4px;border:1px solid var(--line);}
+  .photo-thumbs .rm{position:absolute;top:-6px;right:-6px;background:#a33;color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;border:none;cursor:pointer;line-height:18px;}
+  .file-count{font-size:11px;color:var(--navy);margin-top:4px;}
+  .type-block{display:none;}
+  .type-block.show{display:block;}
+  .mode-rental-only{display:none;}
+
+  /* ---- Document preview shared ---- */
+  .doc-page{background:#fff;width:210mm;max-width:100%;min-height:297mm;margin:0 auto 20px;padding:14mm;box-shadow:0 0 8px rgba(0,0,0,.15);font-size:13px;}
+  .doc-page.landscape{width:277mm;max-width:100%;height:207mm;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:5mm 8mm;}
+  .doc-page h2.doctitle{text-align:center;font-size:20px;letter-spacing:6px;margin:10px 0 20px;color:var(--navy-dark);}
+  table.spec{width:100%;border-collapse:collapse;margin-bottom:10px;}
+  table.spec th,table.spec td{border:1px solid #888;padding:6px 8px;font-size:12.5px;vertical-align:top;}
+  table.spec th{background:#eef2f7;width:16%;text-align:left;color:var(--navy-dark);white-space:nowrap;}
+  .photo-warning{background:#fdeaea;border:1px dashed #c0392b;color:#a33;font-size:11px;padding:6px 10px;border-radius:5px;margin:6px 0;}
+
+  /* ---- one-page landscape flyer grid ---- */
+  .fl-topbar{display:flex;justify-content:space-between;align-items:center;background:var(--navy-dark);color:#fff;padding:4px 12px;border-radius:3px;flex:0 1 auto;min-height:0;overflow:hidden;}
+  .fl-topbar .fl-left{display:flex;align-items:center;gap:10px;}
+  .fl-logo{height:34px;background:#fff;border-radius:3px;padding:2px 5px;}
+  .fl-price{font-size:22px;font-weight:bold;line-height:1.2;}
+  .fl-name{font-size:18px;font-weight:bold;text-align:right;}
+  .fl-highlight{border:2px solid var(--navy);border-radius:4px;padding:3px 10px;margin-top:3px;font-size:13px;font-weight:bold;color:var(--navy-dark);flex:0 1 auto;min-height:0;overflow:hidden;}
+  .fl-traffic{font-size:11.5px;color:#333;margin-top:2px;flex:0 1 auto;min-height:0;overflow:hidden;}
+  .fl-body{flex:1;display:grid;grid-template-columns:1fr 62mm;gap:8mm;margin-top:4px;overflow:hidden;min-height:0;}
+  .fl-main{display:flex;flex-direction:column;gap:6px;overflow:hidden;min-height:0;}
+  .fl-points{font-size:11.5px;line-height:1.5;flex:0 0 auto;max-height:22mm;overflow:hidden;}
+  .fl-points b{color:var(--navy-dark);}
+  .fl-media{flex:1;display:flex;gap:8px;min-height:0;overflow:hidden;}
+  .fl-photos{width:36mm;display:flex;flex-direction:column;gap:4px;overflow:hidden;flex:0 0 auto;}
+  .fl-photos img{width:100%;flex:1;object-fit:cover;border-radius:3px;min-height:0;border:1px solid var(--line);}
+  .fl-plan{flex:1;display:flex;gap:4px;align-items:stretch;justify-content:center;overflow:hidden;background:#fafafa;border:1px solid var(--line);border-radius:3px;min-height:0;}
+  .fl-plan img{flex:1;max-width:100%;object-fit:contain;min-width:0;}
+  .fl-nearby{flex:0 0 auto;font-size:10.5px;columns:2;column-gap:14px;max-height:16mm;overflow:hidden;color:#333;}
+  .fl-nearby div{break-inside:avoid;}
+  .fl-side{border-left:2px solid var(--navy);padding-left:8px;overflow:hidden;font-size:11px;display:flex;flex-direction:column;min-height:0;}
+  .fl-side .srow{display:flex;border-bottom:1px solid #ddd;padding:1.8px 0;flex:0 0 auto;}
+  .fl-side .srow b{width:56px;flex:0 0 56px;color:var(--navy-dark);font-size:10.3px;}
+  .fl-side .srow span{flex:1;overflow:hidden;}
+  .fl-side .srow.biko{flex-direction:column;flex:1 1 0;min-height:0;border-bottom:none;padding-top:3px;}
+  .fl-side .srow.biko b{flex:0 0 auto;margin-bottom:2px;}
+  .fl-side .srow.biko span{flex:1;min-height:0;overflow:hidden;font-size:10px;line-height:1.42;display:block;}
+  .fl-footer{flex:0 1 auto;min-height:0;overflow:hidden;font-size:8px;color:#888;text-align:center;border-top:1px dashed #ccc;padding-top:3px;margin-top:3px;}
+
+  /* ---- rental (FOR RENT) flyer ---- */
+  .rent-banner{background:var(--navy-dark);color:#fff;padding:6px 14px;border-radius:3px;flex:0 1 auto;min-height:0;overflow:hidden;display:flex;justify-content:space-between;align-items:flex-end;}
+  .rent-banner .tag{font-size:12px;font-weight:bold;letter-spacing:3px;opacity:.9;}
+  .rent-banner .title{font-size:20px;font-weight:bold;margin-top:2px;}
+  .rent-banner .rb-right{font-size:10px;text-align:right;line-height:1.5;}
+  .rent-body{flex:1;display:grid;grid-template-columns:1fr 1fr 1.05fr;gap:6mm;margin-top:5px;overflow:hidden;min-height:0;}
+  .rent-col{overflow:hidden;display:flex;flex-direction:column;gap:5px;min-height:0;}
+  .rent-table{width:100%;border-collapse:collapse;font-size:9.8px;flex:0 0 auto;}
+  .rent-table th,.rent-table td{border:1px solid #ccc;padding:2.5px 6px;text-align:left;}
+  .rent-table th{background:#eef2f7;color:var(--navy-dark);white-space:nowrap;width:34%;}
+  .rent-fee-table{width:100%;border-collapse:collapse;font-size:10px;text-align:center;flex:0 0 auto;}
+  .rent-fee-table th{background:var(--navy);color:#fff;padding:2.5px;font-weight:600;}
+  .rent-fee-table td{border:1px solid #ccc;padding:5px;font-weight:bold;}
+  .rent-list{font-size:9.6px;line-height:1.55;flex:0 0 auto;overflow:hidden;}
+  .rent-list .item{margin-left:2px;}
+  .rent-equip{font-size:9.6px;line-height:1.75;flex:0 0 auto;overflow:hidden;}
+  .rent-equip .tag{display:inline-block;margin-right:7px;}
+  .rent-photos{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:4px;flex:1;overflow:hidden;min-height:0;}
+  .rent-photos img{width:100%;height:100%;object-fit:cover;border-radius:2px;}
+
+  /* ---- ④⑤⑥ shared document styles ---- */
+  .doc-banner{background:var(--navy-dark);color:#fff;padding:14px 24px;border-radius:4px;display:flex;align-items:center;gap:16px;margin-bottom:14px;}
+  .doc-banner img{height:50px;background:#fff;border-radius:6px;padding:5px 8px;}
+  .doc-banner .dbtitle{font-size:22px;font-weight:bold;}
+  .doc-banner .dbsub{font-size:11px;line-height:1.6;opacity:.9;}
+  .price-table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:12px;}
+  .price-table th{background:var(--navy-dark);color:#fff;padding:6px 10px;text-align:left;font-weight:600;}
+  .price-table td{border:1px solid #ccc;padding:6px 10px;}
+  .price-table tr:nth-child(even) td{background:#eef2f7;}
+  .sched-table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;table-layout:fixed;}
+  .sched-table th{background:var(--navy);color:#fff;padding:8px;}
+  .sched-table td{border:1px solid #ccc;padding:8px;vertical-align:top;text-align:center;white-space:pre-line;}
+  .sched-table tr:first-child th, .sched-table tr:first-child td{background:var(--navy-dark);color:#fff;font-weight:bold;}
+  .cal-table{width:100%;border-collapse:collapse;margin-top:12px;}
+  .cal-table th{background:var(--navy);color:#fff;padding:5px;font-size:11px;}
+  .cal-table td{border:1px solid #ddd;height:58px;vertical-align:top;padding:3px 5px;font-size:11px;color:#333;}
+  .cal-table td.dim{color:#ccc;background:#fafafa;}
+  .s2-cat-title{background:var(--navy);color:#fff;font-size:11px;font-weight:bold;padding:3px 8px;margin-top:8px;border-radius:2px;}
+  .s2-pay{margin-bottom:0;}
+  .s2-pay td{font-size:11px;padding:4px 8px;}
+  .s2-pay td.amt{text-align:right;white-space:nowrap;}
+  .mgmt-break{page-break-before:always;break-before:page;}
+  .mgmt-terms .article{font-size:11.5px;line-height:1.55;margin-bottom:7px;}
+  .doc-banner{margin-bottom:12px;}
+  .cal-table .badge{display:inline-block;background:var(--navy);color:#fff;border-radius:50%;width:16px;height:16px;text-align:center;font-size:10px;line-height:16px;margin-left:3px;font-weight:bold;}
+
+  /* ---- 業者票（footer info bar）---- */
+  .agent-footer{display:flex;margin-top:3px;flex:0 1 auto;min-height:0;border:1.5px solid var(--navy);border-radius:3px;overflow:hidden;}
+  .af-left{background:var(--navy-dark);color:#fff;display:flex;align-items:center;gap:10px;padding:6px 14px;flex:1.5;min-width:0;}
+  .af-logo{height:46px;background:#fff;border-radius:5px;padding:5px 8px;flex:0 0 auto;}
+  .af-info{min-width:0;}
+  .af-name{font-size:19px;font-weight:bold;letter-spacing:.5px;line-height:1.3;}
+  .af-line{font-size:12px;opacity:.95;line-height:1.45;}
+  .af-right{flex:1.1;display:flex;flex-direction:column;justify-content:center;gap:0;padding:2px 10px;border-left:1px solid rgba(255,255,255,.4);}
+  .af-row{display:flex;justify-content:space-between;gap:6px;border-bottom:1px dotted #dde3ea;padding:0.5px 0;font-size:10px;}
+  .af-row:last-child{border-bottom:none;}
+  .af-row b{color:var(--navy-dark);font-weight:600;white-space:nowrap;}
+  .af-row span{text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .af-qr{width:19mm;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;border-left:1px solid var(--line);padding:2px;gap:2px;}
+  .af-qr img{width:13mm;height:13mm;}
+  .af-recruit{font-size:7.5px;font-weight:bold;color:var(--navy-dark);text-align:center;line-height:1.2;}
+  @page{ margin: 12mm; }
+
+  /* Contract specific */
+  .sign-block{display:flex;justify-content:space-between;margin:14px 0;}
+  .sign-block .box{width:48%;border:1px solid #888;padding:10px 12px;font-size:13px;}
+  .sign-block .box div{margin-bottom:4px;}
+  .page-footer{text-align:center;font-size:10px;color:#888;margin-top:16px;border-top:1px dashed #ccc;padding-top:6px;}
+  .yakkan{margin-top:24px;page-break-before:always;}
+  .yakkan h3.main{text-align:center;font-size:16px;color:var(--navy-dark);margin-bottom:14px;letter-spacing:3px;}
+  .yakkan .article{margin-bottom:12px;font-size:12.5px;line-height:1.85;}
+  .yakkan .article b{color:var(--navy-dark);}
+  .contract-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+  .contract-header img{max-height:50px;max-width:180px;object-fit:contain;}
+
+  /* Print isolation */
+  *{ -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
+  @media print{
+    header,nav,.toolbar,fieldset,.no-print{display:none !important;}
+    body{background:#fff;}
+    .wrap,.preview-wrap{padding:0 !important;margin:0 !important;max-width:none !important;}
+    .doc-page{box-shadow:none;margin:0;width:auto;min-height:auto;}
+    .panel{display:none !important;}
+    .panel.printing{display:block !important;}
+    .cal-table{page-break-inside:avoid;break-inside:avoid;}
+  }
+</style>
+<style id="dynamicPageStyle"></style>
+</head>
+<body>
+
+<!-- ============ 簡易パスワードゲート（GitHub Pages公開用の簡易な目隠しです。本格的なセキュリティではありません） ============ -->
+<div id="passwordGate" style="position:fixed;inset:0;background:var(--navy-dark);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-family:inherit;">
+  <div style="font-size:18px;font-weight:bold;margin-bottom:16px;">GB商事合同会社　社内ツール</div>
+  <div style="display:flex;gap:8px;">
+    <input type="password" id="gatePassword" placeholder="パスワード" style="padding:10px 14px;border-radius:5px;border:none;font-size:14px;width:200px;" onkeydown="if(event.key==='Enter')checkGatePassword()">
+    <button onclick="checkGatePassword()" style="padding:10px 20px;border-radius:5px;border:none;background:var(--navy);color:#fff;font-weight:bold;cursor:pointer;">入室</button>
+  </div>
+  <div id="gateError" style="color:#ffb3b3;font-size:12px;margin-top:10px;display:none;">パスワードが違います</div>
+</div>
+<script>
+  // ↓↓↓ ここのパスワードを変更すれば簡単に更新できます ↓↓↓
+  const GATE_PASSWORD = "5211";
+  if (sessionStorage.getItem('gbToolAuthed') === 'yes') {
+    document.getElementById('passwordGate').style.display = 'none';
+  }
+  function checkGatePassword(){
+    const val = document.getElementById('gatePassword').value;
+    if (val === GATE_PASSWORD) {
+      sessionStorage.setItem('gbToolAuthed', 'yes');
+      document.getElementById('passwordGate').style.display = 'none';
+    } else {
+      document.getElementById('gateError').style.display = 'block';
+    }
+  }
+</script>
+
+<header>
+  <h1>物件資料・媒介契約書 生成工具（プロトタイプ）</h1>
+  <p>GB商事合同会社 ｜ ローカル動作・サーバー不要 ｜ すべてのデータはこのページ内のみで保持されます</p>
+</header>
+
+<nav>
+  <button class="tab-btn active" data-tab="form">① 資料入力</button>
+  <button class="tab-btn" data-tab="flyer">② 物件資料 プレビュー</button>
+  <button class="tab-btn" data-tab="contract">③ 媒介契約書 プレビュー</button>
+  <button class="tab-btn" data-tab="schedule">④ 簽約日程表</button>
+  <button class="tab-btn" data-tab="mgmt">⑤ 代管合約書</button>
+  <button class="tab-btn" data-tab="settle">⑥ 決済清算書</button>
+  <button class="tab-btn" data-tab="settle2">⑦ 決済のご案内</button>
+  <button class="tab-btn" data-tab="initial">⑧ 初期費用一覧表</button>
+</nav>
+
+<div class="wrap">
+
+  <!-- ================= FORM ================= -->
+  <div class="panel active" id="panel-form">
+
+    <fieldset style="border-color:var(--navy);">
+      <legend>取引種別</legend>
+      <div class="row">
+        <div class="field small"><label>この物件は</label>
+          <select id="txn_mode" onchange="toggleMode()"><option value="売買">売買</option><option value="賃貸">賃貸</option></select>
+        </div>
+      </div>
+      <p style="font-size:11px;color:#888;margin:4px 0 0;">💡 薄い文字（例文）が入っている空欄は、ダブルクリックするとそのまま入力されます。</p>
+    </fieldset>
+
+    <fieldset class="mode-sale-only">
+      <legend>物件基本情報</legend>
+      <div class="row">
+        <div class="field wide"><label>物件名</label><input id="f_name" placeholder="大阪市東淀川区菅原６丁目 戸建"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>種別</label>
+          <select id="f_type" onchange="toggleType()"><option>一戸建住宅</option><option>マンション</option><option>土地</option><option>その他</option></select>
+        </div>
+        <div class="field"><label>新築/中古</label><select id="f_cond"><option>中古</option><option>新築</option></select></div>
+        <div class="field"><label>価格（万円）</label><input id="f_price" type="number" placeholder="2980"></div>
+      </div>
+      <div class="row">
+        <div class="field wide"><label>所在地（住所）</label><input id="f_address" placeholder="大阪府大阪市東淀川区菅原６丁目"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>取引態様</label>
+          <select id="f_torihiki"><option>一般</option><option>専任</option><option>専属専任</option><option>売主</option><option>代理</option></select>
+        </div>
+        <div class="field"><label>報酬形態</label><select id="f_houshu_keitai"><option>分かれ</option><option>正規手数料</option><option>3％(税込)</option></select></div>
+      </div>
+      <label>交通（駅・沿線・徒歩分数、複数行可）</label>
+      <div id="f_traffic_list"></div>
+      <button class="btn small secondary" onclick="addLine('f_traffic_list','例：JRおおさか東線「JR淡路」駅 徒歩3分')">+ 交通情報を追加</button>
+    </fieldset>
+
+    <!-- ============ 一戸建て専用 ============ -->
+    <div id="block-house" class="type-block">
+      <fieldset>
+        <legend>土地（一戸建て・土地）</legend>
+        <div class="row">
+          <div class="field small"><label>権利</label><input id="f_land_right" value="所有権"></div>
+          <div class="field small"><label>面積(㎡)</label><input id="f_land_area" type="number"></div>
+          <div class="field"><label>地目</label><input id="f_land_moku" value="宅地"></div>
+          <div class="field wide"><label>接面道路</label><input id="f_land_road" placeholder="南東側 公道3.6m"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>セットバック</label><input id="f_setback" placeholder="0.69㎡含む／無"></div>
+          <div class="field"><label>私道負担</label><input id="f_shido" placeholder="無"></div>
+          <div class="field"><label>舗装</label><input id="f_hoso" placeholder="無"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>建物（一戸建て）</legend>
+        <div class="row">
+          <div class="field"><label>構造</label><input id="f_kouzou" placeholder="鉄骨造 地上3階建"></div>
+          <div class="field"><label>築年月</label><input id="f_chikunen" placeholder="1988年3月"></div>
+          <div class="field"><label>間取り</label><input id="f_madori" placeholder="4LDK"></div>
+          <div class="field small"><label>合計面積(㎡)</label><input id="f_build_total" type="number"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>各階面積（自由記入）</label><input id="f_floor_area" placeholder="1階36.48㎡ 2階38.36㎡ 3階35.93㎡"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>制限・設備（一戸建て）</legend>
+        <div class="row">
+          <div class="field"><label>都市計画</label><input id="f_toshi" value="市街化区域"></div>
+          <div class="field"><label>用途地域</label><select id="f_youto"></select></div>
+          <div class="field small"><label>建ぺい率</label><input id="f_kenpei" placeholder="80%"></div>
+          <div class="field small"><label>容積率</label><input id="f_youseki" placeholder="200%"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>ガス</label><input id="f_gas" value="都市ガス"></div>
+          <div class="field"><label>上水道</label><input id="f_josui" value="上水道(公営水道)"></div>
+          <div class="field"><label>汚水/雑排水</label><input id="f_gesui" value="下水道(公共下水)"></div>
+          <div class="field"><label>駐車場</label><input id="f_parking" placeholder="無"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>現況</label><select id="f_genjyo"><option>空家</option><option>居住用</option><option>賃貸中</option></select></div>
+          <div class="field"><label>引渡し時期</label><input id="f_hikiwatashi" placeholder="相談"></div>
+        </div>
+        <div class="field wide"><label>備考</label><textarea id="f_biko" placeholder="建ぺい率･容積率を超過しており、同規模建物の再建築は出来ません。"></textarea></div>
+      </fieldset>
+    </div>
+
+    <!-- ============ マンション専用 ============ -->
+    <div id="block-mansion" class="type-block">
+      <fieldset>
+        <legend>マンション情報</legend>
+        <div class="row">
+          <div class="field small"><label>権利</label><input id="m_right" value="所有権"></div>
+          <div class="field"><label>用途地域</label><select id="m_youto"></select></div>
+          <div class="field small"><label>専有面積(㎡)</label><input id="m_senyu" type="number"></div>
+          <div class="field small"><label>バルコニー/テラス(㎡)</label><input id="m_balcony"></div>
+          <div class="field small"><label>専用庭</label><input id="m_niwa" placeholder="－㎡"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>間取り</label><input id="m_madori" placeholder="4DK"></div>
+          <div class="field wide"><label>構造等（自由記入）</label><input id="m_kouzou" placeholder="鉄筋コンクリート造 地上9階建8階部分"></div>
+        </div>
+        <div class="row">
+          <div class="field small"><label>総戸数</label><input id="m_soukosuu" placeholder="74戸"></div>
+          <div class="field small"><label>築年月</label><input id="m_chikunen" placeholder="1979年2月"></div>
+          <div class="field"><label>新築時売主</label><input id="m_baishu"></div>
+          <div class="field"><label>施工会社</label><input id="m_sekou" placeholder="株式会社小林工務店"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>管理会社</label><input id="m_kanri_gaisha" placeholder="ケイエスコミュニティ"></div>
+          <div class="field"><label>管理形態</label><select id="m_keitai"><option>管理会社に全部委託</option><option>管理会社に一部委託</option><option>自主管理</option></select></div>
+          <div class="field"><label>管理方式</label><select id="m_houshiki"><option>日勤</option><option>巡回</option><option>常駐</option><option>なし</option></select></div>
+        </div>
+        <div class="row">
+          <div class="field small"><label>管理費(円/月)</label><input id="m_kanrihi" type="number" placeholder="8200"></div>
+          <div class="field small"><label>修繕積立金(円/月)</label><input id="m_shuzen" type="number" placeholder="10800"></div>
+          <div class="field wide"><label>その他費用（備考含む）</label><input id="m_sonota" placeholder="自治会費：500円/月、銀行口座振替手数料：110円/月"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>駐車場</label><input id="m_parking" placeholder="空無／有（月額◯円）"></div>
+          <div class="field"><label>エレベーター</label><select id="m_ev"><option>有</option><option>無</option></select></div>
+          <div class="field"><label>ペット飼育</label><select id="m_pet"><option>不可</option><option>可</option><option>条件付き可</option></select></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>ガス</label><input id="m_gas" value="都市ガス"></div>
+          <div class="field"><label>給湯</label><select id="m_kyuto"><option>個別</option><option>都市</option><option>共用</option></select></div>
+          <div class="field"><label>現況</label><select id="m_genjyo"><option>空家</option><option>居住用</option><option>賃貸中</option></select></div>
+          <div class="field"><label>引渡し時期</label><input id="m_hikiwatashi" placeholder="相談"></div>
+        </div>
+        <div class="field wide"><label>備考</label><textarea id="m_biko"></textarea></div>
+      </fieldset>
+    </div>
+
+    <fieldset class="mode-sale-only">
+      <legend>おすすめポイント・周辺施設</legend>
+      <div class="field wide"><label>おすすめポイント（見出し文）</label><textarea id="f_points"></textarea></div>
+      <label>周辺施設（施設名・徒歩分数・距離）</label>
+      <div id="f_nearby_list"></div>
+      <button class="btn small secondary" onclick="addNearby()">+ 施設を追加</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>写真・図面アップロード</legend>
+      <div class="row">
+        <div class="field">
+          <label>外観・室内写真</label>
+          <input type="file" id="f_photos" accept="image/*" multiple>
+          <div class="file-count" id="photoCountText">未選択</div>
+        </div>
+        <div class="field">
+          <label>間取図・平面図</label>
+          <input type="file" id="f_plans" accept="image/*" multiple>
+          <div class="file-count" id="planCountText">未選択</div>
+        </div>
+      </div>
+      <div class="photo-thumbs" id="photoThumbs"></div>
+      <div class="photo-thumbs" id="planThumbs"></div>
+      <div class="photo-warning" id="photoWarnBox" style="display:none;"></div>
+    </fieldset>
+
+    <fieldset class="mode-sale-only">
+      <legend>甲（委託者）情報</legend>
+      <div class="row">
+        <div class="field"><label>氏名</label><input id="k_name"></div>
+        <div class="field wide"><label>住所</label><input id="k_address"></div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label><input type="checkbox" id="k_same_owner" checked onchange="toggleOwner()"> 所有者・登記名義人は上記と同一</label>
+        </div>
+      </div>
+      <div id="ownerBlock" style="display:none">
+        <div class="row">
+          <div class="field"><label>所有者氏名</label><input id="o_name"></div>
+          <div class="field wide"><label>所有者住所</label><input id="o_address"></div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>乙（宅地建物取引業者）情報</legend>
+      <div class="row">
+        <div class="field"><label>商号（名称）</label><input id="o_shougou" value="GB商事合同会社"></div>
+        <div class="field"><label>代表者</label><input id="o_daihyou" value="黄 健霖"></div>
+      </div>
+      <div class="row">
+        <div class="field wide"><label>主たる事務所の所在地</label><input id="o_jimusho" value="大阪市生野区桃谷1-13-17桃谷駅前ビル302号室"></div>
+        <div class="field"><label>免許証番号</label><input id="o_menkyo" value="大阪府知事 (1) 第 65476 号"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>電話番号</label><input id="o_tel" value="06-6734-5211"></div>
+        <div class="field"><label>FAX</label><input id="o_fax" value="06-7635-8008"></div>
+        <div class="field"><label>定休日</label><input id="o_teikyu" value="土日祝"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>担当者</label><input id="o_tantou" placeholder="例：黄（コウ）"></div>
+        <div class="field"><label>物件番号（任意）</label><input id="o_bukken_bango" placeholder="社内管理番号があれば入力"></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>会社ロゴ（自動的に物件資料・契約書へ反映されます）</label><img id="logoPreview" style="max-height:44px;margin-top:2px;" src=""></div>
+      </div>
+    </fieldset>
+
+    <fieldset class="mode-sale-only">
+      <legend>契約条件</legend>
+      <div class="row">
+        <div class="field"><label>契約日</label><input id="c_date" type="date"></div>
+        <div class="field"><label>依頼の内容</label>
+          <select id="c_content"><option>売却</option><option>購入</option><option>交換</option></select>
+        </div>
+        <div class="field"><label>媒介契約型式</label>
+          <select id="c_type"><option>一般媒介契約型式</option><option>専任媒介契約型式</option><option>専属専任媒介契約型式</option></select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field small"><label>有効期間（ヶ月）</label><input id="c_months" type="number" value="3"></div>
+        <div class="field"><label>指定流通機構への登録</label>
+          <select id="c_reins"><option>無</option><option selected>有</option></select>
+        </div>
+        <div class="field"><label>指定流通機構名</label><input id="c_reins_name" value="レインズ不動産流通機構"></div>
+      </div>
+      <div class="row">
+        <div class="field wide"><label>約定報酬額</label><input id="c_houshu" value="売買価格の3％+6万円"></div>
+        <div class="field"><label>報酬受領の時期</label><input id="c_juryou" value="契約時50％、決済時50％"></div>
+      </div>
+      <div class="field wide"><label>特約事項</label><textarea id="c_tokuyaku"></textarea></div>
+    </fieldset>
+
+    <div class="mode-rental-only" id="rentalFields">
+      <fieldset>
+        <legend>賃貸物件概要</legend>
+        <div class="row">
+          <div class="field wide"><label>物件名</label><input id="r_name" placeholder="メゾン難波"></div>
+          <div class="field"><label>号室（任意）</label><input id="r_room" placeholder="501"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>所在地</label><input id="r_address" placeholder="〒556-0021 大阪府大阪市浪速区幸町2丁目2-47"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>構造規模</label><input id="r_kouzou" placeholder="RC 地上10階建 地上5階部分"></div>
+          <div class="field"><label>築年月</label><input id="r_chikunen" placeholder="1977年6月"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>契約期間</label><input id="r_keiyaku" value="普通賃貸借2年0カ月(更新料：0円)"></div>
+          <div class="field"><label>間取り</label><input id="r_madori" placeholder="1LDK"></div>
+          <div class="field"><label>専有面積</label><input id="r_senyu" placeholder="43.78㎡"></div>
+        </div>
+        <label>交通（駅・沿線・徒歩分数、複数行可）</label>
+        <div id="r_traffic_list"></div>
+        <button class="btn small secondary" onclick="addLine('r_traffic_list','例：Osaka Metro千日前線「桜川」駅 徒歩1分')">+ 交通情報を追加</button>
+      </fieldset>
+
+      <fieldset>
+        <legend>賃料・募集条件</legend>
+        <div class="row">
+          <div class="field"><label>賃料（円/月）</label><input id="r_yachin" type="number" placeholder="78000"></div>
+          <div class="field"><label>共益費（円/月）</label><input id="r_kyoekihi" type="number" placeholder="10000"></div>
+          <div class="field"><label>敷金</label><input id="r_shikikin" placeholder="0ヶ月"></div>
+          <div class="field"><label>礼金</label><input id="r_reikin" placeholder="1ヶ月"></div>
+          <div class="field"><label>入居可能日</label><input id="r_nyukyo" placeholder="即日"></div>
+          <div class="field"><label>水道代（円/月）</label><input id="r_suidou" type="number" placeholder="2000"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>初期費用・その他（1行1項目、自由に追加できます）</legend>
+        <label>初期費用（固定3項目）</label>
+        <div class="row">
+          <div class="field"><label>家財保険</label><input id="r_kazaihoken" placeholder="18,000円（2年契約）"></div>
+          <div class="field"><label>保証会社</label><select id="r_hoshoukaisha"><option>アーク保証会社</option><option>GTN</option></select></div>
+          <div class="field"><label>ハウスクリーニング代</label><input id="r_cleaning" placeholder="48,400円（退去時）"></div>
+        </div>
+        <label style="display:block;margin-top:6px;">その他の初期費用（自由項目）</label>
+        <div id="r_shokihi_list"></div>
+        <button class="btn small secondary" onclick="addLine('r_shokihi_list','例：鍵交換代：22,000円')">+ 項目を追加</button>
+        <label style="display:block;margin-top:10px;">その他</label>
+        <div id="r_sonota_list"></div>
+        <button class="btn small secondary" onclick="addLine('r_sonota_list','例：解約予告：1ヶ月前')">+ 項目を追加</button>
+      </fieldset>
+
+      <fieldset>
+        <legend>設備等</legend>
+        <div class="field wide"><label>共用部設備（カンマ区切り）</label><textarea id="r_kyoyou_setsubi" placeholder="集合ポスト,エレベーター,駐輪場"></textarea></div>
+        <div class="field wide"><label>専有部設備（カンマ区切り）</label><textarea id="r_senyu_setsubi" placeholder="角部屋,下駄箱,シャワー,バス・トイレ別,洗面台,ガス給湯,脱衣所,システムキッチン,インターホン,バルコニー,クローゼット,室内洗濯機置き場,2口ガスコンロ,エアコン"></textarea></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>LIFE INFORMATION（周辺施設）</legend>
+        <div id="r_life_list"></div>
+        <button class="btn small secondary" onclick="addLifeRow()">+ 施設を追加</button>
+      </fieldset>
+
+      <fieldset>
+        <legend>取引態様・手数料（賃貸）</legend>
+        <div class="row">
+          <div class="field"><label>取引態様</label>
+            <select id="r_torihiki"><option>代理</option><option>媒介（一般）</option><option>媒介（専任）</option></select>
+          </div>
+          <div class="field"><label>広告料</label><input id="r_koukokuryo" placeholder="1ヶ月"></div>
+        </div>
+        <p style="font-size:11px;color:#888;margin:4px 0 0;">※手数料負担割合（貸主0%／借主100%）・手数料配分割合（元付0%／客付100%）は自社の固定ルールとして自動表示されます。入力は不要です。</p>
+      </fieldset>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn" onclick="generateAll()">▶ 資料を生成する（②③タブへ反映）</button>
+    </div>
+  </div>
+  </div><!-- /.wrap -->
+
+  <div class="preview-wrap">
+  <!-- ================= FLYER PREVIEW ================= -->
+  <div class="panel" id="panel-flyer">
+    <div class="toolbar no-print">
+      <button class="btn" onclick="printPanel('panel-flyer')">🖨 印刷 / PDFとして保存</button>
+    </div>
+    <div class="doc-page landscape" id="flyerOutput"></div>
+    <p class="no-print" style="text-align:center;font-size:12px;color:#888;">※印刷ダイアログで「横向き」が自動選択されない場合は印刷設定で「横（ランドスケープ）」を、複数ページになる場合は「余白：なし」を選択してください。</p>
+  </div>
+
+  <!-- ================= CONTRACT PREVIEW ================= -->
+  <div class="panel" id="panel-contract">
+    <div class="toolbar no-print">
+      <button class="btn" onclick="printPanel('panel-contract')">🖨 印刷 / PDFとして保存</button>
+      <button class="btn secondary" onclick="downloadWord()">⬇ Wordファイルとしてダウンロード (.doc)</button>
+    </div>
+    <div class="doc-page" id="contractOutput"></div>
+  </div>
+
+  <!-- ================= ⑤ 代管合約書 ================= -->
+  <div class="panel" id="panel-mgmt">
+    <div class="side-form">
+      <fieldset>
+        <legend>客戶・物件情報</legend>
+        <div class="row">
+          <div class="field"><label>客戶（屋主）姓名</label><input id="mg_name"></div>
+          <div class="field"><label>客戶電話</label><input id="mg_tel"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>客戶住所</label><input id="mg_address"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>物件名稱</label><input id="mg_bukken"></div>
+          <div class="field"><label>号室</label><input id="mg_room"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>物件所在地</label><input id="mg_bukken_address"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>管理類型</label><select id="mg_type"><option>自住管理</option><option>投資出租管理</option></select></div>
+          <div class="field"><label>簽約日</label><input id="mg_date" type="date"></div>
+        </div>
+      </fieldset>
+      <div class="toolbar no-print">
+        <button class="btn" onclick="generateMgmt()">▶ 代管合約書を生成する</button>
+        <button class="btn secondary" onclick="printPanel('panel-mgmt')">🖨 印刷 / PDFとして保存</button>
+      </div>
+      <p class="no-print" style="font-size:11.5px;color:#888;">※4ページ構成で生成されます：①客戶・費用資訊　②管理價目表　③条文（日本語）　④條文（中文參考譯文）</p>
+    </div>
+    <div id="mgmtOutput"></div>
+  </div>
+
+  <!-- ================= ⑥ 決済清算書 ================= -->
+  <div class="panel" id="panel-settle">
+    <div class="side-form">
+      <fieldset>
+        <legend>基本情報</legend>
+        <div class="row">
+          <div class="field"><label>買主様</label><input id="st_buyer"></div>
+          <div class="field wide"><label>物件名・号室</label><input id="st_bukken"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>決済日</label><input id="st_date" type="date"></div>
+          <div class="field wide"><label>場所</label>
+            <select id="st_place">
+              <option>〒５４１－００５４大阪市中央区南本町二丁目２番１１号堺筋本町西尾ビル３階ミナミ司法書士事務所</option>
+              <option>大阪市生野区桃谷1-13-17桃谷駅前ビル302号室</option>
+              <option>立ち合いなしで決済</option>
+            </select>
+          </div>
+          <div class="field wide"><label>連絡先</label><input id="st_contact" value="06-6734-5211"></div>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>① 売買代金（残代金）</legend>
+        <div class="row"><div class="field"><label>残代金（円）</label><input id="st_zandaikin" type="number"></div></div>
+      </fieldset>
+      <fieldset>
+        <legend>② 固定資産税等の清算</legend>
+        <div class="row">
+          <div class="field"><label>年額（円）</label><input id="st_kotei_nengaku" type="number"></div>
+          <div class="field"><label>年度表記</label>
+            <select id="st_kotei_nendo">
+              <option>令和8年度</option>
+              <option>令和9年度</option>
+              <option>令和10年度</option>
+              <option>令和11年度</option>
+              <option>令和12年度</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field"><label>買主負担 開始日</label><input id="st_kotei_start" type="date"></div>
+          <div class="field"><label>買主負担 終了日</label><input id="st_kotei_end" type="date"></div>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>③ 管理費等の清算</legend>
+        <div class="row">
+          <div class="field"><label>管理費等 月額（円）</label><input id="st_kanri_getsugaku" type="number"></div>
+          <div class="field"><label>買主負担 開始日</label><input id="st_kanri_start" type="date"></div>
+          <div class="field"><label>買主負担 終了日（当月末）</label><input id="st_kanri_end" type="date"></div>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>④ 家賃の清算</legend>
+        <div class="row">
+          <div class="field"><label>家賃 月額（円）</label><input id="st_yachin_getsugaku" type="number"></div>
+          <div class="field"><label>売主取得 開始日</label><input id="st_yachin_start" type="date"></div>
+          <div class="field"><label>売主取得 終了日（当月末）</label><input id="st_yachin_end" type="date"></div>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>諸費用（1行1項目）</legend>
+        <div id="st_fee_list"></div>
+        <button class="btn small secondary" onclick="addKVRow('st_fee_list','項目（例：印紙代）','金額（円）')">+ 項目を追加</button>
+      </fieldset>
+      <fieldset>
+        <legend>お振込先</legend>
+        <div class="row">
+          <div class="field"><label>銀行・支店</label><input id="st_bank" placeholder="りそな銀行　南森町支店"></div>
+          <div class="field"><label>種別・口座番号</label><input id="st_account" placeholder="普通　328091"></div>
+          <div class="field"><label>名義</label><input id="st_meigi" placeholder="カ）アップライフ"></div>
+        </div>
+      </fieldset>
+      <div class="toolbar no-print">
+        <button class="btn" onclick="generateSettle()">▶ 清算書を計算・生成する</button>
+        <button class="btn secondary" onclick="printPanel('panel-settle')">🖨 印刷 / PDFとして保存</button>
+      </div>
+      <p class="no-print" style="font-size:11.5px;color:#888;">※日割計算は年365日（②のみ）で自動算出した参考値です。生成後の表は数字を直接編集してから印刷できます。</p>
+    </div>
+    <div id="settleOutput"></div>
+  </div>
+
+  <!-- ================= ④ 簽約日程表 ================= -->
+  <div class="panel" id="panel-schedule">
+    <div class="side-form">
+      <fieldset>
+        <legend>基本情報</legend>
+        <div class="row">
+          <div class="field"><label>客戶姓名</label><input id="sc_client" placeholder="陳春良"></div>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>行程（順序固定：①→⑤、日期可跨月填寫）</legend>
+
+        <div class="row" style="align-items:flex-end;">
+          <div class="field small"><label>①訂金匯款</label><input type="date" id="sc1_date"></div>
+          <div class="field"><label>內容</label><input id="sc1_content" value="匯款訂金"></div>
+          <div class="field"><label>需要文件</label><input id="sc1_docs" value="已匯款"></div>
+        </div>
+        <div class="row" style="align-items:flex-end;">
+          <div class="field small"><label>②講解契約書</label><input type="date" id="sc2_date"></div>
+          <div class="field"><label>內容</label><input id="sc2_content" value="找一天空出兩小時聽講解契約書"></div>
+          <div class="field"><label>需要文件</label><input id="sc2_docs" value="視訊講解"></div>
+        </div>
+        <div class="row" style="align-items:flex-end;">
+          <div class="field small"><label>③簽約</label><input type="date" id="sc3_date"></div>
+          <div class="field"><label>內容</label><input id="sc3_content" value="當天我司畫押日期簽名蓋章"></div>
+          <div class="field"><label>需要文件</label><input id="sc3_docs" value="護照影本or護照照片"></div>
+        </div>
+        <div class="row" style="align-items:flex-end;">
+          <div class="field small"><label>④前尾款匯款</label><input type="date" id="sc4_date"></div>
+          <div class="field"><label>內容</label><input id="sc4_content" value="尾款匯款"></div>
+          <div class="field"><label>需要文件</label><textarea id="sc4_docs">寄件:
+戶籍謄本
+護照影本
+印鑑證明
+買方代理委任狀
+代書代理委任狀
+印章</textarea></div>
+        </div>
+        <div class="row" style="align-items:flex-end;">
+          <div class="field small"><label>⑤交屋</label><input type="date" id="sc5_date"></div>
+          <div class="field"><label>內容</label><input id="sc5_content" value="付尾款拿鑰匙交屋"></div>
+          <div class="field"><label>需要文件</label><input id="sc5_docs" placeholder=""></div>
+        </div>
+      </fieldset>
+      <div class="toolbar no-print">
+        <button class="btn" onclick="generateSchedule()">▶ 日程表を生成する</button>
+        <button class="btn secondary" onclick="printPanel('panel-schedule')">🖨 印刷 / PDFとして保存</button>
+      </div>
+      <p class="no-print" style="font-size:11.5px;color:#888;">※日付を入力すると、月をまたいでいても該当する月のカレンダーが自動でそれぞれ表示されます。</p>
+    </div>
+    <div id="scheduleOutput"></div>
+  </div>
+
+  <!-- ================= ⑦ 決済のご案内 ================= -->
+  <div class="panel" id="panel-settle2">
+    <div class="side-form">
+      <fieldset>
+        <legend>基本情報</legend>
+        <div class="row">
+          <div class="field"><label>契約No</label><input id="s2_no"></div>
+          <div class="field"><label>作成日</label><input id="s2_createdate" type="date"></div>
+          <div class="field"><label>作成者名</label><input id="s2_creator"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>客戶様（買主）</label><input id="s2_client"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>決済日時</label><input id="s2_datetime" type="date"></div>
+          <div class="field wide"><label>決済場所</label>
+            <select id="s2_place">
+              <option>〒５４１－００５４大阪市中央区南本町二丁目２番１１号堺筋本町西尾ビル３階ミナミ司法書士事務所</option>
+              <option>大阪市生野区桃谷1-13-17桃谷駅前ビル302号室</option>
+              <option>立ち合いなしで決済</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field"><label>融資銀行</label><input id="s2_bank"></div>
+          <div class="field"><label>支店</label><input id="s2_branch"></div>
+          <div class="field"><label>担当者</label><input id="s2_tantou"></div>
+          <div class="field"><label>連絡先</label><input id="s2_contact"></div>
+        </div>
+        <div class="field wide"><label>【連絡事項】</label><textarea id="s2_renraku"></textarea></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>①売主に支払う分</legend>
+        <div id="s2_list1"></div>
+        <button class="btn small secondary" onclick="addKVRow('s2_list1','残代金','金額（円）')">+ 項目を追加</button>
+        <div class="row" style="margin-top:6px;"><div class="field"><label>支払方法</label><select class="s2-method" id="s2_method1"><option>振込</option><option>差引</option><option>未定</option><option>相殺</option><option>現金払い</option></select></div></div>
+      </fieldset>
+      <fieldset>
+        <legend>②仲介業者に支払う分</legend>
+        <div id="s2_list2"></div>
+        <button class="btn small secondary" onclick="addKVRow('s2_list2','仲介手数料','金額（円）')">+ 項目を追加</button>
+        <div class="row" style="margin-top:6px;"><div class="field"><label>支払方法</label><select class="s2-method" id="s2_method2"><option>振込</option><option>差引</option><option>未定</option><option>相殺</option><option>現金払い</option></select></div></div>
+      </fieldset>
+      <fieldset>
+        <legend>③土地家屋調査士に支払う分</legend>
+        <div id="s2_list3"></div>
+        <button class="btn small secondary" onclick="addKVRow('s2_list3','表題登記費用','金額（円）')">+ 項目を追加</button>
+        <div class="row" style="margin-top:6px;"><div class="field"><label>支払方法</label><select class="s2-method" id="s2_method3"><option>振込</option><option>差引</option><option>未定</option><option>相殺</option><option>現金払い</option></select></div></div>
+      </fieldset>
+      <fieldset>
+        <legend>④司法書士に支払う分</legend>
+        <div id="s2_list4"></div>
+        <button class="btn small secondary" onclick="addKVRow('s2_list4','登記費用','金額（円）')">+ 項目を追加</button>
+        <div class="row" style="margin-top:6px;">
+          <div class="field"><label>支払方法</label><select class="s2-method" id="s2_method4"><option>振込</option><option>差引</option><option>未定</option><option>相殺</option><option>現金払い</option></select></div>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>⑤融資銀行に支払う分</legend>
+        <div id="s2_list5"></div>
+        <button class="btn small secondary" onclick="addKVRow('s2_list5','項目（例：融資手数料）','金額（円）')">+ 項目を追加</button>
+        <div class="row" style="margin-top:6px;"><div class="field"><label>支払方法</label><select class="s2-method" id="s2_method5"><option>振込</option><option>差引</option><option>未定</option><option>相殺</option><option>現金払い</option></select></div></div>
+      </fieldset>
+      <fieldset>
+        <legend>⑥保険会社に支払う分</legend>
+        <div id="s2_list6"></div>
+        <button class="btn small secondary" onclick="addKVRow('s2_list6','項目（例：保険会社支払金額）','金額（円）')">+ 項目を追加</button>
+        <div class="row" style="margin-top:6px;">
+          <div class="field"><label>支払方法</label><select class="s2-method" id="s2_method6"><option>未定</option><option>振込</option><option>差引</option><option>相殺</option><option>現金払い</option></select></div>
+          <div class="field wide"><label>備考</label><input id="s2_note6" placeholder="※プラン未定、概算（資金計画表より）"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>固定資産税等・管理費等・家賃の清算（自動計算・①に自動加算されます）</legend>
+        <div class="row">
+          <div class="field"><label>固定資産税 年額（円）</label><input id="s2_kotei_nengaku" type="number"></div>
+          <div class="field"><label>年度表記</label>
+            <select id="s2_kotei_nendo">
+              <option>令和8年度</option><option>令和9年度</option><option>令和10年度</option><option>令和11年度</option><option>令和12年度</option>
+            </select>
+          </div>
+          <div class="field"><label>買主負担 開始日</label><input id="s2_kotei_start" type="date"></div>
+          <div class="field"><label>買主負担 終了日</label><input id="s2_kotei_end" type="date"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>管理費等 月額（円）</label><input id="s2_kanri_getsugaku" type="number"></div>
+          <div class="field"><label>買主負担 開始日</label><input id="s2_kanri_start" type="date"></div>
+          <div class="field"><label>買主負担 終了日（当月末）</label><input id="s2_kanri_end" type="date"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>家賃 月額（円）</label><input id="s2_yachin_getsugaku" type="number"></div>
+          <div class="field"><label>売主取得 開始日</label><input id="s2_yachin_start" type="date"></div>
+          <div class="field"><label>売主取得 終了日（当月末）</label><input id="s2_yachin_end" type="date"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>諸費用（1行1項目）</legend>
+        <div id="s2_list7"></div>
+        <button class="btn small secondary" onclick="addKVRow('s2_list7','項目（例：印紙代）','金額（円）')">+ 項目を追加</button>
+        <div class="row" style="margin-top:6px;"><div class="field"><label>支払方法</label><select class="s2-method" id="s2_method7"><option>振込</option><option>差引</option><option>未定</option><option>相殺</option><option>現金払い</option></select></div></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>融資・自己資金</legend>
+        <div class="row">
+          <div class="field"><label>融資金額（住宅ローン・円）</label><input id="s2_yushigaku" type="number"></div>
+        </div>
+      </fieldset>
+
+      <div class="toolbar no-print">
+        <button class="btn" onclick="generateSettle2()">▶ 決済のご案内を生成する</button>
+        <button class="btn secondary" onclick="printPanel('panel-settle2')">🖨 印刷 / PDFとして保存</button>
+      </div>
+      <p class="no-print" style="font-size:11.5px;color:#888;">※各区分の金額はその区分内の項目を自動合計します。「必要な自己資金」は合計金額－融資金額で自動計算されます。</p>
+    </div>
+    <div id="settle2Output"></div>
+  </div>
+
+  <!-- ================= ⑧ 初期費用一覧表 ================= -->
+  <div class="panel" id="panel-initial">
+    <div class="side-form">
+      <fieldset>
+        <legend>基本情報</legend>
+        <div class="row">
+          <div class="field"><label>作成日</label><input id="ic_date" type="date"></div>
+          <div class="field wide"><label>ご契約者名</label><input id="ic_client"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>物件名（号室含む）</label><input id="ic_bukken" placeholder="ダイドーメゾン本町 404号室"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>ご入居費用明細</legend>
+        <div class="row">
+          <div class="field"><label>礼金（円）</label><input id="ic_reikin" type="number" value="0"></div>
+          <div class="field"><label>敷金（円）</label><input id="ic_shikikin" type="number" value="0"></div>
+          <div class="field"><label>家賃（円）</label><input id="ic_yachin" type="number"></div>
+          <div class="field"><label>共益費（円）</label><input id="ic_kyoekihi" type="number"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>日割家賃（円）</label><input id="ic_hiwari_yachin" type="number"></div>
+          <div class="field"><label>日割家賃 期間</label><input id="ic_hiwari_yachin_kikan" placeholder="8/17-8/31"></div>
+          <div class="field"><label>日割共益費（円）</label><input id="ic_hiwari_kyoeki" type="number"></div>
+          <div class="field"><label>日割共益費 期間</label><input id="ic_hiwari_kyoeki_kikan" placeholder="8/17-8/31"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>水道代（円）</label><input id="ic_suidou" type="number"></div>
+          <div class="field"><label>火災保険（円）</label><input id="ic_kasai" type="number"></div>
+          <div class="field"><label>火災保険 年数</label><input id="ic_kasai_nensuu" placeholder="2年"></div>
+          <div class="field"><label>保証会社初回費用（円）</label><input id="ic_hoshou" type="number"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>ハウスクリーニング（円）</label><input id="ic_cleaning" type="number"></div>
+          <div class="field"><label>手付金（定金・円）</label><input id="ic_tetsukekin" type="number" value="0"></div>
+        </div>
+        <label>その他項目（1行1項目、任意）</label>
+        <div id="ic_extra_list"></div>
+        <button class="btn small secondary" onclick="addKVRow('ic_extra_list','項目','金額（円）')">+ 項目を追加</button>
+      </fieldset>
+
+      <fieldset>
+        <legend>必要書類・備考</legend>
+        <div class="row">
+          <div class="field wide"><label>契約者様の必要書類</label><input id="ic_docs_kounin" placeholder="顔写真、住民票"></div>
+          <div class="field wide"><label>保証人様の必要書類</label><input id="ic_docs_hoshounin" value="なし"></div>
+        </div>
+        <label>備考（1行1項目）</label>
+        <div id="ic_note_list"></div>
+        <button class="btn small secondary" onclick="addLine('ic_note_list','例：保証会社年間更新料10000円')">+ 項目を追加</button>
+      </fieldset>
+
+      <fieldset>
+        <legend>お振込先（訂金匯款帳號）</legend>
+        <div class="row">
+          <div class="field"><label>銀行名</label><input id="ic_bank"></div>
+          <div class="field"><label>支店名（支店コード）</label><input id="ic_branch"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>種別・口座番号</label><input id="ic_account"></div>
+          <div class="field wide"><label>口座名義</label><input id="ic_meigi"></div>
+        </div>
+      </fieldset>
+
+      <div class="toolbar no-print">
+        <button class="btn" onclick="generateInitial()">▶ 初期費用一覧表を生成する</button>
+        <button class="btn secondary" onclick="printPanel('panel-initial')">🖨 印刷 / PDFとして保存</button>
+      </div>
+      <p class="no-print" style="font-size:11.5px;color:#888;">※差し引きお支払額は、明細の合計から手付金（定金）を差し引いて自動計算されます。</p>
+    </div>
+    <div id="initialOutput"></div>
+  </div>
+
+  </div><!-- /.preview-wrap -->
+
+<script>
+/* =========================================================================
+   CONFIG — 会社情報・選択肢はここでまとめて編集できます。
+   GitHub Pages 化して公開運用する場合、社内でデータを更新するときは
+   基本的にこのブロックだけ触れば済むように分離してあります。
+   ========================================================================= */
+const CONFIG = {
+  company: {
+    shougou: "GB商事合同会社",
+    daihyou: "黄 健霖",
+    jimusho: "大阪市生野区桃谷1-13-17桃谷駅前ビル302号室",
+    menkyo: "大阪府知事 (1) 第 65476 号",
+    logo: "data:image/png;base64,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",
+    qr: "data:image/png;base64,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",
+    recruit: "営業員募集中！"
+  },
+  youtoChiiki: [
+    "第一種低層住居専用地域","第二種低層住居専用地域",
+    "第一種中高層住居専用地域","第二種中高層住居専用地域",
+    "第一種住居地域","第二種住居地域","準住居地域","田園住居地域",
+    "近隣商業地域","商業地域","準工業地域","工業地域","工業専用地域"
+  ],
+  genjyoOptions: ["居住用","賃貸中","空家"],
+  defaultHoushu: "売買価格の3％+6万円"
+};
+
+/* apply config defaults on load */
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('o_shougou').value = CONFIG.company.shougou;
+  document.getElementById('o_daihyou').value = CONFIG.company.daihyou;
+  document.getElementById('o_jimusho').value = CONFIG.company.jimusho;
+  document.getElementById('o_menkyo').value = CONFIG.company.menkyo;
+  document.getElementById('c_houshu').value = CONFIG.defaultHoushu;
+
+  fillSelect('f_youto', CONFIG.youtoChiiki);
+  fillSelect('m_youto', CONFIG.youtoChiiki);
+  fillSelect('f_genjyo', CONFIG.genjyoOptions, "空家");
+  fillSelect('m_genjyo', CONFIG.genjyoOptions, "空家");
+
+  document.getElementById('f_photos').addEventListener('change', e => handlePhotos(e.target, 'photoStore', 'photoCountText'));
+  document.getElementById('f_plans').addEventListener('change', e => handlePhotos(e.target, 'planStore', 'planCountText'));
+  document.getElementById('logoPreview').src = CONFIG.company.logo;
+
+  toggleMode();
+});
+
+/* ---------- double-click to fill placeholder text ---------- */
+document.addEventListener('dblclick', (e)=>{
+  const el = e.target;
+  if((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && el.placeholder && !el.value){
+    el.value = el.placeholder;
+    el.dispatchEvent(new Event('input', {bubbles:true}));
+  }
+});
+
+function fillSelect(id, options, defaultVal){
+  const sel = document.getElementById(id);
+  sel.innerHTML = options.map(o=>`<option${o===defaultVal?' selected':''}>${o}</option>`).join('');
+}
+
+/* ---------- tab switching ---------- */
+document.querySelectorAll('.tab-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('panel-'+b.dataset.tab).classList.add('active');
+  });
+});
+
+/* ---------- 売買 / 賃貸 mode toggle ---------- */
+function toggleMode(){
+  const mode = document.getElementById('txn_mode').value;
+  document.querySelectorAll('.mode-sale-only').forEach(el => el.style.display = (mode==='売買') ? '' : 'none');
+  document.getElementById('rentalFields').style.display = (mode==='賃貸') ? 'block' : 'none';
+  toggleType();
+}
+
+/* ---------- house / mansion toggle ---------- */
+function toggleType(){
+  const mode = document.getElementById('txn_mode').value;
+  if(mode !== '売買'){
+    document.getElementById('block-house').classList.remove('show');
+    document.getElementById('block-mansion').classList.remove('show');
+    return;
+  }
+  const t = document.getElementById('f_type').value;
+  document.getElementById('block-house').classList.toggle('show', t !== 'マンション');
+  document.getElementById('block-mansion').classList.toggle('show', t === 'マンション');
+}
+
+function toggleOwner(){
+  document.getElementById('ownerBlock').style.display = document.getElementById('k_same_owner').checked ? 'none':'block';
+}
+
+/* ---------- dynamic line lists (traffic) ---------- */
+function addLine(containerId, placeholder){
+  const row = document.createElement('div');
+  row.className='dyn-row';
+  row.innerHTML = `<input placeholder="${placeholder}"><button class="btn small danger" onclick="this.parentElement.remove()">削除</button>`;
+  document.getElementById(containerId).appendChild(row);
+}
+addLine('f_traffic_list','例：JRおおさか東線「JR淡路」駅 徒歩3分');
+
+/* ---------- generic 2-field dynamic rows (label + value) ---------- */
+function addKVRow(containerId, ph1, ph2){
+  const row=document.createElement('div');
+  row.className='dyn-row';
+  row.innerHTML=`<input placeholder="${ph1}" class="kv-k" style="flex:2">
+                 <input placeholder="${ph2}" class="kv-v" style="flex:1">
+                 <button class="btn small danger" onclick="this.parentElement.remove()">削除</button>`;
+  document.getElementById(containerId).appendChild(row);
+}
+function collectKV(containerId){
+  return [...document.querySelectorAll('#'+containerId+' .dyn-row')].map(r=>({
+    k:r.querySelector('.kv-k').value, v:r.querySelector('.kv-v').value
+  })).filter(x=>x.k.trim()!=='' || x.v.trim()!=='');
+}
+
+/* ---------- nearby facilities ---------- */
+function addNearby(){
+  const row=document.createElement('div');
+  row.className='dyn-row';
+  row.innerHTML=`<input placeholder="施設名（例：ローソン菅原六丁目店）" class="nb-name" style="flex:2">
+                 <input placeholder="徒歩分" class="nb-min" style="flex:0 0 70px">
+                 <input placeholder="距離(m)" class="nb-m" style="flex:0 0 90px">
+                 <button class="btn small danger" onclick="this.parentElement.remove()">削除</button>`;
+  document.getElementById('f_nearby_list').appendChild(row);
+}
+addNearby();
+
+/* ---------- ⑦ 決済のご案内 default rows ---------- */
+addKVRow('s2_list1','残代金','金額（円）');
+addKVRow('s2_list2','仲介手数料','金額（円）');
+addKVRow('s2_list3','表題登記費用','金額（円）');
+addKVRow('s2_list4','登記費用','金額（円）');
+addKVRow('s2_list5','項目（例：融資手数料）','金額（円）');
+addKVRow('s2_list6','項目（例：保険会社支払金額）','金額（円）');
+addKVRow('s2_list7','項目（例：印紙代）','金額（円）');
+
+/* ---------- LIFE INFORMATION (rental nearby facilities) ---------- */
+function addLifeRow(){
+  const row=document.createElement('div');
+  row.className='dyn-row';
+  row.innerHTML=`<input placeholder="施設名（例：セブンイレブン大阪幸町2丁目店）" class="lf-name" style="flex:2">
+                 <input placeholder="徒歩分" class="lf-min" style="flex:0 0 70px">
+                 <input placeholder="距離(m)" class="lf-m" style="flex:0 0 90px">
+                 <button class="btn small danger" onclick="this.parentElement.remove()">削除</button>`;
+  document.getElementById('r_life_list').appendChild(row);
+}
+function collectLife(){
+  return [...document.querySelectorAll('#r_life_list .dyn-row')].map(r=>({
+    name:r.querySelector('.lf-name').value,
+    min:r.querySelector('.lf-min').value,
+    m:r.querySelector('.lf-m').value
+  })).filter(x=>x.name.trim()!=='');
+}
+
+/* ---------- 簽約日程 milestones (fixed order: ①-⑤) ---------- */
+const MILESTONE_TITLES = ['訂金匯款','講解契約書','簽約','前尾款匯款','交屋'];
+function collectMilestones(){
+  return [1,2,3,4,5].map(i=>({
+    date: $('sc'+i+'_date'),
+    title: MILESTONE_TITLES[i-1],
+    content: $('sc'+i+'_content'),
+    docs: $('sc'+i+'_docs')
+  }));
+}
+
+/* ---------- photo handling ---------- */
+let photoStore=[], planStore=[], logoStore=CONFIG.company.logo, photoWarnings=[];
+window.photoStore = photoStore;
+window.planStore = planStore;
+
+/* Resize/convert any readable image to a compact JPEG dataURL via canvas.
+   If the resize step itself has trouble, fall back to the original dataURL
+   rather than discarding the photo — only a genuine decode failure (img.onerror)
+   counts as "unreadable". */
+function resizeImage(dataUrl, maxDim){
+  return new Promise((resolve)=>{
+    try{
+      const img = new Image();
+      img.onload = () => {
+        try{
+          let w = img.width, h = img.height;
+          if(w > maxDim || h > maxDim){
+            if(w > h){ h = Math.round(h * maxDim / w); w = maxDim; }
+            else { w = Math.round(w * maxDim / h); h = maxDim; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.85));
+        }catch(err){
+          resolve(dataUrl); // canvas step failed — keep the original image instead of discarding it
+        }
+      };
+      img.onerror = () => resolve(null); // browser genuinely could not decode this file
+      img.src = dataUrl;
+    }catch(err){
+      resolve(dataUrl);
+    }
+  });
+}
+
+function handlePhotos(input, storeName, countId){
+  const files = Array.from(input.files || []);
+  if(files.length === 0) return;
+  document.getElementById(countId).textContent = '処理中…（' + files.length + ' 件）';
+
+  files.forEach(file=>{
+    const reader = new FileReader();
+    reader.onload = e => {
+      resizeImage(e.target.result, 1400).then(result=>{
+        if(result){
+          window[storeName].push(result);
+        } else {
+          photoWarnings.push(file.name);
+        }
+        renderThumbs();
+      });
+    };
+    reader.onerror = () => { photoWarnings.push(file.name); renderThumbs(); };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderThumbs(){
+  document.getElementById('photoThumbs').innerHTML = photoStore.map((src,i)=>
+    `<div class="thumb"><img src="${src}"><button class="rm" onclick="photoStore.splice(${i},1);renderThumbs()">×</button></div>`).join('');
+  document.getElementById('planThumbs').innerHTML = planStore.map((src,i)=>
+    `<div class="thumb"><img src="${src}"><button class="rm" onclick="planStore.splice(${i},1);renderThumbs()">×</button></div>`).join('');
+  document.getElementById('photoCountText').textContent = '現在 ' + photoStore.length + ' 枚アップロード済み';
+  document.getElementById('planCountText').textContent = '現在 ' + planStore.length + ' 枚アップロード済み';
+
+  const warnBox = document.getElementById('photoWarnBox');
+  if(photoWarnings.length){
+    warnBox.style.display = 'block';
+    warnBox.textContent = '⚠ 次のファイルは形式の関係で読み込めませんでした（iPhoneのHEIC形式など）。JPG/PNGに変換してから再度アップロードしてください：' + photoWarnings.join('、');
+  } else {
+    warnBox.style.display = 'none';
+  }
+}
+
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id).value;
+function collectLines(containerId){
+  return [...document.querySelectorAll('#'+containerId+' input')].map(i=>i.value).filter(v=>v.trim()!=='');
+}
+function collectNearby(){
+  return [...document.querySelectorAll('#f_nearby_list .dyn-row')].map(r=>({
+    name:r.querySelector('.nb-name').value,
+    min:r.querySelector('.nb-min').value,
+    m:r.querySelector('.nb-m').value
+  })).filter(x=>x.name.trim()!=='');
+}
+function tsubo(sqm){ return sqm? (sqm*0.3025).toFixed(2):''; }
+function addMonths(dateStr, months){
+  if(!dateStr) return '';
+  const d=new Date(dateStr); d.setMonth(d.getMonth()+parseInt(months||0));
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+}
+function fmtDateJP(dateStr){
+  if(!dateStr) return '　　年　　月　　日';
+  const d=new Date(dateStr);
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`;
+}
+
+/* ---------- MAIN GENERATE ---------- */
+function generateAll(){
+  if(document.getElementById('txn_mode').value === '賃貸'){
+    generateRentalFlyer();
+    document.getElementById('contractOutput').innerHTML = `<p style="padding:20mm;text-align:center;color:#888;">賃貸物件のため、この画面（媒介契約書）は対象外です。「② 物件資料 プレビュー」をご確認ください。</p>`;
+    document.querySelector('.tab-btn[data-tab="flyer"]').click();
+    return;
+  }
+  const isMansion = $('f_type') === 'マンション';
+  const traffic = collectLines('f_traffic_list');
+  const nearby = collectNearby();
+  const ownerName = document.getElementById('k_same_owner').checked ? $('k_name') : $('o_name');
+  const ownerAddr = document.getElementById('k_same_owner').checked ? $('k_address') : $('o_address');
+
+  const sideRow = (label, value, wide) => value ? `<div class="srow${wide?' biko':''}"><b>${label}</b><span>${value}</span></div>` : '';
+
+  const topbar = `
+    <div class="fl-topbar">
+      <div class="fl-left">
+        ${logoStore?`<img class="fl-logo" src="${logoStore}">`:''}
+        <div class="fl-price">${$('f_cond')}｜${$('f_type')}　<span style="font-size:24px">${$('f_price')?Number($('f_price')).toLocaleString():''}万円</span></div>
+      </div>
+      <div class="fl-name">${$('f_name')}</div>
+    </div>
+    ${$('f_points')?`<div class="fl-highlight">${$('f_points').split('\n')[0]}</div>`:''}
+    <div class="fl-traffic">${traffic.map(t=>'交通　'+t).join('　｜　')}</div>
+  `;
+
+  const mediaHtml = `
+    <div class="fl-media">
+      ${photoStore.length?`<div class="fl-photos">${photoStore.slice(0,4).map(s=>`<img src="${s}">`).join('')}</div>`:''}
+      <div class="fl-plan">${planStore.length?planStore.slice(0,3).map(s=>`<img src="${s}">`).join(''):'<span style="color:#aaa;font-size:11px;">間取図未アップロード</span>'}</div>
+    </div>
+  `;
+
+  const pointsBody = ($('f_points')||'').split('\n').slice(1).join('\n') || $('f_points') || '';
+  const pointsHtml = pointsBody ? `<div class="fl-points"><b>～おすすめポイント～</b><br>${pointsBody.replace(/\n/g,'<br>')}</div>` : '';
+
+  const nearbyHtml = nearby.length ? `<div class="fl-nearby">${nearby.map(n=>`<div>${n.name}　徒歩${n.min}分(約${n.m}m)</div>`).join('')}</div>` : '';
+
+  let sideHtml, landAreaForContract='', buildAreaForContract='';
+
+  if(isMansion){
+    const senyu = parseFloat($('m_senyu'))||0;
+    landAreaForContract = ''; buildAreaForContract = senyu?senyu+'㎡ ('+tsubo(senyu)+'坪)':'';
+    sideHtml = [
+      sideRow('所在', $('f_address')),
+      sideRow('権利', $('m_right')),
+      sideRow('用途地域', $('m_youto')),
+      sideRow('専有面積', senyu?senyu+'㎡ ('+tsubo(senyu)+'坪)':''),
+      sideRow('ﾊﾞﾙｺﾆｰ/庭', `${$('m_balcony')} ／ ${$('m_niwa')}`),
+      sideRow('間取り', $('m_madori')),
+      sideRow('構造等', $('m_kouzou')),
+      sideRow('総戸数', $('m_soukosuu')),
+      sideRow('築年月', $('m_chikunen')),
+      sideRow('施工会社', $('m_sekou')),
+      sideRow('管理会社', $('m_kanri_gaisha')),
+      sideRow('管理形態', `${$('m_keitai')}　${$('m_houshiki')}`),
+      sideRow('管理費', $('m_kanrihi')?Number($('m_kanrihi')).toLocaleString()+'円/月':''),
+      sideRow('修繕積立金', $('m_shuzen')?Number($('m_shuzen')).toLocaleString()+'円/月':''),
+      sideRow('その他費用', $('m_sonota')),
+      sideRow('設備', `駐車場:${$('m_parking')} EV:${$('m_ev')} ペット:${$('m_pet')}`),
+      sideRow('ガス/給湯', `${$('m_gas')} ／ ${$('m_kyuto')}`),
+      sideRow('引渡し', `現況:${$('m_genjyo')} 時期:${$('m_hikiwatashi')}`),
+      sideRow('備考', ($('m_biko')||'').replace(/\n/g,'<br>'), true)
+    ].join('');
+  } else {
+    const land_area = parseFloat($('f_land_area'))||0;
+    const build_total = parseFloat($('f_build_total'))||0;
+    landAreaForContract = land_area?land_area+'㎡ ('+tsubo(land_area)+'坪)':'';
+    buildAreaForContract = build_total?build_total+'㎡ ('+tsubo(build_total)+'坪)':'';
+    sideHtml = [
+      sideRow('所在', $('f_address')),
+      sideRow('権利', $('f_land_right')),
+      sideRow('土地面積', landAreaForContract),
+      sideRow('地目', $('f_land_moku')),
+      sideRow('接面道路', $('f_land_road')),
+      sideRow('ｾｯﾄﾊﾞｯｸ等', `${$('f_setback')} ／ ${$('f_shido')} ／ ${$('f_hoso')}`),
+      sideRow('構造', $('f_kouzou')),
+      sideRow('築年月', $('f_chikunen')),
+      sideRow('間取り', $('f_madori')),
+      sideRow('各階面積', $('f_floor_area')),
+      sideRow('延床面積', buildAreaForContract),
+      sideRow('都市計画', $('f_toshi')),
+      sideRow('用途地域', $('f_youto')),
+      sideRow('建ぺい/容積', `${$('f_kenpei')} ／ ${$('f_youseki')}`),
+      sideRow('設備', `${$('f_gas')} ／ ${$('f_josui')} ／ 駐車場:${$('f_parking')}`),
+      sideRow('引渡し', `現況:${$('f_genjyo')} 時期:${$('f_hikiwatashi')}`),
+      sideRow('備考', ($('f_biko')||'').replace(/\n/g,'<br>'), true)
+    ].join('');
+  }
+
+  const todayJP = (()=>{ const d=new Date(); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; })();
+
+  const agentBar = `
+    <div class="agent-footer">
+      <div class="af-left">
+        ${logoStore?`<img class="af-logo" src="${logoStore}">`:''}
+        <div class="af-info">
+          <div class="af-name">${$('o_shougou')}</div>
+          <div class="af-line">TEL：${$('o_tel')}　FAX：${$('o_fax')}</div>
+          <div class="af-line">${$('o_jimusho')}</div>
+        </div>
+      </div>
+      <div class="af-right">
+        <div class="af-row"><b>免許番号</b><span>${$('o_menkyo')}</span></div>
+        <div class="af-row"><b>取引態様</b><span>${$('f_torihiki')}</span></div>
+        <div class="af-row"><b>報酬形態</b><span>${$('f_houshu_keitai')}</span></div>
+        <div class="af-row"><b>情報公開日</b><span>${todayJP}</span></div>
+        <div class="af-row"><b>担当者</b><span>${$('o_tantou')}</span></div>
+        <div class="af-row"><b>物件番号</b><span>${$('o_bukken_bango')}</span></div>
+      </div>
+      <div class="af-qr">
+        <img src="${CONFIG.company.qr}">
+        <div class="af-recruit">${CONFIG.company.recruit}</div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('flyerOutput').innerHTML = `
+    ${topbar}
+    <div class="fl-body">
+      <div class="fl-main">
+        ${pointsHtml}
+        ${mediaHtml}
+        ${nearbyHtml}
+      </div>
+      <div class="fl-side">${sideHtml}</div>
+    </div>
+    ${agentBar}
+    <div class="fl-footer">※この販売図面は概要紹介図です。形状等が現況と異なる場合は現況優先となることをご了承願います。｜${CONFIG.company.shougou}</div>
+  `;
+
+  /* ===== CONTRACT ===== */
+  const contractHtml = `
+    ${logoStore?`<div class="contract-header"><img src="${logoStore}"><span></span></div>`:''}
+    <h2 class="doctitle">一 般 媒 介 契 約 書</h2>
+    <p style="text-align:right">依頼の内容　${$('c_content')}</p>
+    <p style="font-size:12px">依頼者甲は、この契約書および媒介契約約款により、別表に表示する不動産（目的物件）に関する
+    売買（交換）の媒介を宅地建物取引業者乙に依頼し、乙はこれを承諾します。（契約型式：${$('c_type')}）</p>
+    <p style="text-align:right;font-size:12px">${fmtDateJP($('c_date'))}</p>
+
+    <div class="sign-block">
+      <div class="box">
+        <b>甲・依頼者</b>
+        <div>住所：${$('k_address')}</div>
+        <div>氏名：${$('k_name')}　㊞</div>
+      </div>
+      <div class="box">
+        <b>乙・宅地建物取引業者</b>
+        <div>商号：${$('o_shougou')}</div>
+        <div>代表者：${$('o_daihyou')}　㊞</div>
+        <div>事務所所在地：${$('o_jimusho')}</div>
+        <div>免許証番号：${$('o_menkyo')}</div>
+      </div>
+    </div>
+
+    <table class="spec">
+      <tr><th>有効期間</th><td>本契約締結後 ${$('c_months')} ヶ月（${addMonths($('c_date'),$('c_months'))} まで）</td></tr>
+      <tr><th>指定流通機構への登録</th><td>${$('c_reins')}　${$('c_reins')==='有'?'（登録先：'+$('c_reins_name')+'）':''}</td></tr>
+      <tr><th>約定報酬額</th><td>${$('c_houshu')}（消費税別）</td></tr>
+      <tr><th>報酬受領の時期</th><td>${$('c_juryou')}</td></tr>
+      <tr><th>特約事項</th><td>${($('c_tokuyaku')||'無').replace(/\n/g,'<br>')}</td></tr>
+    </table>
+
+    <h3 style="color:#1c3f6e;font-size:13px;margin-top:20px;">別表（目的物件の表示）</h3>
+    <table class="spec">
+      <tr><th>所在地</th><td colspan="3">${$('f_address')}</td></tr>
+      <tr><th>物件種別</th><td>${$('f_type')}</td><th>間取り</th><td>${isMansion?$('m_madori'):$('f_madori')}</td></tr>
+      <tr><th>土地面積</th><td>${landAreaForContract||'－'}</td><th>建物延面積</th><td>${buildAreaForContract||'－'}</td></tr>
+      <tr><th>媒介価額</th><td colspan="3">${$('f_price')?Number($('f_price')).toLocaleString()+'万円（消費税別）':''}</td></tr>
+      <tr><th>所有者</th><td>${ownerName}</td><th>登記名義人</th><td>${ownerName}</td></tr>
+      <tr><th>所有者住所</th><td colspan="3">${ownerAddr}</td></tr>
+    </table>
+
+    ${buildYakkan()}
+
+    <div class="page-footer">${CONFIG.company.shougou}</div>
+  `;
+  document.getElementById('contractOutput').innerHTML = contractHtml;
+
+  document.querySelector('.tab-btn[data-tab="flyer"]').click();
+}
+
+/* ---------- 一般媒介契約約款 全文（固定条項） ---------- */
+/* ---------- RENTAL FLYER (FOR RENT) ---------- */
+function generateRentalFlyer(){
+  const traffic = collectLines('r_traffic_list');
+  const shokihiFixed = [
+    $('r_kazaihoken') ? `家財保険：${$('r_kazaihoken')}` : '',
+    `保証会社：${$('r_hoshoukaisha')}`,
+    $('r_cleaning') ? `ハウスクリーニング代：${$('r_cleaning')}` : ''
+  ].filter(Boolean);
+  const shokihi = shokihiFixed.concat(collectLines('r_shokihi_list'));
+  const sonota = collectLines('r_sonota_list');
+  const life = collectLife();
+  const todayJP = (()=>{ const d=new Date(); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`; })();
+
+  const equipTags = (str) => (str||'').split(/[,、\n]/).map(s=>s.trim()).filter(Boolean).map(s=>`<span class="tag">□ ${s}</span>`).join(' ');
+
+  const banner = `
+    <div class="rent-banner">
+      <div class="rb-left">
+        <div class="tag">FOR RENT</div>
+        <div class="title">${$('r_name')}${$('r_room')?'　'+$('r_room'):''}</div>
+      </div>
+      <div class="rb-right">${traffic.map(t=>t).join('<br>')}</div>
+    </div>
+  `;
+
+  const gaiyoRows = [
+    ['物件名', $('r_name')],
+    ['所在地', $('r_address')],
+    ['構造規模', $('r_kouzou')],
+    ['築年月', $('r_chikunen')],
+    ['契約期間', $('r_keiyaku')],
+    ['間取り', $('r_madori')],
+    ['専有面積', $('r_senyu')]
+  ].filter(r=>r[1]).map(r=>`<tr><th>${r[0]}</th><td>${r[1]}</td></tr>`).join('');
+
+  const feeTable = `
+    <table class="rent-fee-table">
+      <tr><th>賃料</th><th>共益費</th><th>敷金</th><th>礼金</th></tr>
+      <tr><td>${$('r_yachin')?Number($('r_yachin')).toLocaleString()+'円':''}</td>
+          <td>${$('r_kyoekihi')?Number($('r_kyoekihi')).toLocaleString()+'円':''}</td>
+          <td>${$('r_shikikin')}</td>
+          <td>${$('r_reikin')}</td></tr>
+    </table>
+    <div style="font-size:9.5px;margin-top:3px;"><b>入居可能日：</b>${$('r_nyukyo')}${$('r_suidou')?'　｜　<b>水道代：</b>'+Number($('r_suidou')).toLocaleString()+'円/月':''}</div>
+  `;
+
+  const listBlock = (title, items) => items.length ? `<div class="rent-list"><b style="color:var(--navy-dark);">${title}</b>${items.map(i=>`<div class="item">・${i}</div>`).join('')}</div>` : '';
+
+  const equipBlock = `
+    <div class="rent-equip">
+      ${$('r_kyoyou_setsubi')?`<div><b>◆共用部</b><br>${equipTags($('r_kyoyou_setsubi'))}</div>`:''}
+      ${$('r_senyu_setsubi')?`<div style="margin-top:4px;"><b>◆専有部</b><br>${equipTags($('r_senyu_setsubi'))}</div>`:''}
+    </div>
+  `;
+
+  const lifeBlock = life.length ? `<div class="rent-list"><b style="color:var(--navy-dark);">LIFE INFORMATION</b>${life.map(n=>`<div class="item">●${n.name}・・・徒歩${n.min}分(約${n.m}m)</div>`).join('')}</div>` : '';
+
+  const photosBlock = `
+    <div class="rent-photos">
+      ${photoStore.length?photoStore.slice(0,7).map(s=>`<img src="${s}">`).join(''):'<div style="display:flex;align-items:center;justify-content:center;color:#aaa;font-size:11px;grid-column:1/3;">写真未アップロード</div>'}
+    </div>
+  `;
+
+  document.getElementById('flyerOutput').innerHTML = `
+    ${banner}
+    <div class="rent-body">
+      <div class="rent-col">
+        <table class="rent-table">${gaiyoRows}</table>
+        ${feeTable}
+        ${listBlock('初期費用', shokihi)}
+        ${listBlock('その他', sonota)}
+      </div>
+      <div class="rent-col">
+        ${equipBlock}
+        <div class="fl-plan" style="flex:1;">${planStore.length?planStore.slice(0,1).map(s=>`<img src="${s}">`).join(''):'<span style="color:#aaa;font-size:11px;">間取図未アップロード</span>'}</div>
+        ${lifeBlock}
+      </div>
+      <div class="rent-col">
+        ${photosBlock}
+      </div>
+    </div>
+    <div class="agent-footer">
+      <div class="af-left">
+        ${logoStore?`<img class="af-logo" src="${logoStore}">`:''}
+        <div class="af-info">
+          <div class="af-name">${$('o_shougou')}</div>
+          <div class="af-line">TEL：${$('o_tel')}　FAX：${$('o_fax')}</div>
+          <div class="af-line">${$('o_jimusho')}</div>
+        </div>
+      </div>
+      <div class="af-right">
+        <div class="af-row"><b>免許番号</b><span>${$('o_menkyo')}</span></div>
+        <div class="af-row"><b>取引態様</b><span>${$('r_torihiki')}</span></div>
+        <div class="af-row"><b>広告料</b><span>${$('r_koukokuryo')}</span></div>
+        <div class="af-row"><b>手数料負担割合</b><span>貸主0%／借主100%</span></div>
+        <div class="af-row"><b>手数料配分割合</b><span>元付0%／客付100%</span></div>
+        <div class="af-row"><b>情報公開日</b><span>${todayJP}</span></div>
+        <div class="af-row"><b>担当者</b><span>${$('o_tantou')}</span></div>
+      </div>
+      <div class="af-qr">
+        <img src="${CONFIG.company.qr}">
+        <div class="af-recruit">${CONFIG.company.recruit}</div>
+      </div>
+    </div>
+    <div class="fl-footer">※図面と現況が異なる場合は現況優先とさせて頂きます。｜${CONFIG.company.shougou}</div>
+  `;
+}
+
+function buildYakkan(){
+  return `
+  <div class="yakkan">
+    <h3 class="main">一 般 媒 介 契 約 約 款</h3>
+
+    <div class="article"><b>（目的）第1条</b> この約款は、宅地または建物の売買または交換の一般媒介契約について、当事者が契約の締結に際して定めるべき事項および当事者が契約の履行に関して互いに遵守すべき事項を明らかにすることを目的とします。</div>
+
+    <div class="article"><b>（当事者の表示と用語の定義）第2条</b> この約款においては、媒介契約の当事者について、依頼者を「甲」、依頼を受ける宅地建物取引業者を「乙」と表示します。<br>
+    2　この約款において、「一般媒介契約」とは、甲が依頼の目的である宅地または建物（以下「目的物件」といいます。）の売買または交換の媒介または代理を乙以外の宅地建物取引業者に重ねて依頼することができるものとする媒介契約をいいます。</div>
+
+    <div class="article"><b>（目的物件の表示等）第3条</b> 目的物件を特定するために必要な表示および目的物件を売買すべき価額または交換すべき評価額（以下「媒介価額」といいます。）は、一般媒介契約書の別表に記載します。</div>
+
+    <div class="article"><b>（重ねて依頼をする宅地建物取引業者の明示）第4条</b> 甲は、目的物件の売買または交換の媒介または代理を乙以外の宅地建物取引業者に重ねて依頼するときは、その宅地建物取引業者を乙に明示しなければなりません。<br>
+    2　一般媒介契約の締結時においてすでに依頼をしている宅地建物取引業者の商号または名称および主たる事務所の所在地は、一般媒介契約書に記載するものとし、その後において更に他の宅地建物取引業者に依頼をしようとするときは、甲は、その旨を乙に通知するものとします。</div>
+
+    <div class="article"><b>（宅地建物取引業者の義務等）第5条</b> 乙は、次の事項を履行する義務を負います。<br>
+    一　媒介価額の決定に際し、甲に、その価額に関する意見を述べるときは、根拠を示して説明を行うこと<br>
+    二　甲が乙に目的物件の購入または取得を依頼した場合にあっては、甲に対して、目的物件の売買または交換の契約が成立するまでの間に、宅地建物取引士をして、宅地建物取引業法第35条に定める重要事項について、宅地建物取引士が記名押印した書面を交付して説明させること<br>
+    三　目的物件の売買または交換の契約が成立したときは、甲および甲の相手方に対して、遅滞なく、宅地建物取引業法第37条に定める書面を作成し、宅地建物取引士に当該書面に記名押印させた上で、これを交付すること<br>
+    四　甲に対して、登記、決済手続等の目的物件の引渡しに係る事務の補助を行うこと<br>
+    五　その他一般媒介契約書に記載する業務を行うこと<br>
+    2　乙は、前項に掲げる義務を履行するとともに、次の業務を行います。<br>
+    一　契約の相手方との契約条件の調整等を行い、契約の成立に向けて積極的に努力すること<br>
+    二　目的物件の売買または交換の申込みがあったときは、甲に対して、遅滞なく、その旨を報告すること</div>
+
+    <div class="article"><b>（媒介価額の変更の助言等）第6条</b> 媒介価額が地価や物価の変動その他事情の変更によって不適当と認められるに至ったときは、乙は、甲に対して、媒介価額の変更について根拠を示して助言します。<br>
+    2　甲は、媒介価額を変更しようとするときは、乙にその旨を通知します。この場合において、価額の変更が引上げであるとき（甲が乙に目的物件の購入または取得を依頼した場合にあっては、引下げであるとき）は、乙の承諾を要します。<br>
+    3　乙は、前項の承諾を拒否しようとするときは、その根拠を示さなければなりません。</div>
+
+    <div class="article"><b>（建物状況調査を実施する者のあっせん）第7条</b> 乙は、この媒介契約において建物状況調査を実施する者のあっせんを行うこととした場合にあっては、甲に対して、建物状況調査を実施する者をあっせんしなければなりません。</div>
+
+    <div class="article"><b>（有効期間）第8条</b> 一般媒介契約の有効期間は、3ヶ月を超えない範囲で、甲乙協議の上、定めます。</div>
+
+    <div class="article"><b>（指定流通機構への登録）第9条</b> 乙は、この媒介契約において目的物件を指定流通機構に登録することとした場合にあっては、当該目的物件を一般媒介契約書に記載する指定流通機構に登録しなければなりません。</div>
+
+    <div class="article"><b>（報酬の請求）第10条</b> 乙の媒介によって目的物件の売買または交換の契約が成立したときは、乙は、甲に対して、報酬を請求することができます。ただし、売買または交換の契約が停止条件付契約として成立したときは、乙は、その条件が成就した場合にのみ報酬を請求することができます。<br>
+    2　前項の報酬の額は、国土交通省告示に定める限度額の範囲内で、甲乙協議の上、定めます。</div>
+
+    <div class="article"><b>（報酬の受領の時期）第11条</b> 乙は、宅地建物取引業法第37条に定める書面を作成し、これを成立した契約の当事者に交付した後でなければ、前条第1項の報酬（以下「約定報酬」といいます。）を受領することができません。<br>
+    2　目的物件の売買または交換の契約が、代金または交換差金についての融資の不成立を解除条件として締結された後、融資の不成立が確定した場合、または融資が不成立のときは甲が契約を解除できるものとして締結された後、融資の不成立が確定し、これを理由として甲が契約を解除した場合は、乙は、甲に、受領した約定報酬の全額を遅滞なく返還しなければなりません。ただし、これに対しては、利息は付さないこととします。</div>
+
+    <div class="article"><b>（特別依頼に係る費用）第12条</b> 甲が乙に特別に依頼した広告の料金または遠隔地への出張旅費は甲の負担とし、甲は、乙の請求に基づいて、その実費を支払わなければなりません。</div>
+
+    <div class="article"><b>（直接取引）第13条</b> 一般媒介契約の有効期間内または有効期間の満了後2年以内に、甲が乙の紹介によって知った相手方と乙を排除して目的物件の売買または交換の契約を締結したときは、乙は、甲に対して、契約の成立に寄与した割合に応じた相当額の報酬を請求することができます。</div>
+
+    <div class="article"><b>（費用償還の請求）第14条</b> 一般媒介契約の有効期間内に甲が乙に明示していない宅地建物取引業者に目的物件の売買または交換の媒介または代理を依頼し、これによって売買または交換の契約を成立させたときは、乙は、甲に対して、一般媒介契約の履行のために要した費用の償還を請求することができます。<br>
+    2　前項の費用の額は、約定報酬額を超えることはできません。</div>
+
+    <div class="article"><b>（依頼者の通知義務）第15条</b> 甲は、一般媒介契約の有効期間内に、自ら発見した相手方と目的物件の売買もしくは交換の契約を締結したとき、または乙以外の宅地建物取引業者の媒介もしくは代理によって目的物件の売買もしくは交換の契約を成立させたときは、乙に対して遅滞なくその旨を通知しなければなりません。<br>
+    2　甲が前項の通知を怠った場合において、乙が売買または交換の契約の成立後善意で甲のために一般媒介契約の事務の処理に要する費用を支出したときは、乙は、甲に対して、その費用の償還を請求することができます。</div>
+
+    <div class="article"><b>（更新）第16条</b> 一般媒介契約の有効期間は、甲および乙の合意に基づき、更新することができます。<br>
+    2　有効期間の更新をしようとするときは、有効期間の満了に際して甲から乙に対し文書でその旨を申し出るものとします。<br>
+    3　前2項の規定による有効期間の更新に当たり、甲乙間で一般媒介契約の内容について別段の合意がなされなかったときは、従前の契約と同一内容の契約が成立したものとみなします。</div>
+
+    <div class="article"><b>（契約の解除）第17条</b> 甲または乙が一般媒介契約に定める義務の履行に関してその本旨に従った履行をしない場合には、その相手方は、相当の期間を定めて履行を催告し、その期間内に履行がないときは、一般媒介契約を解除することができます。<br>
+    2　次のいずれかに該当する場合においては、甲は、一般媒介契約を解除することができます。<br>
+    一　乙が一般媒介契約に係る業務について信義を旨とし誠実に遂行する義務に違反したとき<br>
+    二　乙が一般媒介契約に係る重要な事項について故意もしくは重過失により事実を告げず、または不実のことを告げる行為をしたとき<br>
+    三　乙が宅地建物取引業に関して不正または著しく不当な行為をしたとき<br>
+    3　乙が前項の規定により一般媒介契約を解除したときは、甲に対して、約定報酬額に相当する金額（すでに約定報酬の一部を受領している場合は、その額を除いた額とします。なお、この媒介に係る消費税額および地方消費税額の合計額に相当する額を除きます。）を違約金として請求することができます。</div>
+
+    <div class="article"><b>（反社会的勢力の排除）第18条</b> 甲および乙は、それぞれ相手方に対し、次の事項を確約します。<br>
+    一　自らが、暴力団、暴力団関係企業、総会屋もしくはこれらに準ずる者またはその構成員（以下これらを総称して「反社会的勢力」といいます。）ではないこと<br>
+    二　自らの役員（業務を執行する社員、取締役、執行役またはこれらに準ずる者をいいます。）が反社会的勢力ではないこと<br>
+    三　反社会的勢力に自己の名義を利用させ、一般媒介契約を締結するものでないこと<br>
+    四　一般媒介契約の有効期間内に、自らまたは第三者を利用して、次の行為をしないこと<br>
+    （イ）相手方に対する脅迫的な言動または暴力を用いる行為<br>
+    （ロ）偽計または威力を用いて相手方の業務を妨害し、または信用を毀損する行為<br>
+    2　一般媒介契約の有効期間内に、甲または乙が次のいずれかに該当した場合には、その相手方は、何らの催告を要せずして、一般媒介契約を解除することができます。<br>
+    一　前項第一号または第二号の確約に反する申告をしたことが判明した場合<br>
+    二　前項第三号の確約に反し契約をしたことが判明した場合<br>
+    三　前項第四号の確約に反する行為をした場合</div>
+
+    <div class="article"><b>（その他）第19条</b> この約款に定めがない事項については、甲および乙が協議して別に定めることができます。<br>
+    2　この約款の各条項の定めに反する特約で甲に不利なものは無効とします。</div>
+  </div>`;
+}
+
+/* ---------- print isolation ---------- */
+const ORIGINAL_TITLE = document.title;
+function getPrintFilename(panelId){
+  const mode = document.getElementById('txn_mode') ? document.getElementById('txn_mode').value : '売買';
+  let name = '';
+  switch(panelId){
+    case 'panel-flyer':
+      name = (mode==='賃貸' ? $('r_name') : $('f_name')) + '-物件資料'; break;
+    case 'panel-contract':
+      name = $('f_name') + '-媒介契約書'; break;
+    case 'panel-mgmt':
+      name = $('mg_name') + '-代管合約書'; break;
+    case 'panel-settle':
+      name = $('st_bukken') + '-決済清算書'; break;
+    case 'panel-schedule':
+      name = $('sc_client') + '-簽約日程表'; break;
+    case 'panel-settle2':
+      name = $('s2_client') + '-決済のご案内'; break;
+    case 'panel-initial':
+      name = $('ic_client') + '-初期費用一覧表'; break;
+    default:
+      name = ORIGINAL_TITLE;
+  }
+  return name.trim() || ORIGINAL_TITLE;
+}
+
+function printPanel(panelId){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('printing'));
+  document.getElementById(panelId).classList.add('printing');
+  document.title = getPrintFilename(panelId);
+  const pageStyle = document.getElementById('dynamicPageStyle');
+  pageStyle.textContent = (panelId === 'panel-flyer')
+    ? '@page{size:landscape;margin:0;}'
+    : '@page{size:auto;margin:12mm;}';
+  window.print();
+  setTimeout(()=>{ document.title = ORIGINAL_TITLE; }, 1000);
+}
+
+/* ---------- word export (.doc via HTML wrapper, opens natively in Word) ---------- */
+function downloadWord(){
+  const content = document.getElementById('contractOutput').innerHTML;
+  const htmlDoc = `
+    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head><meta charset="utf-8"><title>一般媒介契約書</title>
+    <style>
+      body{font-family:"Yu Gothic","MS Mincho",sans-serif;font-size:12pt;}
+      table{border-collapse:collapse;width:100%;}
+      th,td{border:1px solid #888;padding:5px 7px;font-size:11pt;}
+      th{background:#eef2f7;text-align:left;}
+      h2{text-align:center;letter-spacing:6px;}
+      .yakkan{page-break-before:always;}
+      .article{margin-bottom:12px;font-size:11pt;line-height:1.8;}
+      .contract-header img{max-height:50px;}
+    </style></head>
+    <body>${content}</body></html>`;
+  const blob = new Blob(['\ufeff', htmlDoc], {type:'application/msword'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = (document.getElementById('f_name') && document.getElementById('f_name').value ? document.getElementById('f_name').value : '一般媒介契約書') + '.doc';
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
+
+/* =========================================================================
+   ⑤ 代管合約書
+   ========================================================================= */
+function generateMgmt(){
+  const banner = `
+    <div class="doc-banner">
+      ${logoStore?`<img src="${logoStore}">`:''}
+      <div>
+        <div class="dbtitle">${CONFIG.company.shougou}　代管合約書</div>
+        <div class="dbsub">${$('o_jimusho')}　TEL：${$('o_tel')}　FAX：${$('o_fax')}</div>
+      </div>
+    </div>
+  `;
+
+  const clientTable = `
+    <table class="price-table">
+      <tr><th style="width:20%">客戶姓名</th><td>${$('mg_name')}</td><th style="width:20%">電話</th><td>${$('mg_tel')}</td></tr>
+      <tr><th>客戶住所</th><td colspan="3">${$('mg_address')}</td></tr>
+      <tr><th>物件名稱</th><td>${$('mg_bukken')}　${$('mg_room')}</td><th>管理類型</th><td>${$('mg_type')}</td></tr>
+      <tr><th>物件所在地</th><td colspan="3">${$('mg_bukken_address')}</td></tr>
+      <tr><th>簽約日</th><td colspan="3">${$('mg_date')?fmtDateJP($('mg_date')):''}</td></tr>
+    </table>
+  `;
+
+  const rentalTerms = `
+    <h3 style="color:var(--navy-dark);">■ 租賃相關</h3>
+    <table class="price-table">
+      <tr><th>租賃契約</th><th>內容</th><th>備註</th></tr>
+      <tr><td>租金</td><td>可由屋主自行設定</td><td></td></tr>
+      <tr><td>共益費</td><td>可由屋主自行設定</td><td></td></tr>
+      <tr><td>押金</td><td>可由屋主自行設定</td><td></td></tr>
+      <tr><td>禮金</td><td>可由屋主自行設定</td><td></td></tr>
+      <tr><td>契約更約費</td><td>無</td><td></td></tr>
+      <tr><td>租金保證公司</td><td>有</td><td></td></tr>
+    </table>
+    <table class="price-table">
+      <tr><th>租賃管理委託</th><th>內容</th><th>備註</th></tr>
+      <tr><td>委託料</td><td>租金1個月(租金+共益費的總和)+廣告費1~3個月</td><td></td></tr>
+      <tr><td>管理費(每個月)</td><td>租金5.5%(租金+共益費的總和)最低3300円</td><td></td></tr>
+      <tr><td>退去業務手數料</td><td>22000円、指定修繕業者可免除</td><td>房客退租出勤費用</td></tr>
+      <tr><td>代付帳單手續費</td><td>440円/1張</td><td></td></tr>
+      <tr><td>書類作成料</td><td>22000円</td><td></td></tr>
+      <tr><td>出勤費</td><td>11000円</td><td>管理組合實施工事等的出勤費用</td></tr>
+      <tr><td>修繕費用</td><td>實費</td><td>緊急狀況下，33000円以下不用取得屋主同意，可以直接安排修繕</td></tr>
+    </table>
+  `;
+
+  const priceTables = `
+    <h3 style="color:var(--navy-dark);">■ 管理價目表（稅入）</h3>
+    <table class="price-table">
+      <tr><th>自住管理/投資出租管理</th><th>費用 JPY</th><th>備註</th></tr>
+      <tr><td>初期費用</td><td>55000日圓/1間（一次性）</td><td>非經由我司購入物件之代管</td></tr>
+    </table>
+    <table class="price-table">
+      <tr><th>自住管理</th><th>費用 JPY</th><th>備註</th></tr>
+      <tr><td>納稅管理人設定</td><td>5500日圓/1間</td><td>不動產取得稅/固定資產稅</td></tr>
+      <tr><td>各項開通費(電話對應)</td><td>1100日圓/1回</td><td>水、電、瓦斯、網路契約/解約 及 助各項電話相談</td></tr>
+      <tr><td>每代繳一張帳單</td><td>440日圓/1張</td><td>水、電、瓦斯、管理費、不動產取得稅/固定資產稅、網路</td></tr>
+    </table>
+    <table class="price-table">
+      <tr><th>投資出租管理</th><th>費用 JPY</th><th>備註</th></tr>
+      <tr><td>納稅管理人設定</td><td>5500日圓/1間</td><td>不動產取得稅/固定資產稅</td></tr>
+      <tr><td>一戶建/公寓套房</td><td>房租 x 5.5%（未滿3300日圓收3300日圓）/月</td><td></td></tr>
+      <tr><td>確定申告(申報所得稅)</td><td>44000日圓/1間（第2間起加5500日圓）</td><td></td></tr>
+      <tr><td>所得稅管理人設定</td><td>5500日圓/人</td><td>申報所得稅時需要設定的代理人</td></tr>
+    </table>
+    <table class="price-table">
+      <tr><th>出勤費用</th><th>費用 JPY</th><th>備註</th></tr>
+      <tr><td>大阪市內出勤</td><td>11000日圓（3小時內）/每日上限22000日圓（6小時）</td><td rowspan="4">瓦斯開通出勤、到宅等待家具配達、陪同翻譯（不包含專車接送）等需到現場等待之出勤費用</td></tr>
+      <tr><td>非大阪市 0-20公里</td><td>14300日圓（3小時內）/每日上限25300日圓（6小時）</td></tr>
+      <tr><td>非大阪市 21-30公里</td><td>17600日圓（3小時內）/每日上限28600日圓（6小時）</td></tr>
+      <tr><td>非大阪市 31-40公里</td><td>20900日圓（3小時內）/每日上限31900日圓（6小時）</td></tr>
+    </table>
+    <table class="price-table">
+      <tr><th>裝潢費用</th><th>費用 JPY</th><th>備註</th></tr>
+      <tr><td>我司服務費</td><td>裝潢費用稅入的10%</td><td>空調安裝、各項裝修</td></tr>
+    </table>
+  `;
+
+  const bukkenName = $('mg_bukken') + ($('mg_room') ? '　' + $('mg_room') : '');
+  const bukkenAddr = $('mg_bukken_address');
+  const contractDate = $('mg_date') ? fmtDateJP($('mg_date')) : '　　年　　月　　日';
+
+  const signBlock = `
+    <div class="sign-block">
+      <div class="box">
+        <b>甲（委託者）</b>
+        <div>住所：${$('mg_address')}</div>
+        <div>氏名：${$('mg_name')}　㊞</div>
+      </div>
+      <div class="box">
+        <b>乙（受託者）</b>
+        <div>商号：${$('o_shougou')}</div>
+        <div>代表者：${$('o_daihyou')}　㊞</div>
+        <div>事務所所在地：${$('o_jimusho')}</div>
+      </div>
+    </div>
+  `;
+
+  const terms = `
+    <div class="mgmt-terms">
+    <h3 class="main" style="text-align:center;color:var(--navy-dark);letter-spacing:2px;">管理委託契約 条文</h3>
+    <div class="article"><b>第1条</b> 甲は管理業務を委託した物件等（以下、目的物件という）の管理業務を乙に委託する。<br>
+    ・名称：${bukkenName}<br>
+    ・所在地：${bukkenAddr}</div>
+    <div class="article"><b>第2条</b> 乙は以下の管理業務において責任をもってその処理に当たらなければならない。<br>
+    1．家賃等の集金業務及び毎月の報告書作成と送付<br>
+    2．敷金の精算業務<br>
+    3．退居処理（検針等）<br>
+    4．空室の入居者募集<br>
+    5．賃貸契約締結関連業務<br>
+    6．清掃・建物設備管理業務<br>
+    7．入退居に伴う室内補修に必要な工事<br>
+    8．甲と入居者との意見調整</div>
+    <div class="article"><b>第3条</b> 家賃の滞納がある場合でも、乙は滞納分の立替払いはしないものとする。</div>
+    <div class="article"><b>第4条</b> 甲は乙が当該物件に入居斡旋した場合、1〜3ヶ月分の賃料相当額の管理促進費を支払うものとする。</div>
+    <div class="article"><b>第5条</b> 甲は目的物件に対して価値相場の変動や災害保険等を自己負担で掛けるものとする。万一火災等により減失毀損した場合は、物件の損害は保険金により補填するものとし、乙は一切責任を負わないものとする。</div>
+    <div class="article"><b>第6条</b> 本契約の期間を契約締結日より満1年とする。但し、契約満了時において双方の何等かの申出がないときは同一条件にて更新されるものとする。</div>
+    <div class="article"><b>第7条</b> 甲又は乙が前条契約期間中の解約をする場合、書面にて解約日の3ヶ月前に通知することにより、契約を解除することができるものとする。但し、本契約の解約に伴い、乙に生じる費用は甲が負担するものとする。</div>
+    <div class="article"><b>第8条</b> 甲及び乙は、それぞれが暴力団、暴力団関係企業、総会屋若しくはこれらに準ずるものまたはその構成員ではないことを確約し、確約に反することが判明した場合、相手側は何ら催告を要せずして、この契約を解除することができるものとする。</div>
+    <div class="article"><b>第9条</b> この契約に起因する紛争に関し、訴訟の提起等裁判上の手続きをしようとする時は、大阪地方法（簡易）裁判所をもって管轄裁判所とするものとする。</div>
+    <div class="article">&lt;特約事項&gt;<br>
+    ・清掃・建物設備管理業務等の内容及び費用については、目的物件ごとに別途定めるものとする。</div>
+    <p style="text-align:right;font-size:12px;">契約締結日　${contractDate}</p>
+    </div>
+  `;
+
+  const termsCH = `
+    <div class="mgmt-terms">
+    <h3 class="main" style="text-align:center;color:var(--navy-dark);letter-spacing:2px;margin-top:24px;">管理委託合約 條文（中文參考譯文）</h3>
+    <div class="article"><b>第1條</b> 甲方將其管理業務委託給乙方（以下稱為目的物件）的管理業務。<br>
+    ・名稱：${bukkenName}<br>
+    ・所在地：${bukkenAddr}</div>
+    <div class="article"><b>第2條</b> 乙方必須負責以下管理業務並進行處理。<br>
+    1．租金等的收取業務及每月報告書的製作和寄送<br>
+    2．保證金的結算業務<br>
+    3．退租處理（檢查等）<br>
+    4．空房的租戶招募<br>
+    5．租賃合同締結相關業務<br>
+    6．清潔與建物設備管理業務<br>
+    7．伴隨入住和退租的室內修繕必要工程<br>
+    8．甲方與租戶之間的意見調整</div>
+    <div class="article"><b>第3條</b> 即使存在租金拖欠情況，乙方也不代為支付拖欠部分。</div>
+    <div class="article"><b>第4條</b> 如果乙方為該物件招攬租戶，甲方將支付相當於1至3個月租金的管理促進費。</div>
+    <div class="article"><b>第5條</b> 甲方應自行承擔目的物件的價值變動及災害保險等費用。萬一因火災等原因造成物件損壞，物件的損失應由保險金補償，乙方不承擔任何責任。</div>
+    <div class="article"><b>第6條</b> 本合同期限為自合同簽訂日起滿1年。若合同到期時雙方未提出任何申請，則自動以相同條件續約。</div>
+    <div class="article"><b>第7條</b> 甲方或乙方在合同期限內解除合同的，應在解除日期前3個月書面通知對方。合同解除所產生的費用由甲方承擔。</div>
+    <div class="article"><b>第8條</b> 甲方及乙方各自保證不是暴力團、暴力團關係企業、總會屋或類似組織的成員，若確定違反此保證，對方可不經催告立即解除本合同。</div>
+    <div class="article"><b>第9條</b> 凡因本合同引起的糾紛，若需提起訴訟等法律程序，應以大阪地方法院（簡易法院）為管轄法院。</div>
+    <div class="article">&lt;特約事項&gt;<br>
+    ・清潔與建物設備管理業務等的內容及費用，將根據每個目的物件另行規定。</div>
+    <p style="text-align:right;font-size:12px;">合同簽訂日　${contractDate}</p>
+    </div>
+  `;
+
+  document.getElementById('mgmtOutput').innerHTML = `
+    <div class="doc-page">
+      ${banner}
+      ${clientTable}
+      ${rentalTerms}
+    </div>
+    <div class="doc-page mgmt-break">
+      ${priceTables}
+    </div>
+    <div class="doc-page mgmt-break">
+      ${signBlock}
+      ${terms}
+    </div>
+    <div class="doc-page mgmt-break">
+      ${termsCH}
+    </div>
+  `;
+}
+
+/* =========================================================================
+   ⑥ 決済清算書
+   ========================================================================= */
+function daysBetweenInclusive(startStr, endStr){
+  if(!startStr || !endStr) return 0;
+  const s = new Date(startStr), e = new Date(endStr);
+  const diff = Math.round((e - s) / 86400000) + 1;
+  return diff > 0 ? diff : 0;
+}
+
+function generateSettle(){
+  const zandaikin = parseFloat($('st_zandaikin')) || 0;
+
+  const koteiDays = daysBetweenInclusive($('st_kotei_start'), $('st_kotei_end'));
+  const koteiNengaku = parseFloat($('st_kotei_nengaku')) || 0;
+  const koteiPro = koteiNengaku ? Math.round(koteiNengaku * koteiDays / 365) : 0;
+
+  const kanriDays = daysBetweenInclusive($('st_kanri_start'), $('st_kanri_end'));
+  const kanriGetsu = parseFloat($('st_kanri_getsugaku')) || 0;
+  const kanriMonthDays = $('st_kanri_start') ? new Date(new Date($('st_kanri_start')).getFullYear(), new Date($('st_kanri_start')).getMonth()+1, 0).getDate() : 30;
+  const kanriPro = kanriGetsu ? Math.round(kanriGetsu * kanriDays / kanriMonthDays) : 0;
+
+  const yachinDays = daysBetweenInclusive($('st_yachin_start'), $('st_yachin_end'));
+  const yachinGetsu = parseFloat($('st_yachin_getsugaku')) || 0;
+  const yachinMonthDays = $('st_yachin_start') ? new Date(new Date($('st_yachin_start')).getFullYear(), new Date($('st_yachin_start')).getMonth()+1, 0).getDate() : 30;
+  const yachinPro = yachinGetsu ? Math.round(yachinGetsu * yachinDays / yachinMonthDays) : 0;
+
+  const fees = collectKV('st_fee_list');
+  const feesTotal = fees.reduce((sum,f)=> sum + (parseFloat(f.v)||0), 0);
+
+  const total = zandaikin - koteiPro - kanriPro - yachinPro + feesTotal;
+
+  document.getElementById('settleOutput').innerHTML = `
+    <div class="doc-page">
+      ${logoStore?`<div style="text-align:center;margin-bottom:6px;"><img src="${logoStore}" style="height:52px;"></div>`:''}
+      <h2 class="doctitle" style="letter-spacing:3px;">決済金清算書</h2>
+      <p>${$('st_buyer')} 様</p>
+      <p style="font-size:12px;">下記の通りご確認くださいますよう、お願い申し上げます。</p>
+
+      <table class="price-table">
+        <tr><th style="width:22%">1. 不動産の表示</th><td>${$('st_bukken')}</td></tr>
+        <tr><th>2. 手続き日時・場所</th><td>${$('st_date')?fmtDateJP($('st_date')):''}　${$('st_place')}</td></tr>
+        <tr><th>連絡先</th><td>${$('st_contact')}</td></tr>
+      </table>
+
+      <h3 style="color:var(--navy-dark);">3. 計算書</h3>
+      <table class="price-table">
+        <tr><th style="width:40%">① 売買代金（残代金）</th><td style="text-align:right;">${zandaikin.toLocaleString()} 円</td></tr>
+        <tr><th>② 固定資産税等の清算（${$('st_kotei_nendo')}、${koteiDays}日／365日）</th><td style="text-align:right;">－${koteiPro.toLocaleString()} 円</td></tr>
+        <tr><th>③ 管理費等の清算（月額${kanriGetsu.toLocaleString()}円、${kanriDays}日／${kanriMonthDays}日）</th><td style="text-align:right;">－${kanriPro.toLocaleString()} 円</td></tr>
+        <tr><th>④ 家賃の清算（月額${yachinGetsu.toLocaleString()}円、${yachinDays}日／${yachinMonthDays}日）</th><td style="text-align:right;">＋${yachinPro.toLocaleString()} 円</td></tr>
+        ${fees.map(f=>`<tr><th>${f.k}</th><td style="text-align:right;">${(parseFloat(f.v)||0).toLocaleString()} 円</td></tr>`).join('')}
+        <tr><th style="background:var(--navy);color:#fff;">お振込合計額</th><td style="text-align:right;font-weight:bold;font-size:14px;">${total.toLocaleString()} 円</td></tr>
+      </table>
+
+      <h3 style="color:var(--navy-dark);">お振込先</h3>
+      <table class="price-table">
+        <tr><th style="width:22%">銀行・支店</th><td>${$('st_bank')}</td></tr>
+        <tr><th>種別・口座番号</th><td>${$('st_account')}</td></tr>
+        <tr><th>名義</th><td>${$('st_meigi')}</td></tr>
+      </table>
+      <p style="font-size:10.5px;color:#888;margin-top:16px;">※本表の日割金額は年365日（②）／実月日数（③④）で自動計算した参考値です。実際の請求額は必要に応じて調整してください。</p>
+    </div>
+  `;
+}
+
+/* =========================================================================
+   ④ 簽約日程表
+   ========================================================================= */
+function generateSchedule(){
+  const ms = collectMilestones();
+  const client = $('sc_client');
+
+  const table = `
+    <table class="sched-table">
+      <tr><th>行程</th>${ms.map((m,i)=>`<th>${'①②③④⑤'[i]} ${m.date?fmtDateJP(m.date):''}<br>${m.title}</th>`).join('')}</tr>
+      <tr><td>內容</td>${ms.map(m=>`<td>${m.content}</td>`).join('')}</tr>
+      <tr><td>需要文件</td>${ms.map(m=>`<td>${m.docs}</td>`).join('')}</tr>
+    </table>
+  `;
+
+  /* auto-detect every distinct year-month among filled-in dates and render a calendar for each */
+  const monthKeys = [];
+  ms.forEach(m=>{
+    if(m.date){
+      const d = new Date(m.date);
+      const key = d.getFullYear()+'-'+(d.getMonth()+1);
+      if(!monthKeys.includes(key)) monthKeys.push(key);
+    }
+  });
+  monthKeys.sort((a,b)=>{
+    const [ay,am]=a.split('-').map(Number), [by,bm]=b.split('-').map(Number);
+    return (ay*12+am) - (by*12+bm);
+  });
+
+  const calendarHtml = monthKeys.map((key, idx)=>{
+    const [y,mo] = key.split('-').map(Number);
+    const first = new Date(y, mo-1, 1);
+    const daysInMonth = new Date(y, mo, 0).getDate();
+    const startWeekday = first.getDay();
+    const markers = {};
+    ms.forEach((m,i)=>{
+      if(m.date){
+        const d = new Date(m.date);
+        if(d.getFullYear()===y && d.getMonth()===mo-1) markers[d.getDate()] = (markers[d.getDate()]||'') + '①②③④⑤'[i];
+      }
+    });
+
+    let cells = [];
+    for(let i=0;i<startWeekday;i++) cells.push('<td class="dim"></td>');
+    for(let d=1; d<=daysInMonth; d++){
+      cells.push(`<td>${d}${markers[d]?`<span class="badge">${markers[d]}</span>`:''}</td>`);
+    }
+    while(cells.length % 7 !== 0) cells.push('<td class="dim"></td>');
+    let rows = '';
+    for(let i=0;i<cells.length;i+=7) rows += '<tr>'+cells.slice(i,i+7).join('')+'</tr>';
+
+    return `
+      <div class="cal-block"${idx>0?' style="page-break-before:always;break-before:page;"':''}>
+      <h3 style="color:var(--navy-dark);margin-top:16px;">${y}年${mo}月</h3>
+      <table class="cal-table">
+        <tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr>
+        ${rows}
+      </table>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('scheduleOutput').innerHTML = `
+    <div class="doc-page">
+      ${logoStore?`<div style="text-align:center;margin-bottom:6px;"><img src="${logoStore}" style="height:52px;"></div>`:''}
+      <h2 class="doctitle" style="letter-spacing:3px;">簽約各項費用繳交日期</h2>
+      <p style="font-size:15px;font-weight:bold;">${client} 様</p>
+      ${table}
+      ${calendarHtml}
+    </div>
+  `;
+}
+
+/* =========================================================================
+   ⑦ 決済のご案内
+   ========================================================================= */
+function fmtDateJPWithWeekday(dateStr){
+  if(!dateStr) return '';
+  const d = new Date(dateStr);
+  const w = ['日','月','火','水','木','金','土'][d.getDay()];
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}(${w})`;
+}
+
+function generateSettle2(){
+  const baseTitles = ['売主に支払う分','仲介業者に支払う分','土地家屋調査士に支払う分','司法書士に支払う分','融資銀行に支払う分','保険会社に支払う分','諸費用'];
+  const cats = [1,2,3,4,5,6,7].map((i,idx) => ({
+    title: baseTitles[idx],
+    items: collectKV('s2_list'+i),
+    method: $('s2_method'+i),
+    isInsurance: idx === 5
+  }));
+
+  /* auto-compute 固定資産税等／管理費等／家賃の清算 and fold into 売主に支払う分 */
+  const koteiDays = daysBetweenInclusive($('s2_kotei_start'), $('s2_kotei_end'));
+  const koteiNengaku = parseFloat($('s2_kotei_nengaku')) || 0;
+  const koteiPro = koteiNengaku ? Math.round(koteiNengaku * koteiDays / 365) : 0;
+  if(koteiPro) cats[0].items.push({k:`固都精算金（${$('s2_kotei_nendo')}・${koteiDays}日）`, v: koteiPro});
+
+  const kanriDays = daysBetweenInclusive($('s2_kanri_start'), $('s2_kanri_end'));
+  const kanriGetsu = parseFloat($('s2_kanri_getsugaku')) || 0;
+  const kanriMonthDays = $('s2_kanri_start') ? new Date(new Date($('s2_kanri_start')).getFullYear(), new Date($('s2_kanri_start')).getMonth()+1, 0).getDate() : 30;
+  const kanriPro = kanriGetsu ? Math.round(kanriGetsu * kanriDays / kanriMonthDays) : 0;
+  if(kanriPro) cats[0].items.push({k:`管理費等清算金（${kanriDays}日）`, v: kanriPro});
+
+  const yachinDays = daysBetweenInclusive($('s2_yachin_start'), $('s2_yachin_end'));
+  const yachinGetsu = parseFloat($('s2_yachin_getsugaku')) || 0;
+  const yachinMonthDays = $('s2_yachin_start') ? new Date(new Date($('s2_yachin_start')).getFullYear(), new Date($('s2_yachin_start')).getMonth()+1, 0).getDate() : 30;
+  const yachinPro = yachinGetsu ? Math.round(yachinGetsu * yachinDays / yachinMonthDays) : 0;
+  if(yachinPro) cats[0].items.push({k:`家賃清算金（${yachinDays}日）`, v: yachinPro});
+
+  /* 項目が1つもない区分は非表示にし、残った区分だけを①②③…で振り直す */
+  const circled = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨'];
+  const activeCats = cats.filter(c => c.items.length > 0);
+  activeCats.forEach((c,i)=>{ c.num = circled[i] || (i+1); c.total = c.items.reduce((s,it)=> s + (parseFloat(it.v)||0), 0); });
+
+  const leftHtml = activeCats.map(c=>`
+    <div class="s2-cat-title">${c.num}${c.title}</div>
+    <table class="price-table s2-pay">
+      ${c.items.map(it=>`<tr><td>${it.k}</td><td class="amt">金${(parseFloat(it.v)||0).toLocaleString()}円</td></tr>`).join('')}
+    </table>
+    ${c.isInsurance && $('s2_note6') ? `<div style="font-size:10px;color:#888;margin:-4px 0 6px;">${$('s2_note6')}</div>` : ''}
+  `).join('');
+
+  const rightHtml = activeCats.map(c=>`
+    <div class="s2-cat-title">&nbsp;</div>
+    <table class="price-table s2-pay">
+      <tr><td>${c.num}合計</td><td style="width:70px;text-align:center;color:#888;">（${c.method}）</td><td class="amt"><b>金${c.total.toLocaleString()}円</b></td></tr>
+    </table>
+  `).join('');
+
+  const grandTotal = activeCats.reduce((a,c)=>a+c.total,0);
+  const yushi = parseFloat($('s2_yushigaku')) || 0;
+  const jikoshikin = grandTotal - yushi;
+  const jikoshikinMan = Math.ceil(jikoshikin/10000);
+
+  document.getElementById('settle2Output').innerHTML = `
+    <div class="doc-page">
+      ${logoStore?`<div style="text-align:center;margin-bottom:4px;"><img src="${logoStore}" style="height:44px;"></div>`:''}
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:start;font-size:11px;">
+        <div>契約No：${$('s2_no')}</div>
+        <h2 class="doctitle" style="margin:0;font-size:22px;letter-spacing:2px;">決済のご案内</h2>
+        <div style="text-align:right;">
+          作成日：${$('s2_createdate')?fmtDateJP($('s2_createdate')):''}<br>
+          作成者名：${$('s2_creator')}<br>
+          <span style="font-size:10px;color:#555;">
+            ${CONFIG.company.shougou}<br>
+            TEL：${$('o_tel')}　FAX：${$('o_fax')}<br>
+            ${$('o_jimusho')}
+          </span>
+        </div>
+      </div>
+      <p style="text-align:center;font-size:14px;font-weight:bold;margin:6px 0 10px;">${$('s2_client')} 様</p>
+
+      <table class="price-table">
+        <tr><th style="width:16%">決済日時</th><td style="width:34%">${fmtDateJPWithWeekday($('s2_datetime'))}</td><th style="width:16%">決済場所</th><td>${$('s2_place')}</td></tr>
+        <tr><th>融資銀行</th><td>${$('s2_bank')}</td><th>支店</th><td>${$('s2_branch')}</td></tr>
+        <tr><th>担当者</th><td>${$('s2_tantou')}</td><th>連絡先</th><td>${$('s2_contact')}</td></tr>
+      </table>
+
+      ${$('s2_renraku') ? `<div class="note" style="display:block;"><b>【連絡事項】</b><br>${$('s2_renraku').replace(/\n/g,'<br>')}</div>` : ''}
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:12px;">
+        <div>
+          <h3 style="text-align:center;color:var(--navy-dark);">《代金の支払い》</h3>
+          ${leftHtml}
+        </div>
+        <div>
+          <h3 style="text-align:center;color:var(--navy-dark);">《支払方法》</h3>
+          ${rightHtml}
+        </div>
+      </div>
+
+      <table class="price-table" style="margin-top:10px;">
+        <tr><th style="width:60%;text-align:right;background:var(--navy);color:#fff;">合計金額</th><td style="text-align:right;font-weight:bold;">金${grandTotal.toLocaleString()}円</td></tr>
+        <tr><th style="text-align:right;">融資金額（住宅ローン）</th><td style="text-align:right;color:#c0392b;font-weight:bold;">金${yushi.toLocaleString()}円</td></tr>
+        <tr><th style="text-align:right;">必要な自己資金</th><td style="text-align:right;font-weight:bold;">金${jikoshikin.toLocaleString()}円</td></tr>
+      </table>
+
+    </div>
+  `;
+}
+
+/* =========================================================================
+   ⑧ 初期費用一覧表
+   ========================================================================= */
+function generateInitial(){
+  const items = [
+    ['礼金', $('ic_reikin')],
+    ['敷金', $('ic_shikikin')],
+    ['家賃', $('ic_yachin')],
+    ['共益費', $('ic_kyoekihi')],
+    [`日割家賃${$('ic_hiwari_yachin_kikan')?'（'+$('ic_hiwari_yachin_kikan')+'）':''}`, $('ic_hiwari_yachin')],
+    [`日割共益費${$('ic_hiwari_kyoeki_kikan')?'（'+$('ic_hiwari_kyoeki_kikan')+'）':''}`, $('ic_hiwari_kyoeki')],
+    ['水道代', $('ic_suidou')],
+    [`火災保険${$('ic_kasai_nensuu')?'／'+$('ic_kasai_nensuu'):''}`, $('ic_kasai')],
+    ['保証会社初回費用', $('ic_hoshou')],
+    ['ハウスクリーニング', $('ic_cleaning')]
+  ];
+  const extra = collectKV('ic_extra_list').map(it=>[it.k, it.v]);
+  const allItems = items.concat(extra).filter(it => it[1] !== '' && it[1] !== undefined);
+
+  const subtotal = allItems.reduce((s,it)=> s + (parseFloat(it[1])||0), 0);
+  const tetsukekin = parseFloat($('ic_tetsukekin')) || 0;
+  const grandTotal = subtotal - tetsukekin;
+
+  const itemRows = allItems.map(it=>`<tr><td>${it[0]}</td><td style="text-align:right;">${(parseFloat(it[1])||0).toLocaleString()}円</td></tr>`).join('');
+
+  const notes = collectLines('ic_note_list');
+
+  document.getElementById('initialOutput').innerHTML = `
+    <div class="doc-page">
+      ${logoStore?`<div style="text-align:center;margin-bottom:4px;"><img src="${logoStore}" style="height:44px;"></div>`:''}
+      <h2 class="doctitle" style="letter-spacing:2px;">初期費用一覧表</h2>
+      <table class="price-table">
+        <tr><th style="width:20%">作成日</th><td>${$('ic_date')?fmtDateJP($('ic_date')):''}</td></tr>
+        <tr><th>ご契約者名</th><td>${$('ic_client')} 様</td></tr>
+        <tr><th>物件名</th><td>${$('ic_bukken')}</td></tr>
+      </table>
+
+      <h3 style="color:var(--navy-dark);margin-top:8px;">●ご入居費用明細●</h3>
+      <table class="price-table">
+        <tr><th style="width:60%">項目</th><th style="text-align:right;">金額</th></tr>
+        ${itemRows}
+        <tr><td>手付金（定金）</td><td style="text-align:right;">－${tetsukekin.toLocaleString()}円</td></tr>
+        <tr><th style="background:var(--navy);color:#fff;">差し引きお支払額（需支付額）</th><td style="text-align:right;font-weight:bold;font-size:15px;background:#eef2f7;">￥${grandTotal.toLocaleString()}</td></tr>
+      </table>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px;">
+        <div>
+          <h3 style="color:var(--navy-dark);">契約書・必要書類の提出について</h3>
+          <table class="price-table">
+            <tr><th style="width:45%">契約者様の必要書類</th><td>${$('ic_docs_kounin')}</td></tr>
+            <tr><th>保証人様の必要書類</th><td>${$('ic_docs_hoshounin')}</td></tr>
+          </table>
+          ${notes.length?`<div style="font-size:11px;color:#555;margin-top:6px;">${notes.map(n=>'・'+n).join('<br>')}</div>`:''}
+        </div>
+        <div>
+          <h3 style="color:var(--navy-dark);">●訂金匯款帳號●</h3>
+          <table class="price-table">
+            <tr><th style="width:45%">銀行</th><td>${$('ic_bank')}</td></tr>
+            <tr><th>支店</th><td>${$('ic_branch')}</td></tr>
+            <tr><th>種別・口座番号</th><td>${$('ic_account')}</td></tr>
+            <tr><th>口座名義</th><td>${$('ic_meigi')}</td></tr>
+          </table>
+          <p style="font-size:10.5px;color:#c0392b;margin-top:6px;">※お振込の際は必ずお客様名をご入力下さい</p>
+        </div>
+      </div>
+
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
