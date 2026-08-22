@@ -22,6 +22,9 @@
   header{background:var(--navy);color:#fff;padding:16px 24px;}
   header h1{margin:0;font-size:20px;}
   header p{margin:4px 0 0;font-size:12px;opacity:.8;}
+  .header-top{display:flex;justify-content:space-between;align-items:center;gap:20px;}
+  .header-link{color:#fff;font-size:15px;font-weight:bold;text-decoration:underline;white-space:nowrap;flex:0 0 auto;}
+  .header-link:hover{opacity:.85;}
   nav{display:flex;background:var(--navy-dark);}
   nav button{flex:1;padding:12px;border:none;background:transparent;color:#cfd8e3;cursor:pointer;font-size:14px;border-bottom:3px solid transparent;}
   nav button.active{color:#fff;border-bottom-color:var(--gold);background:rgba(255,255,255,.06);}
@@ -130,7 +133,9 @@
   .cal-table td{border:1px solid #ddd;height:58px;vertical-align:top;padding:3px 5px;font-size:11px;color:#333;}
   .cal-table td.dim{color:#ccc;background:#fafafa;}
 
-  /* ---- ⑩ 進度追蹤 ---- */
+  /* ---- 進度追蹤 ---- */
+  .tracker-month-group{margin-bottom:22px;}
+  .tracker-month-title{font-size:16px;font-weight:bold;color:var(--navy-dark);border-bottom:2px solid var(--navy);padding-bottom:4px;margin-bottom:10px;}
   .case-card{border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-bottom:10px;background:#fff;}
   .case-card .ctop{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
   .case-card .cname{font-weight:bold;font-size:15px;}
@@ -140,9 +145,11 @@
   .stage-講解契約{background:#e0a72f;}
   .stage-簽約{background:#3f8ede;}
   .stage-款項確認{background:#8a5fd6;}
-  .stage-交屋{background:#2ba36b;}
+  .stage-待交屋{background:#2ba36b;}
   .stage-完成{background:#555;}
-  .case-card .nexthint{margin-top:6px;font-size:13px;background:#fff8e6;border:1px dashed var(--gold);padding:5px 10px;border-radius:5px;color:#7a5a10;}
+  .warn-tags{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;}
+  .warn-tag{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11.5px;font-weight:bold;color:#fff;background:#c0392b;white-space:nowrap;}
+  .case-card .nexthint{margin-top:6px;font-size:13px;background:#fff0f0;border:1px dashed #c0392b;padding:5px 10px;border-radius:5px;color:#c0392b;font-weight:bold;}
   .case-card .cactions{margin-top:8px;display:flex;gap:8px;}
   .s2-cat-title{background:var(--navy);color:#fff;font-size:11px;font-weight:bold;padding:3px 8px;margin-top:8px;border-radius:2px;}
   .s2-pay{margin-bottom:0;}
@@ -225,8 +232,13 @@
 </script>
 
 <header>
-  <h1>物件資料・媒介契約書 生成工具（プロトタイプ）</h1>
-  <p>GB商事合同会社 ｜ ローカル動作・サーバー不要 ｜ すべてのデータはこのページ内のみで保持されます</p>
+  <div class="header-top">
+    <div>
+      <h1>物件資料・媒介契約書 生成工具（プロトタイプ）</h1>
+      <p>GB商事合同会社 ｜ ローカル動作・サーバー不要 ｜ すべてのデータはこのページ内のみで保持されます</p>
+    </div>
+    <a href="#" class="header-link" id="trackerHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-tracker').classList.add('active');return false;">進度追蹤 →</a>
+  </div>
 </header>
 
 <nav>
@@ -239,7 +251,6 @@
   <button class="tab-btn" data-tab="settle2">⑦ 決済のご案内</button>
   <button class="tab-btn" data-tab="initial">⑧ 初期費用一覧表</button>
   <button class="tab-btn" data-tab="history">⑨ 歷史記錄・存檔</button>
-  <button class="tab-btn" data-tab="tracker">⑩ 進度追蹤</button>
 </nav>
 
 <div class="wrap">
@@ -971,7 +982,7 @@
     </div>
   </div>
 
-  <!-- ================= ⑩ 進度追蹤 ================= -->
+  <!-- ================= 進度追蹤 ================= -->
   <div class="panel" id="panel-tracker">
     <div class="side-form" style="max-width:1100px;">
 
@@ -984,10 +995,10 @@
         <legend id="trackerFormTitle">新增案子</legend>
         <div class="row">
           <div class="field"><label>類型</label>
-            <select id="tr_type"><option>売買</option><option>賃貸</option></select>
+            <select id="tr_type" onchange="toggleTrackerType()"><option>売買</option><option>賃貸</option></select>
           </div>
-          <div class="field"><label>用途</label>
-            <select id="tr_subtype"><option>自住</option><option>投資</option><option>招租</option><option>出租</option></select>
+          <div class="field" id="tr_subtype_field"><label>用途</label>
+            <select id="tr_subtype"><option>自住</option><option>投資</option><option>民宿</option></select>
           </div>
           <div class="field wide"><label>物件</label><input id="tr_property"></div>
         </div>
@@ -996,7 +1007,7 @@
           <div class="field"><label>擔當人員</label>
             <select id="tr_staff"><option>黃</option><option>林</option><option>陳</option><option>李</option><option>其他</option></select>
           </div>
-          <div class="field"><label>司法書士</label><input id="tr_scrivener"></div>
+          <div class="field" id="tr_scrivener_field"><label>司法書士</label><input id="tr_scrivener"></div>
         </div>
         <div class="row">
           <div class="field"><label>講解契約日期</label><input id="tr_explain_date" type="date"></div>
@@ -2454,7 +2465,7 @@ function initFirebaseTracker(){
 
 function computeStage(c){
   if(c.completed) return '完成';
-  if(c.handoverDate) return '交屋';
+  if(c.handoverDate) return '待交屋';
   if(c.signDate){
     if(c.payment === '全部到帳') return '款項確認';
     return '簽約';
@@ -2463,17 +2474,40 @@ function computeStage(c){
   return '洽談中';
 }
 
+function collectWarnings(c){
+  if(c.completed) return [];
+  const warns = [];
+  if(!c.signDate) warns.push('契約日未定');
+  if(!c.handoverDate) warns.push('交屋日未定');
+  if(c.payment === '未到帳' || !c.payment) warns.push('款項未到帳');
+  if(c.docs === '未收齊' || !c.docs) warns.push('客戶資料未齊');
+  return warns;
+}
+
 function nextStepHint(c){
   const stage = computeStage(c);
+  let hint = '';
   switch(stage){
-    case '洽談中': return '下一步：安排講解契約時間';
-    case '講解契約': return '下一步：確認並敲定簽約日期';
-    case '簽約': return c.payment === '未到帳' ? '下一步：確認訂金／款項到帳狀況' : '下一步：等待款項全部到帳確認';
-    case '款項確認': return '下一步：安排交屋（或入居）日期、準備交屋文件';
-    case '交屋': return c.docs === '未收齊' ? '下一步：補齊客戶資料，並確認結案' : '下一步：確認結案後標記為完成';
-    case '完成': return '已完成，無待辦事項';
-    default: return '';
+    case '洽談中': hint = '下一步：安排講解契約時間'; break;
+    case '講解契約': hint = '下一步：確認並敲定簽約日期'; break;
+    case '簽約': hint = c.payment === '未到帳' ? '下一步：確認訂金／款項到帳狀況' : '下一步：等待款項全部到帳確認'; break;
+    case '款項確認': hint = '下一步：安排交屋（或入居）日期、準備交屋文件'; break;
+    case '待交屋': hint = c.docs === '未收齊' ? '下一步：補齊客戶資料，並確認結案' : '下一步：確認結案後標記為完成'; break;
+    case '完成': hint = '已完成，無待辦事項'; break;
+    default: hint = '';
   }
+  if(c.type !== '賃貸' && stage !== '完成' && !c.scrivener){
+    hint += '　｜　調公課證明並聯繫司法書士';
+  }
+  return hint;
+}
+
+function toggleTrackerType(){
+  const isRental = $('tr_type') === '賃貸';
+  const subtypeField = document.getElementById('tr_subtype_field');
+  const scrivenerField = document.getElementById('tr_scrivener_field');
+  if(subtypeField) subtypeField.style.display = isRental ? 'none' : '';
+  if(scrivenerField) scrivenerField.style.display = isRental ? 'none' : '';
 }
 
 function resetTrackerForm(){
@@ -2490,17 +2524,19 @@ function resetTrackerForm(){
   document.getElementById('tr_completed').value = '否';
   document.getElementById('trackerFormTitle').textContent = '新增案子';
   document.getElementById('trackerCancelBtn').style.display = 'none';
+  toggleTrackerType();
 }
 
 function saveCaseToTracker(){
   if(!trackerDB){ alert('資料庫尚未連線，請確認 Firebase 設定。'); return; }
+  const isRental = $('tr_type') === '賃貸';
   const data = {
     type: $('tr_type'),
-    subtype: $('tr_subtype'),
+    subtype: isRental ? '' : $('tr_subtype'),
     property: $('tr_property'),
     client: $('tr_client'),
     staff: $('tr_staff'),
-    scrivener: $('tr_scrivener'),
+    scrivener: isRental ? '' : $('tr_scrivener'),
     explainDate: $('tr_explain_date'),
     signDate: $('tr_sign_date'),
     handoverDate: $('tr_handover_date'),
@@ -2543,12 +2579,50 @@ function editCase(id){
   document.getElementById('tr_note').value = c.note || '';
   document.getElementById('trackerFormTitle').textContent = '編輯案子';
   document.getElementById('trackerCancelBtn').style.display = 'inline-block';
+  toggleTrackerType();
   document.querySelector('#trackerFormBox').scrollIntoView({behavior:'smooth'});
 }
 
 function deleteCase(id){
   if(!confirm('確定要刪除這筆案子嗎？刪除後無法復原，所有同事都看不到這筆資料了。')) return;
   trackerDB.collection('cases').doc(id).delete();
+}
+
+function monthGroupKey(c){
+  if(!c.handoverDate) return '9999-99';
+  return c.handoverDate.slice(0,7); // "YYYY-MM"
+}
+function monthGroupLabel(key){
+  if(key === '9999-99') return '尚未安排交屋日期';
+  const [y,m] = key.split('-');
+  return `${y}年${parseInt(m,10)}月交屋`;
+}
+
+function renderCaseCard(c){
+  const stage = computeStage(c);
+  const hint = nextStepHint(c);
+  const warns = collectWarnings(c);
+  return `
+      <div class="case-card">
+        <div class="ctop">
+          <div>
+            <span class="cname">${c.property || '(未填物件)'}　${c.client?'／'+c.client:''}</span>
+            <div class="cmeta">${c.type}${c.subtype?'／'+c.subtype:''}　擔當：${c.staff}　${c.scrivener?'司法書士：'+c.scrivener:''}</div>
+          </div>
+          <span class="stage-badge stage-${stage}">${stage}</span>
+        </div>
+        <div class="cmeta" style="margin-top:6px;">
+          講解契約：${c.explainDate||'－'}　簽約：${c.signDate||'－'}　交屋：${c.handoverDate||'－'}　款項：${c.payment||'－'}　資料：${c.docs||'－'}
+        </div>
+        ${warns.length ? `<div class="warn-tags">${warns.map(w=>`<span class="warn-tag">${w}</span>`).join('')}</div>` : ''}
+        ${c.note?`<div class="cmeta">備註：${c.note}</div>`:''}
+        <div class="nexthint">💡 ${hint}</div>
+        <div class="cactions">
+          <button class="btn small secondary" onclick="editCase('${c.id}')">編輯</button>
+          <button class="btn small danger" onclick="deleteCase('${c.id}')">刪除</button>
+        </div>
+      </div>
+    `;
 }
 
 function renderCaseList(){
@@ -2570,30 +2644,20 @@ function renderCaseList(){
     return;
   }
 
-  container.innerHTML = list.map(c=>{
-    const stage = computeStage(c);
-    const hint = nextStepHint(c);
-    return `
-      <div class="case-card">
-        <div class="ctop">
-          <div>
-            <span class="cname">${c.property || '(未填物件)'}　${c.client?'／'+c.client:''}</span>
-            <div class="cmeta">${c.type}／${c.subtype}　擔當：${c.staff}　${c.scrivener?'司法書士：'+c.scrivener:''}</div>
-          </div>
-          <span class="stage-badge stage-${stage}">${stage}</span>
-        </div>
-        <div class="cmeta" style="margin-top:6px;">
-          講解契約：${c.explainDate||'－'}　簽約：${c.signDate||'－'}　交屋：${c.handoverDate||'－'}　款項：${c.payment||'－'}　資料：${c.docs||'－'}
-        </div>
-        ${c.note?`<div class="cmeta">備註：${c.note}</div>`:''}
-        <div class="nexthint">💡 ${hint}</div>
-        <div class="cactions">
-          <button class="btn small secondary" onclick="editCase('${c.id}')">編輯</button>
-          <button class="btn small danger" onclick="deleteCase('${c.id}')">刪除</button>
-        </div>
-      </div>
-    `;
-  }).join('');
+  const groups = {};
+  list.forEach(c=>{
+    const key = monthGroupKey(c);
+    if(!groups[key]) groups[key] = [];
+    groups[key].push(c);
+  });
+
+  const sortedKeys = Object.keys(groups).sort(); // "尚未安排" (9999-99) sorts last; chronological ascending otherwise
+  container.innerHTML = sortedKeys.map(key=>`
+    <div class="tracker-month-group">
+      <div class="tracker-month-title">${monthGroupLabel(key)}（${groups[key].length}件）</div>
+      ${groups[key].map(renderCaseCard).join('')}
+    </div>
+  `).join('');
 }
 
 initFirebaseTracker();
