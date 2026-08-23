@@ -2453,7 +2453,7 @@ function isFirebaseConfigured(){
   return FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
 }
 
-let trackerCurrentUser = null; // {email, name, role}
+let trackerCurrentUser = null; // {email, name, viewAllCases, viewFinance}
 
 function initFirebaseTracker(){
   const warn = document.getElementById('fbSetupWarning');
@@ -2485,7 +2485,12 @@ function initFirebaseTracker(){
             return;
           }
           const data = doc.data();
-          trackerCurrentUser = { email: user.email, name: data.name || '', role: data.role || 'staff' };
+          trackerCurrentUser = {
+            email: user.email,
+            name: data.name || '',
+            viewAllCases: data.viewAllCases === true,
+            viewFinance: data.viewFinance === true
+          };
           showTrackerLoggedInUI();
           startCaseListener();
         }).catch(err=>{
@@ -2523,14 +2528,14 @@ function showTrackerLoggedInUI(){
   document.getElementById('trackerStaffMgmtBox').style.display = 'block';
   document.getElementById('trackerLoggedInBar').style.display = 'block';
   document.getElementById('trackerCurrentUserLabel').textContent =
-    trackerCurrentUser.name + (trackerCurrentUser.role === 'admin' ? '（主管，可查看全部案子）' : '（只能查看自己擔當的案子）');
+    trackerCurrentUser.name + (trackerCurrentUser.viewAllCases ? '（可查看全部案子）' : '（只能查看自己擔當的案子）');
   startStaffListListener();
 }
 
 function startCaseListener(){
   trackerDB.collection('cases').orderBy('updatedAt', 'desc').onSnapshot(snapshot=>{
     let all = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    if(trackerCurrentUser && trackerCurrentUser.role !== 'admin'){
+    if(trackerCurrentUser && !trackerCurrentUser.viewAllCases){
       all = all.filter(c => c.staff === trackerCurrentUser.name);
     }
     trackerCasesCache = all;
@@ -2579,12 +2584,12 @@ function populateStaffSelects(){
   if(names.includes(prevFilterVal)) filterSelect.value = prevFilterVal;
 
   // 非主管：鎖定為自己的名字
-  if(trackerCurrentUser && trackerCurrentUser.role !== 'admin' && names.includes(trackerCurrentUser.name)){
+  if(trackerCurrentUser && !trackerCurrentUser.viewAllCases && names.includes(trackerCurrentUser.name)){
     staffSelect.value = trackerCurrentUser.name;
   }
 
   const staffFilterField = document.getElementById('tr_filter_staff_field');
-  if(trackerCurrentUser && trackerCurrentUser.role !== 'admin'){
+  if(trackerCurrentUser && !trackerCurrentUser.viewAllCases){
     staffSelect.disabled = true;
     if(staffFilterField) staffFilterField.style.display = 'none';
   } else {
@@ -2708,7 +2713,7 @@ function resetTrackerForm(){
   });
   document.getElementById('tr_type').value = '売買';
   document.getElementById('tr_subtype').value = '自住';
-  if(trackerCurrentUser && trackerCurrentUser.role !== 'admin'){
+  if(trackerCurrentUser && !trackerCurrentUser.viewAllCases){
     document.getElementById('tr_staff').value = trackerCurrentUser.name;
   } else if(document.getElementById('tr_staff').options.length){
     document.getElementById('tr_staff').selectedIndex = 0;
