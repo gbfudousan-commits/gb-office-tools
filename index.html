@@ -206,39 +206,29 @@
 </head>
 <body>
 
-<!-- ============ 簡易パスワードゲート（GitHub Pages公開用の簡易な目隠しです。本格的なセキュリティではありません） ============ -->
+<!-- ============ サイト全体のログインゲート（Firebase Email/Password 認証） ============ -->
 <div id="passwordGate" style="position:fixed;inset:0;background:var(--navy-dark);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-family:inherit;">
   <div style="font-size:18px;font-weight:bold;margin-bottom:16px;">GB商事合同会社　社内ツール</div>
-  <div style="display:flex;gap:8px;">
-    <input type="password" id="gatePassword" placeholder="パスワード" style="padding:10px 14px;border-radius:5px;border:none;font-size:14px;width:200px;" onkeydown="if(event.key==='Enter')checkGatePassword()">
-    <button onclick="checkGatePassword()" style="padding:10px 20px;border-radius:5px;border:none;background:var(--navy);color:#fff;font-weight:bold;cursor:pointer;">入室</button>
+  <div style="display:flex;flex-direction:column;gap:8px;width:260px;">
+    <input type="email" id="gateEmail" placeholder="Email" autocomplete="username" style="padding:10px 14px;border-radius:5px;border:none;font-size:14px;">
+    <input type="password" id="gatePassword" placeholder="パスワード" autocomplete="current-password" style="padding:10px 14px;border-radius:5px;border:none;font-size:14px;" onkeydown="if(event.key==='Enter')checkGatePassword()">
+    <button onclick="checkGatePassword()" style="padding:10px 20px;border-radius:5px;border:none;background:var(--navy);color:#fff;font-weight:bold;cursor:pointer;">ログイン</button>
   </div>
-  <div id="gateError" style="color:#ffb3b3;font-size:12px;margin-top:10px;display:none;">パスワードが違います</div>
+  <div id="gateError" style="color:#ffb3b3;font-size:12px;margin-top:10px;display:none;max-width:280px;text-align:center;"></div>
 </div>
-<script>
-  // ↓↓↓ ここのパスワードを変更すれば簡単に更新できます ↓↓↓
-  const GATE_PASSWORD = "5211";
-  if (sessionStorage.getItem('gbToolAuthed') === 'yes') {
-    document.getElementById('passwordGate').style.display = 'none';
-  }
-  function checkGatePassword(){
-    const val = document.getElementById('gatePassword').value;
-    if (val === GATE_PASSWORD) {
-      sessionStorage.setItem('gbToolAuthed', 'yes');
-      document.getElementById('passwordGate').style.display = 'none';
-    } else {
-      document.getElementById('gateError').style.display = 'block';
-    }
-  }
-</script>
 
 <header>
   <div class="header-top">
     <div>
       <h1>物件資料・媒介契約書 生成工具（プロトタイプ）</h1>
-      <p>GB商事合同会社 ｜ ローカル動作・サーバー不要 ｜ すべてのデータはこのページ内のみで保持されます</p>
+      <p>GB商事合同会社 ｜ ログインが必要です ｜ 案件データは Firebase 上で共有・保存されます</p>
     </div>
-    <a href="#" class="header-link" id="trackerHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-tracker').classList.add('active');return false;">進度追蹤 →</a>
+    <div style="display:flex;align-items:center;gap:18px;">
+      <span id="siteUserLabel" style="font-size:12px;opacity:.85;"></span>
+      <a href="#" class="header-link" id="financeHeaderLink" style="display:none;" target="_blank" rel="noopener">公司財報 →</a>
+      <a href="#" class="header-link" id="trackerHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-tracker').classList.add('active');return false;">進度追蹤 →</a>
+      <a href="#" class="header-link" onclick="siteLogout();return false;" style="font-size:13px;">登出</a>
+    </div>
   </div>
 </header>
 
@@ -992,19 +982,8 @@
         請把 Firebase 專案的 6 個金鑰貼到程式碼裡 <code>FIREBASE_CONFIG</code> 的位置（搜尋 <code>YOUR_API_KEY</code>），存檔重新上傳後這個分頁才能使用。設定好之前，這頁看不到任何案子資料。
       </div>
 
-      <fieldset id="trackerLoginBox" style="display:none;max-width:420px;margin:0 auto;">
-        <legend>登入進度追蹤</legend>
-        <div class="field wide"><label>Email</label><input id="tr_login_email" type="email"></div>
-        <div class="field wide"><label>密碼</label><input id="tr_login_pw" type="password" onkeydown="if(event.key==='Enter')trackerLogin()"></div>
-        <div class="toolbar no-print">
-          <button class="btn" onclick="trackerLogin()">登入</button>
-        </div>
-        <div id="trackerLoginError" style="color:#c0392b;font-size:12px;display:none;margin-top:6px;"></div>
-      </fieldset>
-
       <div id="trackerLoggedInBar" style="display:none;font-size:12px;color:#777;margin-bottom:10px;">
-        已登入：<b id="trackerCurrentUserLabel"></b>　
-        <button class="btn small secondary" onclick="trackerLogout()">登出</button>
+        已登入：<b id="trackerCurrentUserLabel"></b>
       </div>
 
       <fieldset id="trackerFormBox" style="display:none;">
@@ -2445,6 +2424,10 @@ const FIREBASE_CONFIG = {
 };
 /* ↑↑↑ ここまで ↑↑↑ */
 
+/* ↓↓↓ Render にデプロイした財務レポートツールの URL をここに貼り付けてください ↓↓↓ */
+const FINANCE_TOOL_URL = "https://YOUR-APP-NAME.onrender.com";
+/* ↑↑↑ ここまで ↑↑↑ */
+
 let trackerDB = null;
 let trackerCasesCache = [];
 let editingCaseId = null;
@@ -2453,19 +2436,22 @@ function isFirebaseConfigured(){
   return FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.apiKey !== 'YOUR_API_KEY';
 }
 
-let trackerCurrentUser = null; // {email, name, viewAllCases, viewFinance}
+let trackerCurrentUser = null; // {email, name, viewAllCases, viewFinance, manageStaff}
 
 function initFirebaseTracker(){
   const warn = document.getElementById('fbSetupWarning');
+  const gate = document.getElementById('passwordGate');
+  const gateErr = document.getElementById('gateError');
+
   if(!isFirebaseConfigured()){
+    gateErr.textContent = 'サイトの設定がまだ完了していません（管理者に連絡してください：FIREBASE_CONFIG 未設定）。';
+    gateErr.style.display = 'block';
     if(warn) warn.style.display = 'block';
     return;
   }
   if(typeof window.firebase === 'undefined'){
-    if(warn){
-      warn.style.display = 'block';
-      warn.innerHTML = '<b>⚠ 資料庫程式庫尚未載入</b><br>可能是網路連線問題，或載入 Firebase 程式庫的連結失效。請確認裝置有連上網路後重新整理頁面；如果重新整理後還是這樣，請把這個訊息截圖回報。';
-    }
+    gateErr.textContent = 'データベース読み込みに失敗しました。ネット接続をご確認の上、ページを再読み込みしてください。';
+    gateErr.style.display = 'block';
     return;
   }
   try{
@@ -2477,10 +2463,8 @@ function initFirebaseTracker(){
       if(user){
         trackerDB.collection('staffAccess').doc(user.email).get().then(doc=>{
           if(!doc.exists){
-            showTrackerLoginUI();
-            const errEl = document.getElementById('trackerLoginError');
-            errEl.textContent = '這個帳號尚未設定使用權限，請聯絡管理員在 staffAccess 資料表裡新增對應資料後再試一次。';
-            errEl.style.display = 'block';
+            gateErr.textContent = 'このアカウントはまだ利用権限が設定されていません。管理者に staffAccess への追加を依頼してください。';
+            gateErr.style.display = 'block';
             firebase.auth().signOut();
             return;
           }
@@ -2492,38 +2476,38 @@ function initFirebaseTracker(){
             viewFinance: data.viewFinance === true,
             manageStaff: data.manageStaff === true
           };
-          showTrackerLoggedInUI();
-          startCaseListener();
+          gate.style.display = 'none';
+          applyCurrentUserUI();
         }).catch(err=>{
-          showTrackerLoginUI();
-          const errEl = document.getElementById('trackerLoginError');
-          errEl.textContent = '讀取權限資料失敗：' + err.message;
-          errEl.style.display = 'block';
+          gateErr.textContent = '権限データの読み込みに失敗しました：' + err.message;
+          gateErr.style.display = 'block';
         });
       } else {
         trackerCurrentUser = null;
-        showTrackerLoginUI();
+        gate.style.display = 'flex';
       }
     });
   }catch(e){
     console.error(e);
-    if(warn){
-      warn.style.display = 'block';
-      warn.innerHTML = '<b>⚠ 資料庫連線發生錯誤</b><br>' + e.message;
-    }
+    gateErr.textContent = 'データベース接続でエラーが発生しました：' + e.message;
+    gateErr.style.display = 'block';
   }
 }
 
-function showTrackerLoginUI(){
-  document.getElementById('trackerLoginBox').style.display = 'block';
-  document.getElementById('trackerFormBox').style.display = 'none';
-  document.getElementById('trackerListBox').style.display = 'none';
-  document.getElementById('trackerStaffMgmtBox').style.display = 'none';
-  document.getElementById('trackerLoggedInBar').style.display = 'none';
-}
+function applyCurrentUserUI(){
+  // ヘッダーのラベル・ログアウトボタン
+  const userLabel = document.getElementById('siteUserLabel');
+  if(userLabel){
+    userLabel.textContent = trackerCurrentUser.name + '（' + trackerCurrentUser.email + '）';
+  }
+  // 財務レポートへのリンクは viewFinance が true の人にだけ表示
+  const financeLink = document.getElementById('financeHeaderLink');
+  if(financeLink){
+    financeLink.style.display = trackerCurrentUser.viewFinance ? 'inline' : 'none';
+    financeLink.href = FINANCE_TOOL_URL;
+  }
 
-function showTrackerLoggedInUI(){
-  document.getElementById('trackerLoginBox').style.display = 'none';
+  // 進度追蹤パネル
   document.getElementById('trackerFormBox').style.display = 'block';
   document.getElementById('trackerListBox').style.display = 'block';
   document.getElementById('trackerStaffMgmtBox').style.display = trackerCurrentUser.manageStaff ? 'block' : 'none';
@@ -2531,6 +2515,7 @@ function showTrackerLoggedInUI(){
   document.getElementById('trackerCurrentUserLabel').textContent =
     trackerCurrentUser.name + (trackerCurrentUser.viewAllCases ? '（可查看全部案子）' : '（只能查看自己擔當的案子）');
   startStaffListListener();
+  startCaseListener();
 }
 
 function startCaseListener(){
@@ -2642,23 +2627,28 @@ function renderStaffMgmtList(){
   `).join('');
 }
 
-function trackerLogin(){
-  const errEl = document.getElementById('trackerLoginError');
+function checkGatePassword(){
+  const errEl = document.getElementById('gateError');
   errEl.style.display = 'none';
-  const email = $('tr_login_email');
-  const pw = $('tr_login_pw');
+  const email = $('gateEmail');
+  const pw = $('gatePassword');
   if(!email || !pw){
-    errEl.textContent = '請輸入 Email 與密碼。';
+    errEl.textContent = 'Email とパスワードを入力してください。';
+    errEl.style.display = 'block';
+    return;
+  }
+  if(typeof window.firebase === 'undefined' || !firebase.auth){
+    errEl.textContent = 'システムの読み込みが完了していません。しばらくしてから再度お試しください。';
     errEl.style.display = 'block';
     return;
   }
   firebase.auth().signInWithEmailAndPassword(email, pw).catch(err=>{
-    errEl.textContent = '登入失敗，請確認帳號密碼是否正確。';
+    errEl.textContent = 'ログインに失敗しました。Email とパスワードをご確認ください。';
     errEl.style.display = 'block';
   });
 }
 
-function trackerLogout(){
+function siteLogout(){
   firebase.auth().signOut();
 }
 
