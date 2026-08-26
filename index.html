@@ -14,6 +14,7 @@
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <style>
   :root{
     --navy:#14a8db; --navy-dark:#0b7da3; --gold:#b8892f; --line:#c9d2dc; --bg:#f4f6f9;
@@ -29,6 +30,11 @@
   nav{display:flex;background:var(--navy-dark);}
   nav button{flex:1;padding:12px;border:none;background:transparent;color:#cfd8e3;cursor:pointer;font-size:14px;border-bottom:3px solid transparent;}
   nav button.active{color:#fff;border-bottom-color:var(--gold);background:rgba(255,255,255,.06);}
+  .category-nav{background:var(--navy);}
+  .category-nav .cat-btn{padding:10px;font-size:15px;font-weight:bold;}
+  .category-nav .cat-btn.active{border-bottom-color:#fff;background:rgba(255,255,255,.12);}
+  .sub-nav{background:var(--navy-dark);flex-wrap:wrap;}
+  .sub-nav .tab-btn{flex:1 1 auto;min-width:140px;}
   .wrap{max-width:1100px;margin:0 auto;padding:20px;}
   .preview-wrap{max-width:1300px;margin:0 auto;padding:20px;overflow-x:auto;}
   .side-form{max-width:900px;margin:0 auto 20px;}
@@ -152,6 +158,12 @@
   .warn-tag{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11.5px;font-weight:bold;color:#fff;background:#c0392b;white-space:nowrap;}
   .case-card .nexthint{margin-top:6px;font-size:13px;background:#fff0f0;border:1px dashed #c0392b;padding:5px 10px;border-radius:5px;color:#c0392b;font-weight:bold;}
   .case-card .cactions{margin-top:8px;display:flex;gap:8px;}
+
+  /* ---- Excel匯入 ---- */
+  .ei-page{width:210mm;min-height:auto;padding:10mm;}
+  .ei-editable{outline:none;}
+  .ei-table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  .ei-table td{padding:2px 3px;font-size:9px;line-height:1.4;vertical-align:middle;word-break:break-word;overflow:hidden;}
   .s2-cat-title{background:var(--navy);color:#fff;font-size:11px;font-weight:bold;padding:3px 8px;margin-top:8px;border-radius:2px;}
   .s2-pay{margin-bottom:0;}
   .s2-pay td{font-size:11px;padding:4px 8px;}
@@ -232,16 +244,38 @@
   </div>
 </header>
 
-<nav>
-  <button class="tab-btn active" data-tab="form">① 資料入力</button>
+<nav class="category-nav">
+  <button class="cat-btn active" data-cat="sale">売却</button>
+  <button class="cat-btn" data-cat="buy">購入</button>
+  <button class="cat-btn" data-cat="rental">賃貸</button>
+  <button class="cat-btn" data-cat="common">共通</button>
+</nav>
+
+<nav class="sub-nav" id="subNav-sale">
+  <button class="tab-btn active" data-tab="form" onclick="setTxnMode('売買')">① 資料入力</button>
   <button class="tab-btn" data-tab="flyer">② 物件資料 プレビュー</button>
   <button class="tab-btn" data-tab="contract">③ 媒介契約書 プレビュー</button>
-  <button class="tab-btn" data-tab="schedule">④ 簽約日程表</button>
-  <button class="tab-btn" data-tab="mgmt">⑤ 代管合約書</button>
-  <button class="tab-btn" data-tab="settle">⑥ 決済清算書</button>
-  <button class="tab-btn" data-tab="settle2">⑦ 決済のご案内</button>
-  <button class="tab-btn" data-tab="initial">⑧ 初期費用一覧表</button>
-  <button class="tab-btn" data-tab="history">⑨ 歷史記錄・存檔</button>
+</nav>
+
+<nav class="sub-nav" id="subNav-buy" style="display:none;">
+  <button class="tab-btn" data-tab="schedule">簽約日程表</button>
+  <button class="tab-btn" data-tab="mgmt">代管合約書</button>
+</nav>
+
+<nav class="sub-nav" id="subNav-rental" style="display:none;">
+  <button class="tab-btn" data-tab="form" onclick="setTxnMode('賃貸')">① 資料入力</button>
+  <button class="tab-btn" data-tab="flyer">物件資料 プレビュー</button>
+  <button class="tab-btn" data-tab="lease">賃貸借契約書</button>
+  <button class="tab-btn" data-tab="initial">初期費用一覧表</button>
+  <button class="tab-btn" data-tab="cancel">賃貸借契約解約申込書</button>
+</nav>
+
+<nav class="sub-nav" id="subNav-common" style="display:none;">
+  <button class="tab-btn" data-tab="settle">決済清算書</button>
+  <button class="tab-btn" data-tab="settle2">決済のご案内</button>
+  <button class="tab-btn" data-tab="payment">支払約定書</button>
+  <button class="tab-btn" data-tab="history">歷史記錄・存檔</button>
+  <button class="tab-btn" data-tab="excelimport">Excel匯入（重説・契約書）</button>
 </nav>
 
 <div class="wrap">
@@ -943,6 +977,309 @@
     <div id="initialOutput"></div>
   </div>
 
+  <!-- ================= 賃貸借契約書 ================= -->
+  <div class="panel" id="panel-lease">
+    <div class="side-form" style="max-width:1000px;">
+      <fieldset>
+        <legend>①物件の表示</legend>
+        <div class="row">
+          <div class="field wide"><label>名称（号室含む）</label><input id="ld_name" placeholder="ルネ富雄 204号室"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>所在地</label><input id="ld_address" placeholder="〒631-0078 奈良県奈良市富雄元町2丁目6-24"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>構造</label><input id="ld_kouzou" placeholder="鉄筋コンクリート造 陸屋根 地下-階 地上8階建て"></div>
+          <div class="field"><label>建物種類</label><input id="ld_kenbutsu_shurui" value="区分所有"></div>
+        </div>
+        <div class="row">
+          <div class="field small"><label>床面積(㎡)</label><input id="ld_menseki" type="number"></div>
+          <div class="field"><label>バルコニー</label><select id="ld_balcony"><option>有</option><option>無</option></select></div>
+          <div class="field"><label>間取り</label><input id="ld_madori" placeholder="3LDK"></div>
+        </div>
+        <label>付属施設（有・無、必要なら詳細を記入）</label>
+        <div class="row">
+          <div class="field"><label>駐車場</label><input id="ld_chushajo" placeholder="無 ／ 有1台"></div>
+          <div class="field"><label>専用庭</label><input id="ld_senyou_niwa" placeholder="無"></div>
+          <div class="field"><label>ルーフバルコニー</label><input id="ld_roof_balcony" placeholder="無"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>駐輪場</label><input id="ld_chirinjo" placeholder="有"></div>
+          <div class="field"><label>トランクルーム</label><input id="ld_trunk" placeholder="無"></div>
+          <div class="field"><label>バイク置き場</label><input id="ld_bike" placeholder="無"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>②賃貸借の条件</legend>
+        <div class="row">
+          <div class="field"><label>契約開始日</label><input id="ld_start_date" type="date"></div>
+          <div class="field"><label>契約終了日</label><input id="ld_end_date" type="date"></div>
+          <div class="field"><label>契約種別</label><select id="ld_keiyaku_shubetsu"><option>普通借家契約</option><option>定期借家契約</option></select></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>使用目的</label><input id="ld_shiyou_mokuteki" value="居住用"></div>
+          <div class="field"><label>ペット飼育</label><select id="ld_pet"><option>不可</option><option>可</option></select></div>
+          <div class="field"><label>楽器利用</label><select id="ld_gakki"><option>不可</option><option>可</option></select></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>賃料 月額（円）</label><input id="ld_yachin" type="number"></div>
+          <div class="field"><label>共益費 月額（円）</label><input id="ld_kyoekihi" type="number"></div>
+          <div class="field"><label>コールセンター料 月額（円）</label><input id="ld_callcenter" type="number" placeholder="770"></div>
+          <div class="field"><label>駐輪場代 月額（円）</label><input id="ld_chirinjodai" type="number" placeholder="200"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>水道使用料</label><input id="ld_suido" value="甲の請求に基づき、実費支払い"></div>
+          <div class="field wide"><label>電気使用料</label><input id="ld_denki" value="甲の請求に基づき、実費支払い"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>支払方法</label><input id="ld_shiharai_houhou" value="口座振替"></div>
+          <div class="field wide"><label>支払時期</label><input id="ld_shiharai_jiki" placeholder="前月の27日までに当月分を支払い"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>敷金（円）</label><input id="ld_shikikin" type="number" value="0"></div>
+          <div class="field"><label>礼金</label><input id="ld_reikin" placeholder="140,000円 1ヶ月分"></div>
+          <div class="field"><label>更新事務手数料（円）</label><input id="ld_koushinryo" type="number" placeholder="16500"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>③契約者・入居者</legend>
+        <div class="row">
+          <div class="field wide"><label>契約者氏名</label><input id="ld_client_name"></div>
+          <div class="field small"><label>入居人員</label><input id="ld_nyukyo_ninzu" type="number" value="1"></div>
+        </div>
+        <label>入居者（契約者以外の同居人がいる場合）</label>
+        <div id="ld_occupant_list"></div>
+        <button class="btn small secondary" onclick="addKVRow('ld_occupant_list','氏名（例：白 安理）','年齢・続柄（例：45歳・配偶者）')">+ 入居者を追加</button>
+        <div class="row" style="margin-top:8px;">
+          <div class="field"><label>緊急連絡先 氏名</label><input id="ld_emergency_name"></div>
+          <div class="field"><label>続柄</label><input id="ld_emergency_kankei"></div>
+          <div class="field"><label>電話番号</label><input id="ld_emergency_tel"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>④保証会社・賃貸管理会社</legend>
+        <div class="row">
+          <div class="field"><label>保証会社名称</label><input id="ld_hoshou_name" placeholder="株式会社ランドインシュア"></div>
+          <div class="field"><label>承認番号</label><input id="ld_hoshou_ninka"></div>
+          <div class="field wide"><label>保証会社住所</label><input id="ld_hoshou_address"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>賃貸管理会社名称</label><input id="ld_kanri_name"></div>
+          <div class="field"><label>管理業登録番号</label><input id="ld_kanri_touroku"></div>
+          <div class="field wide"><label>管理会社住所</label><input id="ld_kanri_address"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>⑤甲（貸主）・丙（連帯保証人）</legend>
+        <div class="row">
+          <div class="field wide"><label>甲（貸主）住所</label><input id="ld_koushu_address"></div>
+          <div class="field"><label>甲（貸主）氏名</label><input id="ld_koushu_name"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>丙（連帯保証人）住所</label><input id="ld_hoshounin_address"></div>
+          <div class="field"><label>丙（連帯保証人）氏名</label><input id="ld_hoshounin_name"></div>
+          <div class="field"><label>極度額（円）</label><input id="ld_kyokudogaku" type="number"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>⑥媒介B（相手方業者・任意記入）</legend>
+        <p style="font-size:11px;color:#888;">左側「媒介A」は自動的に自社（GB商事）情報が入ります。この欄は空欄のままでも生成できます。</p>
+        <div class="row">
+          <div class="field"><label>取引態様</label><input id="ld_b_torihiki" placeholder="媒介"></div>
+          <div class="field"><label>免許証番号</label><input id="ld_b_menkyo" placeholder="例：大阪府知事(1)第00000号"></div>
+          <div class="field wide"><label>事務所所在地</label><input id="ld_b_address" placeholder="例：大阪府大阪市…"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>商号または名称</label><input id="ld_b_shougou" placeholder="例：株式会社◯◯"></div>
+          <div class="field"><label>代表者氏名</label><input id="ld_b_daihyou" placeholder="例：山田太郎"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>⑦特約事項（1行1項目）</legend>
+        <div id="ld_tokuyaku_list"></div>
+        <button class="btn small secondary" onclick="addLine('ld_tokuyaku_list','例：ルームクリーニング代は退去時に借主負担とする')">+ 項目を追加</button>
+        <div class="row" style="margin-top:6px;"><div class="field"><label>契約日</label><input id="ld_keiyaku_date" type="date"></div></div>
+      </fieldset>
+
+      <div class="toolbar no-print">
+        <button class="btn" onclick="generateLease()">▶ 賃貸借契約書を生成する</button>
+        <button class="btn secondary" onclick="printPanel('panel-lease')">🖨 印刷 / PDFとして保存</button>
+      </div>
+      <p class="no-print" style="font-size:11.5px;color:#888;">※このページで空欄のまま生成しても構いません。後から編集して再生成できます。</p>
+    </div>
+    <div id="leaseOutput"></div>
+  </div>
+
+  <!-- ================= 賃貸借契約解約申込書 ================= -->
+  <div class="panel" id="panel-cancel">
+    <div class="side-form">
+      <fieldset>
+        <legend>基本情報</legend>
+        <div class="row">
+          <div class="field"><label>申込日</label><input id="ca_date" type="date"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>フリガナ</label><input id="ca_furigana"></div>
+          <div class="field"><label>賃借人 氏名</label><input id="ca_name"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>賃借人 住所</label><input id="ca_address"></div>
+          <div class="field"><label>連絡先（電話番号）</label><input id="ca_tel"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>解約申込物件</legend>
+        <div class="row">
+          <div class="field wide"><label>名称</label><input id="ca_bukken_name"></div>
+          <div class="field"><label>部屋番号</label><input id="ca_room"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>所在地</label><input id="ca_bukken_address"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>解約内容</legend>
+        <div class="row">
+          <div class="field"><label>解約事由</label>
+            <select id="ca_reason"><option>帰省</option><option>住替</option><option>転勤</option><option>転職</option><option>卒業</option><option>その他</option></select>
+          </div>
+          <div class="field wide"><label>その他の場合、内容</label><input id="ca_reason_other"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>解約日</label><input id="ca_cancel_date" type="date"></div>
+          <div class="field"><label>退去立会日</label><input id="ca_tachiai_date" type="date"></div>
+          <div class="field"><label>立会希望時間</label><input id="ca_tachiai_time" placeholder="例：14時頃"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>精算後敷金返還口座</legend>
+        <div class="row">
+          <div class="field"><label>銀行名</label><input id="ca_bank"></div>
+          <div class="field"><label>支店名</label><input id="ca_branch"></div>
+          <div class="field"><label>口座種類</label><select id="ca_account_type"><option>普通</option><option>当座</option></select></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>口座番号</label><input id="ca_account_no"></div>
+          <div class="field wide"><label>口座名義人</label><input id="ca_account_name"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>転居先ご住所（任意）</legend>
+        <div class="row">
+          <div class="field wide"><label>転居先ご住所</label><input id="ca_new_address"></div>
+        </div>
+      </fieldset>
+
+      <div class="toolbar no-print">
+        <button class="btn" onclick="generateCancel()">▶ 解約申込書を生成する</button>
+        <button class="btn secondary" onclick="printPanel('panel-cancel')">🖨 印刷 / PDFとして保存</button>
+      </div>
+    </div>
+    <div id="cancelOutput"></div>
+  </div>
+
+  <!-- ================= 支払約定書 ================= -->
+  <div class="panel" id="panel-payment">
+    <div class="side-form">
+      <fieldset>
+        <legend>基本情報</legend>
+        <div class="row">
+          <div class="field"><label>作成日</label><input id="pa_date" type="date"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>支払人 住所</label><input id="pa_address"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>支払人 氏名</label><input id="pa_name"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>支払内容</legend>
+        <div class="row">
+          <div class="field wide"><label>内容（例：◯◯契約書による仲介手数料として）</label><input id="pa_content" placeholder="別紙契約書による仲介手数料として"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>金額（円）</label><input id="pa_amount" type="number"></div>
+          <div class="field"><label>うち消費税相当額（円）</label><input id="pa_tax_amount" type="number"></div>
+          <div class="field small"><label>消費税率(%)</label><input id="pa_tax_rate" type="number" value="10"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>支払スケジュール（最大2回）</legend>
+        <div class="row">
+          <div class="field"><label>①支払日</label><input id="pa_date1" type="date"></div>
+          <div class="field"><label>①金額（円）</label><input id="pa_amount1" type="number"></div>
+          <div class="field"><label>①内消費税（円）</label><input id="pa_tax1" type="number"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>②支払日</label><input id="pa_date2" type="date"></div>
+          <div class="field"><label>②金額（円）</label><input id="pa_amount2" type="number"></div>
+          <div class="field"><label>②内消費税（円）</label><input id="pa_tax2" type="number"></div>
+        </div>
+        <div class="field wide"><label>特記事項</label><textarea id="pa_note" placeholder="上記期日にお支払いいただけない場合、違約による解約となった場合にも貴社にお支払いいたします。"></textarea></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>物件の表示</legend>
+        <div class="row">
+          <div class="field wide"><label>所在地</label><input id="pa_bukken_address"></div>
+          <div class="field wide"><label>物件名</label><input id="pa_bukken_name"></div>
+        </div>
+      </fieldset>
+
+      <div class="toolbar no-print">
+        <button class="btn" onclick="generatePayment()">▶ 支払約定書を生成する</button>
+        <button class="btn secondary" onclick="printPanel('panel-payment')">🖨 印刷 / PDFとして保存</button>
+      </div>
+    </div>
+    <div id="paymentOutput"></div>
+  </div>
+
+  <!-- ================= Excel匯入（重説・契約書） ================= -->
+  <div class="panel" id="panel-excelimport">
+    <div class="side-form" style="max-width:1000px;">
+      <fieldset>
+        <legend>Excelファイルを読み込む</legend>
+        <div class="row">
+          <div class="field wide">
+            <label>「重要事項説明書」「不動産売買契約書」の分頁があるExcelファイルを選択してください</label>
+            <input type="file" id="ei_file" accept=".xlsx,.xls">
+          </div>
+        </div>
+        <div id="ei_sheet_select_box" style="display:none;">
+          <label>読み込む分頁</label>
+          <select id="ei_sheet_select"></select>
+          <button class="btn small secondary" onclick="loadExcelSheetIntoEditor()">この分頁を読み込む</button>
+        </div>
+        <p id="ei_status" style="font-size:11.5px;color:#888;margin-top:6px;"></p>
+      </fieldset>
+
+      <fieldset id="ei_editor_box" style="display:none;">
+        <legend>內容已載入</legend>
+        <p style="font-size:12px;color:#555;">下方預覽區域可以直接點兩下文字進去修改內容，改好之後按「列印/存為PDF」即可。</p>
+      </fieldset>
+
+      <div class="toolbar no-print">
+        <button class="btn" onclick="printPanel('panel-excelimport')" id="ei_print_btn" style="display:none;">🖨 印刷 / PDFとして保存</button>
+      </div>
+      <p class="no-print" style="font-size:11.5px;color:#888;">※「重要事項説明書」「不動産売買契約書」はこのツール専用に分頁の区切り位置を調整しています。他の分頁名を選んだ場合は、約70行ごとに自動で分頁します。</p>
+    </div>
+    <div id="excelimportOutput"></div>
+  </div>
+
+
   <!-- ================= ⑨ 歷史記錄・存檔 ================= -->
   <div class="panel" id="panel-history">
     <div class="side-form">
@@ -1123,10 +1460,31 @@ document.querySelectorAll('.tab-btn').forEach(b=>{
   b.addEventListener('click',()=>{
     document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
     document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
+    document.querySelectorAll('.tab-btn[data-tab="'+b.dataset.tab+'"]').forEach(x=>x.classList.add('active'));
     document.getElementById('panel-'+b.dataset.tab).classList.add('active');
   });
 });
+
+/* ---------- category switching ---------- */
+document.querySelectorAll('.cat-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.sub-nav').forEach(x=>x.style.display = 'none');
+    b.classList.add('active');
+    document.getElementById('subNav-'+b.dataset.cat).style.display = 'flex';
+    // 該分類第一個分頁按鈕自動點擊，切換到對應內容
+    const firstTab = document.querySelector('#subNav-'+b.dataset.cat+' .tab-btn');
+    if(firstTab) firstTab.click();
+  });
+});
+
+function setTxnMode(mode){
+  const sel = document.getElementById('txn_mode');
+  if(sel && sel.value !== mode){
+    sel.value = mode;
+    toggleMode();
+  }
+}
 
 /* ---------- 売買 / 賃貸 mode toggle ---------- */
 function toggleMode(){
@@ -1718,6 +2076,14 @@ function getPrintFilename(panelId){
       name = $('s2_client') + '-決済のご案内'; break;
     case 'panel-initial':
       name = $('ic_client') + '-初期費用一覧表'; break;
+    case 'panel-lease':
+      name = $('ld_name') + '-賃貸借契約書'; break;
+    case 'panel-payment':
+      name = $('pa_name') + '-支払約定書'; break;
+    case 'panel-excelimport':
+      name = (document.getElementById('ei_sheet_select') ? document.getElementById('ei_sheet_select').value : 'Excel資料'); break;
+    case 'panel-cancel':
+      name = $('ca_name') + '-解約申込書'; break;
     default:
       name = ORIGINAL_TITLE;
   }
@@ -2854,6 +3220,455 @@ function renderCaseList(){
 }
 
 initFirebaseTracker();
+
+
+/* =========================================================================
+   賃貸借契約書
+   ========================================================================= */
+function fmtPeriod(startStr, endStr){
+  if(!startStr || !endStr) return '';
+  const s = new Date(startStr);
+  const e = new Date(endStr);
+  e.setDate(e.getDate()+1); // 賃貸借の終了日は最終日を含むため、翌日を基準に年月を計算する
+  let months = (e.getFullYear()-s.getFullYear())*12 + (e.getMonth()-s.getMonth());
+  if(e.getDate() < s.getDate()) months -= 1;
+  const years = Math.floor(months/12);
+  const remMonths = months % 12;
+  return (years>0?years+'年':'') + remMonths+'ヶ月間';
+}
+
+function generateLease(){
+  const occupants = collectKV('ld_occupant_list');
+  const tokuyaku = collectLines('ld_tokuyaku_list');
+
+  const gaiyoRows = [
+    ['名称', $('ld_name')],
+    ['所在地', $('ld_address')],
+    ['構造', $('ld_kouzou')],
+    ['建物種類', $('ld_kenbutsu_shurui')],
+    ['床面積', $('ld_menseki')?$('ld_menseki')+'㎡':''],
+    ['バルコニー', $('ld_balcony')],
+    ['間取り', $('ld_madori')],
+    ['駐車場／専用庭', `${$('ld_chushajo')} ／ ${$('ld_senyou_niwa')}`],
+    ['ルーフバルコニー', $('ld_roof_balcony')],
+    ['駐輪場／トランクルーム／バイク置き場', `${$('ld_chirinjo')} ／ ${$('ld_trunk')} ／ ${$('ld_bike')}`]
+  ].filter(r=>r[1]).map(r=>`<tr><th>${r[0]}</th><td>${r[1]}</td></tr>`).join('');
+
+  const jokenRows = [
+    ['契約期間', `${$('ld_start_date')?fmtDateJP($('ld_start_date')):''} から ${$('ld_end_date')?fmtDateJP($('ld_end_date')):''} まで（${fmtPeriod($('ld_start_date'),$('ld_end_date'))}）　${$('ld_keiyaku_shubetsu')}`],
+    ['使用目的', $('ld_shiyou_mokuteki')],
+    ['ペット飼育／楽器利用', `${$('ld_pet')} ／ ${$('ld_gakki')}`],
+    ['賃料月額', $('ld_yachin')?Number($('ld_yachin')).toLocaleString()+'円':''],
+    ['共益費月額', $('ld_kyoekihi')?Number($('ld_kyoekihi')).toLocaleString()+'円':''],
+    ['コールセンター料／駐輪場代', `${$('ld_callcenter')?Number($('ld_callcenter')).toLocaleString()+'円':''} ／ ${$('ld_chirinjodai')?Number($('ld_chirinjodai')).toLocaleString()+'円':''}`],
+    ['水道使用料', $('ld_suido')],
+    ['電気使用料', $('ld_denki')],
+    ['支払方法', $('ld_shiharai_houhou')],
+    ['支払時期', $('ld_shiharai_jiki')],
+    ['敷金', $('ld_shikikin')?Number($('ld_shikikin')).toLocaleString()+'円':''],
+    ['礼金', $('ld_reikin')],
+    ['更新事務手数料', $('ld_koushinryo')?Number($('ld_koushinryo')).toLocaleString()+'円':'']
+  ].filter(r=>r[1]).map(r=>`<tr><th>${r[0]}</th><td>${r[1]}</td></tr>`).join('');
+
+  const occupantRows = occupants.length ? occupants.map(o=>`<tr><td>${o.k}</td><td>${o.v}</td></tr>`).join('') : '';
+
+  const contractorTable = `
+    <table class="price-table">
+      <tr><th style="width:22%">契約者氏名</th><td>${$('ld_client_name')}</td><th style="width:22%">入居人員</th><td>${$('ld_nyukyo_ninzu')} 人</td></tr>
+      ${occupantRows}
+      <tr><th>緊急連絡先</th><td colspan="3">${$('ld_emergency_name')}（${$('ld_emergency_kankei')}）　TEL：${$('ld_emergency_tel')}</td></tr>
+    </table>
+  `;
+
+  const companyTable = `
+    <table class="price-table">
+      <tr><th style="width:22%">保証会社</th><td>${$('ld_hoshou_name')}　承認番号：${$('ld_hoshou_ninka')}</td></tr>
+      <tr><th>保証会社住所</th><td>${$('ld_hoshou_address')}</td></tr>
+      <tr><th>賃貸管理会社</th><td>${$('ld_kanri_name')}　登録番号：${$('ld_kanri_touroku')}</td></tr>
+      <tr><th>管理会社住所</th><td>${$('ld_kanri_address')}</td></tr>
+    </table>
+  `;
+
+  const signBlock = `
+    <div class="sign-block">
+      <div class="box">
+        <b>甲（貸主）</b>
+        <div>住所：${$('ld_koushu_address')}</div>
+        <div>氏名：${$('ld_koushu_name')}　㊞</div>
+      </div>
+      <div class="box">
+        <b>乙（借主）</b>
+        <div>住所：</div>
+        <div>氏名：${$('ld_client_name')}　㊞</div>
+      </div>
+    </div>
+    <div class="sign-block">
+      <div class="box">
+        <b>丙（連帯保証人）</b>
+        <div>住所：${$('ld_hoshounin_address')}</div>
+        <div>氏名：${$('ld_hoshounin_name')}　㊞</div>
+        <div>極度額：${$('ld_kyokudogaku')?Number($('ld_kyokudogaku')).toLocaleString()+'円':''}</div>
+      </div>
+      <div class="box">
+        <b>媒介A（自社）</b>
+        <div>取引態様：媒介</div>
+        <div>商号：${$('o_shougou')}</div>
+        <div>代表者：${$('o_daihyou')}　㊞</div>
+        <div>免許証番号：${$('o_menkyo')}</div>
+        <div>事務所所在地：${$('o_jimusho')}</div>
+      </div>
+    </div>
+    <div class="sign-block">
+      <div class="box" style="width:100%;">
+        <b>媒介B（相手方業者）</b>
+        <div>取引態様：${$('ld_b_torihiki')||'<span style="color:#aaa;">（未記入）</span>'}</div>
+        <div>商号：${$('ld_b_shougou')||'<span style="color:#aaa;">（未記入）</span>'}</div>
+        <div>代表者：${$('ld_b_daihyou')||'<span style="color:#aaa;">（未記入）</span>'}　㊞</div>
+        <div>免許証番号：${$('ld_b_menkyo')||'<span style="color:#aaa;">（未記入）</span>'}</div>
+        <div>事務所所在地：${$('ld_b_address')||'<span style="color:#aaa;">（未記入）</span>'}</div>
+      </div>
+    </div>
+  `;
+
+  const tokuyakuHtml = tokuyaku.length ? `
+    <h3 style="color:var(--navy-dark);margin-top:14px;">第33条（特約事項）</h3>
+    <div style="font-size:12px;line-height:1.7;">${tokuyaku.map((t,i)=>`${i+1}. ${t}`).join('<br>')}</div>
+  ` : '';
+
+  document.getElementById('leaseOutput').innerHTML = `
+    <div class="doc-page">
+      <h2 class="doctitle" style="letter-spacing:2px;">居住用建物賃貸借契約書</h2>
+      <p style="font-size:11.5px;line-height:1.7;">貸主を甲とし、借主を乙とし、連帯保証人を丙として、以下の物件（以下「本物件」という）について、頭書の賃貸借契約（以下「本契約」という）を締結する。その証として本契約証書を2通作成し、当事者署名捺印の上、甲乙各1通を保有する。</p>
+
+      <h3 style="color:var(--navy-dark);">①物件の表示</h3>
+      <table class="price-table">${gaiyoRows}</table>
+
+      <h3 style="color:var(--navy-dark);margin-top:14px;">②賃貸借の条件</h3>
+      <table class="price-table">${jokenRows}</table>
+
+      <h3 style="color:var(--navy-dark);margin-top:14px;">③契約者・入居者</h3>
+      ${contractorTable}
+
+      <h3 style="color:var(--navy-dark);margin-top:14px;">④保証会社・賃貸管理会社</h3>
+      ${companyTable}
+
+      ${signBlock}
+      ${tokuyakuHtml}
+
+      <p style="text-align:right;font-size:12px;margin-top:10px;">契約日：${$('ld_keiyaku_date')?fmtDateJP($('ld_keiyaku_date')):'　　年　　月　　日'}</p>
+    </div>
+
+    <div class="doc-page">
+      <div class="yakkan">
+        <h3 class="main" style="text-align:center;color:var(--navy-dark);letter-spacing:2px;">賃貸借契約条項</h3>
+    <div class="article"><b>第1条（基本契約）</b> 甲は、頭書①に記載の物件（以下「本物件」という。）を、この契約書に記載されている条件で乙に賃貸し、乙はこれを<br>賃借する。<br>2　本契約に基づく乙から甲への金員の支払いは、持参債務（原則として振込または銀行口座からの引落し）とし、甲から<br>の特段の申し出があった場合を除き、これに要する費用は乙の負担とする。<br>3　本契約に基づく金員の授受については、甲は乙に対して請求書、領収書を発行しない。但し、第8条2項の場合はこの限<br>りではない。</div>
+    <div class="article"><b>第2条（契約期間）</b> 賃貸借の期間は、頭書②に記載のとおりとする。但し、双方異議のない場合は、所定の手続きを経て本契約を更新するこ<br>とができる。</div>
+    <div class="article"><b>第3条（契約期間前解除）</b> 乙は、本契約締結後から賃貸借開始日前日までの間は、賃料の1ヶ月分相当額を相手方に支払うことにより本契約を解除する<br>ことができる。同様に乙の本契約違反を事由として、本契約締結後から賃貸借開始日前日までに本契約が甲より解除された<br>時も、乙は直ちに違約金として賃料の1ヶ月分相当額を甲に支払う。これらの場合、甲は遅滞なく受領済みの賃料、礼金及び<br>敷金を無利息にて乙に返還する。但し、甲は任意に既納の敷金をもって違約金の弁済に充当することができる。</div>
+    <div class="article"><b>第4条（賃料及び共益費）</b> 乙は、頭書②の記載に従い、賃料等を甲に支払わなければならない。但し、振込手数料もしくは引落手数料は乙の負担と<br>する。<br>2　甲及び乙は、次の各号の一に該当する場合は、協議の上、賃料を改定することができる。<br>　イ　土地または建物に対する租税その他の負担の増減により賃料が不相当となった場合。<br>　ロ　土地または建物の価格の上昇または低下その他の経済事情の変動により賃料が不相当となった場合。<br>　ハ　近傍同種の建物の賃料に比較して賃料が不相当となった場合。<br>3　1ヶ月に満たない期間の賃料等は、日割計算しないものとする。<br>4　賃料等に賦課される消費税及び地消費税は、乙の負担とする。なお、契約期間中に税制改正があった場合は、改正後の<br>税額によるものとする。</div>
+    <div class="article"><b>第5条（更新）</b> 乙は、本契約期間を満了した場合、甲は6ヶ月前までに、乙は1ヶ月前までに、それぞれ相手方に対し書面により何らかの申<br>出をしないときは、契約は本契約と同一の条件で更新されるものとし、以後もこの例により更新する。<br>2　乙は、本条による契約の更新に際し、頭書②に記載の更新費用を期間満了日の2週間前までに甲に支払う。また、新賃料<br>により契約の更新がなされた場合は、敷金についても原則として新賃料を基準とした更新前の月数分とし、乙は甲に対し、<br>更新前の敷金との差額を追加差入れする。<br>3　更新費用について、頭書②に記載の契約期間経過の際にその都度発生するものであって、乙は甲に対して、本契約が合意<br>更新であるか法定更新であるかにかかわりなく、当該期間経過の都度更新料を支払う。</div>
+    <div class="article"><b>第6条（礼金）</b> 賃貸借期間開始以降は、甲はいかなる事由においても収受した礼金を乙に返還しない。</div>
+    <div class="article"><b>第7条（敷金・保証金）</b> 乙は、本契約に基づく乙の一切の債務を担保するため、頭書②に記載する敷金・保証金を甲に交付するものとする。甲は本<br>契約が終了し、乙が本物件を明渡したときは遅滞なく、敷金の全額を乙に返還する。ただし、本物件明渡し時に、賃料の滞<br>納、第23条に規定する原状回復に要する費用の未払いその他の本契約から生じる乙の債務の不履行が存在する場合には、甲<br>は当該債務の額を敷金から差し引いた額を無利息にて返還する。なお、敷金の返還は原則として契約終了日より30日以内と<br>し、振込手数料は乙の負担とする。<br>2　甲は、乙が本契約から生じる債務を履行しないときは、敷金をその債務の弁済に充てることができる。この場合におい<br>て乙は、本物件を明け渡すまでの間、敷金をもって当該債務の弁済に充てることを請求することができない。<br>3　前項の規定により乙の債務額を差し引くときは、甲は、債務の額の内訳を明示しなければならない。<br>4　賃料が増額された場合、乙は、頭書②に記載する月数相当分の新賃料額と旧賃料額の差額を、敷金に補填するものとす<br>る。</div>
+    <div class="article"><b>第8条（諸料金）</b> 乙は、本物件内の電気・ガス・水道及び電話等の基本料及び使用料並びに自治会費等の乙の生活から生ずる一切の諸費用<br>を負担する。<br>2　水道局において各戸の個別検針に基づく集金がされない場合は、水道個別メーターを基準にし、本物件建物所在地の都<br>市水道条例の料金表に基づき、甲の計算により、乙は甲に支払う。</div>
+    <div class="article"><b>第9条（遅延損害金）</b> 乙が賃料・共益費或いは更新料の支払い、その他本契約に基づく債務の履行を遅滞したときは、乙は遅延金額に対して年利<br>14.6％（365日の日割計算による）の割合による遅延損害金支払う。</div>
+    <div class="article"><b>第10条（用途の制限）</b> 乙は、本物件を頭書②に記載の目的で使用し、他の目的で使用してはならない。<br>2　乙は、原則として自ら入居し、自分以外の者を入居させる場合には、あらかじめ甲の承諾を必要とし、甲の書面による<br>承諾のない限り入居者の変更はできない。</div>
+    <div class="article"><b>第11条（連帯保証人）</b> 連帯保証人（以下「丙」という。）は、乙と連帯して、本契約から生じる乙の債務を負担するものとする。<br>本契約が更新された場合においても、同様とする。<br>2　前項の丙の負担は、記名押印欄に記載する極度額を限度とする。<br>3　丙が負担する債務の元本は、乙または丙が死亡したときに、確定するものとする。<br>4　丙の請求があったときは、甲は、丙に対し、賃料及び共益費等の支払状況や滞納金の額、損害賠償の額等、乙の全ての<br>債務の額等に関する情報を提供しなければならない。<br>5　甲は、丙を連帯保証人として不適当と認めたときまたは死亡した場合、乙に対し、連帯保証人の変更を要請することが<br>できる。この場合、乙は新たに甲の承諾する連帯保証人を選任するか、甲が指定する保証会社への加入をしなければならな<br>い。但し、保証会社を使用する場合、その費用は乙の負担とする。</div>
+    <div class="article"><b>第12条（甲の承諾事項）</b> 次の各号の場合には、甲の事前の承諾を必要とし、甲は不適当と認めたときはこれを拒否できる。<br>　イ　乙または頭書②に記載の入居者以外の者が本物件を使用する場合。<br>　ロ　事由の如何に関わらず、本契約における乙の連帯保証人を変更するとき。<br>　ハ　乙が破産・民事再生手続開始決定、または後見・補佐・補助開始の審判を受けた場合で、入居者が本物件の使用の継<br>続を希望する場合の本契約の名義変更。<br>　ニ　本物件に対する改造、模様替、造作の新設、その他原状を変更する一切の行為及び本物件の敷地内での工作物の築造<br>や敷地の原状変更。<br>2　本条第1項の承諾の申請書類の様式を甲が指定した場合は乙及び入居者はその様式を使用しなければならない。<br>3　本条第1項ニの原状変更及びその原状回復に要する費用は乙の負担とする。</div>
+    <div class="article"><b>第13条（本物件の使用等）</b> 乙及び入居者は、本物件、付帯設備ならびに本物件の共有部分をその本来の用法に従い善良な管理者の注意をもって使用す<br>る。なお、乙および入居者に対する来訪者等の関係者が本物件、付帯設備ならびに本物件の共有部分を、その本来の用法に<br>従い善良なる管理者の注意をもって使用しなかった場合、乙および入居者は乙の関係者の行為について全責任を負う。<br>2　本契約による禁止事項、甲の契約解除権、原状回復及び明渡し、無断退居、第三者への供覧、修繕負担、損害賠償、立<br>入点検、建物の区分所有等に関する法律の適用の各条項の効力は入居者にも及び、甲は各条項における乙の義務の遵守を入<br>居者に対し主張し、またはこの権利を行使できる。</div>
+    <div class="article"><b>第14条（契約期間中の修繕）</b> 甲は、乙が本物件を使用するために必要な修繕を行わなければならない。この場合の修繕に要する費用については、乙（入<br>居者・来訪者等の関係者を含む）の責めに帰すべき事由により必要となったものは乙が負担し、その他のものは甲が負担す<br>るものとする。<br>2　前項の規定に基づき甲が修繕を行う場合は、甲は、あらかじめ、その旨を乙に通知しなければならない。この場合にお<br>いて、乙は、正当な理由がある場合を除き、当該修繕の実施を拒否することができない。<br>3　乙は、本物件内に修繕を要する箇所を発見したときは、甲にその旨を遅滞なく通知しなければならない。乙からの通知<br>に基づき、甲及び乙は、修繕の必要について協議するものとする。<br>4　前項の規定による通知が行われた場合において、修繕の必要が認められるにもかかわらず、甲が正当な理由なく、相当<br>の期間内に必要な修繕を実施しないときは、乙は自ら修繕を行うことができる。この場合の修繕に要する費用については、<br>第1項に準ずるものとする。<br>5　乙は、次の各号に掲げる修繕について、入居中における通常損耗・経年変化であっても、乙が自らの費用負担において<br>修繕を行うものとし、甲は修繕義務を免れるものとする。この場合、乙は、甲の承諾を得ることなく修繕を行えるものとす<br>る。<br>　イ　電球、蛍光灯、ヒューズLED照明の取替え<br>　ロ　蛇口のパッキン、コマ、浄水器カートリッジの取替え<br>　ハ　風呂場等のゴム栓、鎖の取替え<br>　ニ　畳表の取替え・裏返し 、障子紙の張替え、襖紙の張替え、網戸の張替え<br>　ホ　その他費用が軽微な修繕</div>
+    <div class="article"><b>第15条（乙の通知義務）</b> 次の各号の一に該当する場合には乙・入居者及び丙は直ちに甲に通知しなければならない。<br>　イ　本物件に取り付けた電話の電話番号の決定、もしくは変更したとき。<br>　ロ　乙または入居者の氏名・勤務先・緊急連絡先等の届出事項に変更が生じたとき。<br>　ハ　丙の氏名・勤務先・住所等の変更が生じたとき。<br>　ニ　乙または丙が死亡、破産・民事再生手続開始決定の申立、または後見・補佐・補助開始の審判を受けたとき。<br>　ホ　乙または丙に対して差押・仮差押・仮処分・強制執行があったとき。<br>　ヘ　本物件の鍵を紛失したとき。<br>　ト　乙及び入居者が本契約期間中に継続して1ヶ月以上にわたり不在予定があるとき。<br>2　本条第1項の場合、甲は乙に対して身分証明書その他必要な資料の提出を求めることができる。</div>
+    <div class="article"><b>第16条（一部滅失等による賃料の減額等）</b> 本物件の一部が滅失その他の事由により使用できなくなった場合において、それが乙の責めに帰することができない事由に<br>よるものであるときは、その使用できなくなった部分の割合に応じて賃料は減額されるものとする。この場合において、甲<br>及び乙は、減額の程度、期間、その他必要な事項について協議するものとする。<br>2　本物件の一部が滅失その他の事由により使用できなくなった場合において、残存する部分のみでは乙が賃借をした目的<br>を達することができないときは、乙は、本契約を解除することができる。</div>
+    <div class="article"><b>第17条（禁止事項）</b> 乙は以下の行為をしてはならない。<br>　イ　頭書②に記載の目的以外で本物件を使用すること。また、附属施設については本来の使用目的以外の目的に使用す<br>ること。<br>　ロ　甲が承諾した入居者以外の第三者を入居させ、第三者の在室名義を表示すること。<br>　ハ　一部または全部を問わず第三者に賃借権を譲渡（担保の提供も含む）し、または本物件を転貸（共同使用、使用賃<br>借、その他これらに準ずる行為を含む）すること。<br>　ニ　乙が本契約または本契約に附随して締結される契約、覚書等に違反する行為。<br>　ホ　本物件の近隣の住民（居住者）に危険または迷惑をおよぼす行為、その他本物件の維持保全を害すること。<br>　ヘ　本物件室内で犬、猫、鳥類その他の動物を飼育すること。但し、特約がある場合はこの限りではない。<br>　ト　甲に無断で本物件の鍵を複製、または甲が所持しない開閉ロック装置を本物件の内外に設置すること。<br>　チ　本物件を本店または支店として商業・法人登記をおこなうこと。<br>　リ　階段、廊下等の共用部分に物品等を置くこと、または看板、ポスター類の広告物を掲示すること。<br>　ヌ　本物件を「危険薬物の販売等の用」または「特殊詐欺の用」に利用すること。</div>
+    <div class="article"><b>第18条（甲の契約解除権）</b> 甲は、乙が次の各号の一に該当したときは、催告をせず直ちに本契約を解除することができる。<br>　イ　賃料その他の債務の支払いを2ヶ月分相当額以上怠ったとき、または支払いをしばしば遅滞することによりその支払<br>能力がないと甲が認めたとき。<br>　ロ　更新料の支払いを怠ったとき。<br>　ハ　乙に対して差押・仮差押・仮処分・強制執行があったとき。<br>　ニ　乙が破産・民事再生手続開始の申立、後見・補佐・補助開始の審判を受けたとき。<br>　ホ　乙が禁固刑以上の犯罪を犯したとき。<br>　ヘ　乙に甲の信用を著しく失墜させる行為があったとき。<br>　ト　乙が死亡し、名義変更がおこなわないとき、または相続人が不存在のとき。<br>　チ　乙が甲、甲代理人または本建物の他の居住者に対し暴力的な要求行為、法的な責任を超えた不当な要求行為等をお<br>こない、甲が契約を継続しがたいと認めたとき。<br>　リ　本契約の申込または諸通知に事実と異なる記載があったとき。<br>　ヌ　乙が第17条(禁止事項)の条項に違反したとき。</div>
+    <div class="article"><b>第19条（解約手続）</b> 乙が本契約の解約明渡しをしようとするときは、1ヶ月以上前の予告期間をもって書面または電磁的方法にて申込み、この<br>届け出でされた契約解除日をもって本契約は解除される。<br>2　乙が本条第1項の解約の通知をした後は、乙は甲の承諾を得ることなく、これを撤回または変更することができない。<br>3　乙が本条第1項の通知義務を履行しなくても、賃料及び共益費の1ヶ月分相当額を甲に支払うことにより、即時解約がで<br>きる。<br>4　乙が契約期間満了日又は解約予告期間の満了日までに本物件を明け渡した場合、本契約はその明け渡し日をもって終了<br>する。この場合、乙は明け渡した日の翌日から契約期間満了日又は解約予告期間の満了日までの期間の賃料相当額を甲へ支<br>払うものとする。<br>5　甲は、正当な事由がある場合、乙に対し、6ヶ月前に書面で通知することにより本契約を解約できるものとする。</div>
+    <div class="article"><b>第20条（立入点検）</b> 甲または甲の指定人は、本物件の防火、本物件の構造の保全その他の本物件の管理上特に必要があるときは、あらかじめ<br>乙の承諾を得て、本物件内に立ち入ることができる。<br>2　乙は、正当な理由がある場合を除き、前項の規定に基づく甲の立入りを拒否することはできない。<br>3　甲は、火災による延焼を防止する必要がある場合その他の緊急の必要がある場合及び官公署が法令等にもとづき調査・<br>立ち入りを求めたときにおいては、あらかじめ乙の承諾を得ることなく、本物件内に立ち入り、必要な措置をとることが<br>できる。この場合において、甲は、乙の不在時に立ち入ったときは、立入り後その旨を乙に通知するものとする。</div>
+    <div class="article"><b>第21条（契約失効）</b> 火災による延焼、その他天災地変等不可抗力により本物件が通常の用に供することができなくなった場合、及び都市計画<br>等で本物件が収用され使用ができなくなった場合は、本契約は解除されるものとし、これにより被った損害について、乙<br>は甲に対し、何等の請求はできないものとする。</div>
+    <div class="article"><b>第22条（免責事項）</b> 甲の責任に基づかない事由により、乙が火災、盗難、災害等を被った場合は、その損害は甲に請求できない。それらの予<br>測不能な事象に対しては、乙の負担にて損害保険等に加入し保全する。<br>2　本物件の駐車場その他敷地内の借主またはその関係者の車両等に盗難・破損等の事故が発生しても、貸主の責めに帰す<br>べき事由がない場合、貸主は一切その責めを負わない。</div>
+    <div class="article"><b>第23条（原状回復義務）</b> 本契約が期間の満了、解約、解除により終了する時は、本契約の終了までに、乙は自らの負担において、本物件を原状に<br>回復して甲に明け渡さなければならない。<br>ただし、通常の使用に伴い生じた損耗及び経年変化並びに自然損耗等乙の責めに帰することができない事由により生じた<br>ものについては、原状回復を要しない。<br>2　前項の場合に乙が原状を回復しないとき、乙の負担において、甲は原状回復工事を施工することができる。甲が原状回<br>復に要した費用を、乙は甲に対し、直ちに支払わなければならない。<br>3　乙は、予め自らが不在となった場合の本物件の家財道具等の処理を連帯保証人等に委任する。<br>4　甲は、本契約終了後、本物件及び付属施設内に残置された乙の家財等を本物件から搬出し、連帯保証人等に引き渡す。<br>連帯保証人等が乙の家財等の引き受けを拒んだ場合には、乙は所有権を放棄したものとみなして、甲が任意に処分できる<br>ものとし、乙はこれについて異議を申し立てない。また処分等に要した費用は乙の負担とする。</div>
+    <div class="article"><b>第24条（損害賠償等）</b> 乙またはその同居人・関係者の故意または過失により、本物件または本物件の属する建物に破損・汚損・故障その他の損<br>害を生じさせたときは、乙は、遅滞なくその旨を甲及び関係者に連絡し、一切の損害を賠償しなければならない。<br>2　乙は本契約が終了したにもかかわらず（解除された場合も含む）本物件の明渡しを遅延したときは、甲に対して、明渡<br>し完了の日までの間、賃料等の倍額に相当する損害金を支払わなければならないものとし、且つ貸主の受けたその他一切<br>の損害を賠償しなければならない。<br>3　乙と他の居住者その他の第三者との間で生じた損害賠償問題等については、理由の如何を問わずその当事者間で問題を<br>解決するものとし、甲はこれに関与しないものとする。</div>
+    <div class="article"><b>第25条（合意管轄裁判所）</b> この契約に関して裁判上の紛争が生じた場合は、甲または貸主代理の住居地を管轄する地方裁判所または簡易裁判所を第一<br>審管轄裁判所とすることに甲乙は合意した。</div>
+    <div class="article"><b>第26条（裁判費用）</b> 賃料不払等の乙の債務不履行または不法行為により、甲がやむなく提起した賃貸借契約の解約、本件貸室の明渡し、賃料の<br>支払等を求める裁判手続きに係る印紙代、弁護士費用、鑑定費用、その他の費用は乙の負担とする。</div>
+    <div class="article"><b>第27条（信義則条項）</b> 甲及び乙は、この契約各条項を信義に基づき誠実に履行する。<br>2　本契約に定めのない事項、または疑義を生じた事項については、関係法規並びに取引慣行に従い、甲乙誠意をもって協議<br>の上解決するものとする。</div>
+    <div class="article"><b>第28条（規定外事項）</b> 別に定める「管理規約ならびに使用細則」もしくはそれに準ずるものがある場合は本契約書と同等の効力を持ち、乙（入居者<br>・来訪者等の関係者を含む）はこれを遵守しなければならない。</div>
+    <div class="article"><b>第29条（承認事項）</b> 乙は、次の各号を承認のうえ、この契約を締結する。<br>　イ　本契約の更新に際し、過去において度重なる賃料等の延滞があった場合は、それを理由に甲は契約更新を拒絶できる。<br>　ロ　乙が同居者在宅のまま無断で退去しても、乙は賃料相当額の支払義務を免れえない。<br>　ハ　本契約は、丙の印鑑証明書の添付をもって有効とする。但し、連帯保証人がいない場合はこの限りではない。<br>　ニ　乙は、本契約締結に際し、乙の責任において火災保険に加入するものとし、賃貸借契約期間中は保険契約を継続<br>　　　する事を了承する。<br>　ホ　甲は、本契約の書面に記載された個人情報を、甲の指定する各種サービス（工事等）業者に提供することがある。</div>
+    <div class="article"><b>第30条（反社会的勢力の排除）</b> 甲及び乙は、それぞれ相手方に対し、次の各号の事項を確約する。<br>　イ　自らが、暴力団、暴力団関係企業、総会屋若しくはこれらに準ずる者またはその構成員（以下総称して「反社会的<br>　　　勢力」という）ではないこと。<br>　ロ　自らの役員（業務を執行する社員、取締役、執行役またはこれらに準ずる者をいう）が反社会勢力ではないこと。<br>　ハ　反社会的勢力に自己の名義を利用させ、この契約を締結するものでないこと。<br>　ニ　自らまたは第三者を利用して、相手方に対する脅迫的な言動または暴力を用いる行為、偽計または威力を用いて<br>　　　相手方の業務を妨害し、または信用を毀損する行為をしないこと。</div>
+    <div class="article"><b>第31条（禁止または制限される行為）</b> 乙は、本物件の使用に当たり、以下の行為を行ってはならない。<br>　イ　本物件を反社会的勢力の事務所その他の活動拠点に供すること。<br>　ロ　本物件または本物件の周辺において、著しく粗野若しくは乱暴な言動を行い、または威勢を示すことにより、付近<br>　　　の住民または通行人に不安を覚えさせること。<br>　ハ　本物件に反社会的勢力を居住させ、または反復継続して反社会的勢力を出入りさせること。</div>
+    <div class="article"><b>第32条（契約の解除）</b> 甲または乙の一方について、次のいずれかに該当した場合には、その相手方は、何らの催告も要せずして、本契約を解除す<br>ることができる。<br>　イ　第30条の確約に反する事実が判明したとき。<br>　ロ　契約締結後に自らまたは役員が反社会的勢力に該当したとき。<br>2　甲は、乙が第31条イからハに掲げる行為を行った場合は、何らの催告も要せずして、本契約を解除することができる。</div>
+    <div class="article"><b>第33条（特約事項）</b> 特約事項については以下記載の通りとする。</div>
+      </div>
+    </div>
+  `;
+}
+
+/* =========================================================================
+   支払約定書
+   ========================================================================= */
+function generatePayment(){
+  document.getElementById('paymentOutput').innerHTML = `
+    <div class="doc-page">
+      <div style="text-align:right;font-size:10px;color:#888;">${$('pa_date')?fmtDateJP($('pa_date')):''}</div>
+      <h2 class="doctitle" style="letter-spacing:6px;">支 払 約 定 書</h2>
+
+      <table class="price-table" style="margin-top:20px;">
+        <tr><th style="width:20%">住所</th><td>${$('pa_address')}</td></tr>
+        <tr><th>氏名</th><td>${$('pa_name')}　㊞</td></tr>
+      </table>
+
+      <p style="font-size:13px;line-height:2;margin-top:16px;">
+        ${$('pa_content')}　金 <b>${$('pa_amount')?Number($('pa_amount')).toLocaleString():''}</b> 円也　を下記期日に貴社にお支払いいたします。
+        ${$('pa_tax_amount')?`（但し、上記金額には消費税等相当額　金 ${Number($('pa_tax_amount')).toLocaleString()} 円也（消費税率${$('pa_tax_rate')}％）を含みます）`:''}
+      </p>
+
+      <table class="price-table" style="margin-top:14px;">
+        <tr><th style="width:8%">1.</th><th style="width:20%">支払日</th><td style="width:32%">${$('pa_date1')?fmtDateJP($('pa_date1')):''}</td><th style="width:16%">金額</th><td>${$('pa_amount1')?Number($('pa_amount1')).toLocaleString()+'円也':''}${$('pa_tax1')?'（内消費税：'+Number($('pa_tax1')).toLocaleString()+'円）':''}</td></tr>
+        <tr><th>2.</th><th>支払日</th><td>${$('pa_date2')?fmtDateJP($('pa_date2')):''}</td><th>金額</th><td>${$('pa_amount2')?Number($('pa_amount2')).toLocaleString()+'円也':''}${$('pa_tax2')?'（内消費税：'+Number($('pa_tax2')).toLocaleString()+'円）':''}</td></tr>
+      </table>
+
+      ${$('pa_note')?`<p style="font-size:11px;color:#555;margin-top:10px;">${$('pa_note').replace(/\n/g,'<br>')}</p>`:''}
+
+      <h3 style="color:var(--navy-dark);margin-top:20px;">【物件の表示】</h3>
+      <table class="price-table">
+        <tr><th style="width:20%">所在地</th><td>${$('pa_bukken_address')}</td></tr>
+        <tr><th>物件名</th><td>${$('pa_bukken_name')}</td></tr>
+      </table>
+    </div>
+  `;
+}
+
+/* =========================================================================
+   Excel匯入（重要事項説明書・不動産売買契約書）
+   ========================================================================= */
+
+/* このツール専用に確認した「元のExcelの印刷範囲（行番号・列番号、1始まり）」。
+   同じテンプレートであれば、これに沿って分頁・範囲制限すると元の見た目に近くなります。
+   AX列より右側は、都道府県プルダウン等の「印刷されない参照用データ」が入っているため除外します。 */
+const EI_KNOWN_PAGE_BREAKS = {
+  '重要事項説明書': [89, 190, 273, 356, 439, 523, 606, 688, 771, 854, 938, 1021, 1105, 1188, 1271, 1356, 1439, 1522],
+  '不動産売買契約書': [88, 175, 258, 340, 422, 494],
+  '336.支払約定書': [69]
+};
+const EI_KNOWN_PRINT_RANGE = {
+  '重要事項説明書': { maxCol: 50, maxRow: 1522 },   // A:AX, 1〜1522行
+  '不動産売買契約書': { maxCol: 50, maxRow: 494 },  // A:AX, 1〜494行
+  '336.支払約定書': { maxCol: 50, maxRow: 69 }      // A:AX, 1〜69行
+};
+
+let __eiWorkbook = null;
+
+document.getElementById('ei_file').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const status = document.getElementById('ei_status');
+  status.textContent = '讀取中…';
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const workbook = new ExcelJS.Workbook();
+    workbook.xlsx.load(ev.target.result).then(wb=>{
+      __eiWorkbook = wb;
+      const names = wb.worksheets.map(ws=>ws.name);
+      const select = document.getElementById('ei_sheet_select');
+      select.innerHTML = names.map(n=>`<option>${n}</option>`).join('');
+      const preferred = names.find(n => n==='重要事項説明書' || n==='不動産売買契約書');
+      if(preferred) select.value = preferred;
+      document.getElementById('ei_sheet_select_box').style.display = 'block';
+      status.textContent = `已讀取「${file.name}」，共 ${names.length} 個分頁。請選擇要載入的分頁。`;
+    }).catch(err=>{
+      status.textContent = '讀取失敗，請確認是不是正確的 Excel 檔案：' + err.message;
+    });
+  };
+  reader.onerror = () => { status.textContent = '檔案讀取失敗。'; };
+  reader.readAsArrayBuffer(file);
+});
+
+function eiParseA1Range(rangeStr){
+  const parts = rangeStr.split(':');
+  function parseAddr(a){
+    const m = a.match(/^\$?([A-Z]+)\$?(\d+)$/);
+    let col = 0;
+    for(let i=0;i<m[1].length;i++) col = col*26 + (m[1].charCodeAt(i)-64);
+    return {row: parseInt(m[2],10), col: col};
+  }
+  const start = parseAddr(parts[0]);
+  const end = parts[1] ? parseAddr(parts[1]) : start;
+  return {r1: start.row, c1: start.col, r2: end.row, c2: end.col};
+}
+
+function eiCellValue(cell){
+  let v = cell.value;
+  if(v === null || v === undefined) return '';
+  if(typeof v === 'object'){
+    if(v.richText) return v.richText.map(t=>t.text).join('');
+    if(v.text !== undefined) return String(v.text);
+    if(v.result !== undefined) return String(v.result);
+    if(v instanceof Date) return v.toLocaleDateString('ja-JP');
+    return '';
+  }
+  return String(v);
+}
+
+function eiHasBorder(worksheet, r, c, side){
+  const cell = worksheet.getCell(r, c);
+  return !!(cell.border && cell.border[side] && cell.border[side].style);
+}
+
+function excelSheetToHtmlPages(worksheet, sheetName){
+  const known = EI_KNOWN_PRINT_RANGE[sheetName];
+  const maxCol = known ? known.maxCol : (worksheet.columnCount || 50);
+  const maxRow = known ? known.maxRow : (worksheet.rowCount || 200);
+
+  const merges = (worksheet.model && worksheet.model.merges || []).map(rangeStr => eiParseA1Range(rangeStr))
+    .filter(m => m.c1 <= maxCol && m.r1 <= maxRow);
+
+  const cellToMerge = {};
+  merges.forEach((m, idx)=>{
+    for(let r=m.r1; r<=Math.min(m.r2,maxRow); r++){
+      for(let c=m.c1; c<=Math.min(m.c2,maxCol); c++){
+        cellToMerge[r+'_'+c] = idx;
+      }
+    }
+  });
+
+  function buildTable(rStart, rEnd){
+    let html = '<table class="ei-table">';
+    const skip = new Set();
+    for(let r=rStart; r<=rEnd; r++){
+      html += '<tr>';
+      for(let c=1; c<=maxCol; c++){
+        const key = r+'_'+c;
+        if(skip.has(key)) continue;
+        let r1=r, c1=c, r2=r, c2=c;
+        const mIdx = cellToMerge[key];
+        if(mIdx !== undefined){
+          const m = merges[mIdx];
+          if(m.r1 !== r || m.c1 !== c) continue; // 保険：先頭以外はスキップ済のはず
+          r1=m.r1; c1=m.c1; r2=Math.min(m.r2,maxRow); c2=Math.min(m.c2,maxCol);
+          for(let rr=r1; rr<=r2; rr++) for(let cc=c1; cc<=c2; cc++) skip.add(rr+'_'+cc);
+        }
+        let top=false,bottom=false,left=false,right=false;
+        for(let cc=c1; cc<=c2 && !top; cc++) if(eiHasBorder(worksheet,r1,cc,'top')) top=true;
+        for(let cc=c1; cc<=c2 && !bottom; cc++) if(eiHasBorder(worksheet,r2,cc,'bottom')) bottom=true;
+        for(let rr=r1; rr<=r2 && !left; rr++) if(eiHasBorder(worksheet,rr,c1,'left')) left=true;
+        for(let rr=r1; rr<=r2 && !right; rr++) if(eiHasBorder(worksheet,rr,c2,'right')) right=true;
+
+        const style = `border-top:${top?'1px solid #333':'none'};border-right:${right?'1px solid #333':'none'};border-bottom:${bottom?'1px solid #333':'none'};border-left:${left?'1px solid #333':'none'};`;
+        const val = eiCellValue(worksheet.getCell(r1,c1)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>');
+        const rowspan = r2-r1+1, colspan = c2-c1+1;
+        const rowspanAttr = rowspan>1?` rowspan="${rowspan}"`:'';
+        const colspanAttr = colspan>1?` colspan="${colspan}"`:'';
+        html += `<td${rowspanAttr}${colspanAttr} style="${style}">${val}</td>`;
+      }
+      html += '</tr>';
+    }
+    html += '</table>';
+    return html;
+  }
+
+  let breaks = EI_KNOWN_PAGE_BREAKS[sheetName];
+  if(!breaks){
+    breaks = [];
+    for(let i=70; i<=maxRow; i+=70) breaks.push(i);
+  }
+
+  const pages = [];
+  let start = 1;
+  breaks.forEach(b=>{
+    const end = Math.min(b, maxRow);
+    if(end >= start){ pages.push(buildTable(start, end)); start = end+1; }
+  });
+  if(start <= maxRow) pages.push(buildTable(start, maxRow));
+  return pages;
+}
+
+function loadExcelSheetIntoEditor(){
+  if(!__eiWorkbook) return;
+  const sheetName = $('ei_sheet_select');
+  const worksheet = __eiWorkbook.getWorksheet(sheetName);
+  if(!worksheet){ alert('找不到這個分頁的內容。'); return; }
+
+  const pageTables = excelSheetToHtmlPages(worksheet, sheetName);
+
+  const pagesHtml = pageTables.map((tableHtml, idx) => `
+    <div class="doc-page ei-page"${idx>0?' style="page-break-before:always;"':''}>
+      <div class="ei-editable" contenteditable="true">${tableHtml}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('excelimportOutput').innerHTML = pagesHtml;
+  document.getElementById('ei_editor_box').style.display = 'block';
+  document.getElementById('ei_print_btn').style.display = 'inline-block';
+  document.getElementById('ei_status').textContent = `已載入「${sheetName}」，共分成 ${pageTables.length} 頁，可直接在下方表格裡點兩下編輯文字。`;
+}
+
+/* =========================================================================
+   賃貸借契約解約申込書
+   ========================================================================= */
+function generateCancel(){
+  const reason = $('ca_reason') === 'その他' && $('ca_reason_other')
+    ? `その他（${$('ca_reason_other')}）`
+    : $('ca_reason');
+
+  document.getElementById('cancelOutput').innerHTML = `
+    <div class="doc-page" style="font-size:11px;">
+      <p style="text-align:right;font-size:10px;margin:0;">西暦　${$('ca_date')?fmtDateJP($('ca_date')):'　　年　　月　　日'}</p>
+      <h2 class="doctitle" style="letter-spacing:4px;margin:4px 0;">賃貸借契約解約申込書</h2>
+      <p style="font-size:11px;margin:2px 0;">下記の物件について賃貸借契約を解約することを申し入れ致します。</p>
+
+      <table class="price-table" style="margin-top:6px;">
+        <tr><th style="width:20%">フリガナ</th><td colspan="3">${$('ca_furigana')}</td></tr>
+        <tr><th>賃借人 氏名</th><td colspan="3">${$('ca_name')} 様</td></tr>
+        <tr><th>連絡先（電話番号）</th><td colspan="3">${$('ca_tel')}</td></tr>
+      </table>
+
+      <h3 style="color:var(--navy-dark);margin:6px 0 2px;font-size:12px;">□ 解約申込物件</h3>
+      <table class="price-table">
+        <tr><th style="width:20%">名称</th><td>${$('ca_bukken_name')}</td><th style="width:20%">部屋番号</th><td>${$('ca_room')}</td></tr>
+        <tr><th>所在地</th><td colspan="3">${$('ca_bukken_address')}</td></tr>
+      </table>
+
+      <table class="price-table" style="margin-top:6px;">
+        <tr><th style="width:20%">解約事由</th><td colspan="3">${reason}</td></tr>
+        <tr><th>解約日</th><td>西暦 ${$('ca_cancel_date')?fmtDateJP($('ca_cancel_date')):''}</td>
+            <th>退去立会日</th><td>西暦 ${$('ca_tachiai_date')?fmtDateJP($('ca_tachiai_date')):''}${$('ca_tachiai_time')?'（'+$('ca_tachiai_time')+'希望）':''}</td></tr>
+      </table>
+
+      <h3 style="color:var(--navy-dark);margin:6px 0 2px;font-size:12px;">□ 精算後敷金返還口座</h3>
+      <table class="price-table">
+        <tr><th style="width:20%">銀行名</th><td>${$('ca_bank')}</td><th style="width:20%">支店名</th><td>${$('ca_branch')}</td></tr>
+        <tr><th>口座種類</th><td>${$('ca_account_type')}</td><th>口座番号</th><td>${$('ca_account_no')}</td></tr>
+        <tr><th>口座名義人</th><td colspan="3">${$('ca_account_name')}</td></tr>
+      </table>
+
+      ${$('ca_new_address') ? `
+      <h3 style="color:var(--navy-dark);margin:6px 0 2px;font-size:12px;">□ 転居先ご住所</h3>
+      <table class="price-table"><tr><td>${$('ca_new_address')}</td></tr></table>
+      ` : ''}
+
+      <h3 style="color:var(--navy-dark);margin:6px 0 2px;font-size:12px;">□ 解約時の注意事項</h3>
+      <div style="font-size:9px;line-height:1.4;">
+        （1）公共料金、インターネット、新聞、電話等の停止手続きをお忘れなくお願いいたします。<br>
+        （2）粗大ゴミの処分はお早めにお手続きをお願いいたします。荷物やゴミ等残置物がある場合はその処分費用をご請求させて頂くことになりますのでご注意下さい。<br>
+        （3）退去立会時に鍵を全てご返却いただきます。複製した鍵もご返却いただきますので、必ずご持参下さい。<br>
+        （4）月の途中で解約する場合でも、賃料1ヶ月分が引落しとなります。後日、日割り賃料をご返金いたします。※賃料が振込みの場合も、賃料1ヶ月分をお振込お願いいたします。
+      </div>
+      <p style="font-size:9px;color:#555;margin:4px 0 0;line-height:1.35;">つきましては、家財一切の搬出を終了させ、鍵と本物件の明渡しを上記解約日までに行います。万一、鍵の返還後に本物件内に残置した物品が存在した場合は、その所有権を放棄したものとし、賃貸人により搬出、処分されても一切の異議申し立ては行わないこととします。なお、搬出・処分にかかる費用は賃借人の負担とします。</p>
+
+      <div style="border:1px solid #333;padding:4px 8px;margin-top:6px;background:#fff8e6;">
+        <b style="color:var(--navy-dark);font-size:11px;">【違約金等の振込先】</b><br>
+        <div style="font-size:10px;line-height:1.4;margin-top:2px;">
+          ■銀行名：GMOあおぞらネット銀行（金融機関コード：0310）　■支店名：法人営業部（支店コード：101）<br>
+          ■口座種類：普通　■口座番号：2031431　■口座名義：ジービーショウジゴウドウガイシャ
+        </div>
+      </div>
+
+      <div class="sign-block" style="margin-top:6px;">
+        <div class="box" style="width:100%;">
+          <b>賃借人</b>
+          <div>住所：${$('ca_address')}</div>
+          <div>氏名：${$('ca_name')}　㊞　　(TEL)：${$('ca_tel')}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
 </script>
 </body>
 </html>
