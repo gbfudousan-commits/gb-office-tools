@@ -1076,8 +1076,14 @@
       <fieldset>
         <legend>⑤甲（貸主）・丙（連帯保証人）</legend>
         <div class="row">
-          <div class="field wide"><label>甲（貸主）住所</label><input id="ld_koushu_address"></div>
+          <div class="field wide"><label>甲（貸主・真正房東）住所</label><input id="ld_koushu_address"></div>
           <div class="field"><label>甲（貸主）氏名</label><input id="ld_koushu_name"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>適格請求書発行事業者登録番号</label><input id="ld_koushu_toroku" placeholder="無ければ空欄のまま（自動で「登録なし」と表示）"></div>
+          <div class="field"><label>貸主代理の有無</label>
+            <select id="ld_daishu_flag"><option value="無">無（甲が直接契約）</option><option value="有">有（GB商事が貸主代理）</option></select>
+          </div>
         </div>
         <div class="row">
           <div class="field wide"><label>丙（連帯保証人）住所</label><input id="ld_hoshounin_address"></div>
@@ -3280,23 +3286,39 @@ function generateLease(){
     </table>
   `;
 
+  const kanriTorokuRow = $('ld_kanri_touroku') ? `　登録番号：${$('ld_kanri_touroku')}` : '';
   const companyTable = `
     <table class="price-table">
       <tr><th style="width:22%">保証会社</th><td>${$('ld_hoshou_name')}　承認番号：${$('ld_hoshou_ninka')}</td></tr>
       <tr><th>保証会社住所</th><td>${$('ld_hoshou_address')}</td></tr>
-      <tr><th>賃貸管理会社</th><td>${$('ld_kanri_name')}　登録番号：${$('ld_kanri_touroku')}</td></tr>
+      <tr><th>賃貸管理会社</th><td>${$('ld_kanri_name')}${kanriTorokuRow}</td></tr>
       <tr><th>管理会社住所</th><td>${$('ld_kanri_address')}</td></tr>
     </table>
   `;
 
+  const koushuToroku = $('ld_koushu_toroku') || '登録なし';
+  const hasDaishu = $('ld_daishu_flag') === '有';
+  const daishuBlock = hasDaishu ? `
+      <div class="box" style="width:100%;">
+        <b>（貸主代理）</b>
+        <div>住所：${$('o_jimusho')}</div>
+        <div>名称：${$('o_shougou')}　㊞</div>
+        <div>電話：${$('o_tel')||''}</div>
+      </div>
+  ` : '';
+
   const signBlock = `
     <div class="sign-block">
-      <div class="box">
+      <div class="box" style="width:100%;">
         <b>甲（貸主）</b>
         <div>住所：${$('ld_koushu_address')}</div>
         <div>氏名：${$('ld_koushu_name')}　㊞</div>
+        <div>適格請求書発行事業者登録番号：${koushuToroku}</div>
       </div>
-      <div class="box">
+    </div>
+    <div class="sign-block">${daishuBlock}</div>
+    <div class="sign-block">
+      <div class="box" style="width:100%;">
         <b>乙（借主）</b>
         <div>住所：</div>
         <div>氏名：${$('ld_client_name')}　㊞</div>
