@@ -173,6 +173,10 @@
   .s2-pay td{font-size:11px;padding:4px 8px;}
   .s2-pay td.amt{text-align:right;white-space:nowrap;}
   .mgmt-break{page-break-before:always;break-before:page;}
+  .mgmt-compact h3{font-size:14px;margin:10px 0 6px;}
+  .mgmt-compact .price-table{margin-bottom:8px;}
+  .mgmt-compact .price-table th,.mgmt-compact .price-table td{padding:4px 8px;}
+  .mgmt-compact table.price-table tr{page-break-inside:avoid;break-inside:avoid;}
   .mgmt-terms .article{font-size:11.5px;line-height:1.55;margin-bottom:7px;}
   .doc-banner{margin-bottom:12px;}
   .cal-table .badge{display:inline-block;background:var(--navy);color:#fff;border-radius:50%;width:16px;height:16px;text-align:center;font-size:10px;line-height:16px;margin-left:3px;font-weight:bold;}
@@ -2322,7 +2326,7 @@ function generateMgmt(){
   `;
 
   document.getElementById('mgmtOutput').innerHTML = `
-    <div class="doc-page">
+    <div class="doc-page mgmt-compact">
       ${banner}
       ${clientTable}
       ${rentalTerms}
@@ -3721,7 +3725,7 @@ function generateCancel(){
    ========================================================================= */
 
 /* ↓↓↓ 財務レポートツール（Render）で設定した api_secret と同じ値をここに貼り付けてください ↓↓↓ */
-const TODO_API_SECRET = "aB123Cd456Ef789Gb889420";
+const TODO_API_SECRET = "YOUR_API_SECRET_HERE";
 /* ↑↑↑ ここまで ↑↑↑ */
 
 let todoCache = [];
@@ -3732,7 +3736,7 @@ function loadTodosFromRagic(){
     statusEl.textContent = '尚未設定財報系統網址（FINANCE_TOOL_URL），請聯絡管理員設定。';
     return;
   }
-  if(!TODO_API_SECRET || TODO_API_SECRET === 'YOUR_API_SECRET_HERE'){
+  if(!TODO_API_SECRET || TODO_API_SECRET === 'aB123Cd456Ef789Gb889420'){
     statusEl.textContent = '尚未設定 API 金鑰（TODO_API_SECRET），請聯絡管理員設定。';
     return;
   }
