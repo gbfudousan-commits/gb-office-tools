@@ -243,7 +243,7 @@
       <span id="siteUserLabel" style="font-size:12px;opacity:.85;"></span>
       <a href="#" class="header-link" id="financeHeaderLink" style="display:none;" target="_blank" rel="noopener">公司財報 →</a>
       <a href="#" class="header-link" id="trackerHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-tracker').classList.add('active');return false;">進度追蹤 →</a>
-      <a href="#" class="header-link" id="todoHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-todo').classList.add('active');return false;">代辦事項 →</a>
+      <a href="#" class="header-link" id="todoHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-todo').classList.add('active');if(todoCache.length===0)loadTodosFromRagic();return false;">代辦事項 →</a>
       <a href="#" class="header-link" onclick="siteLogout();return false;" style="font-size:13px;">登出</a>
     </div>
   </div>
@@ -1408,35 +1408,21 @@
   <div class="panel" id="panel-todo">
     <div class="side-form" style="max-width:1100px;">
 
-      <fieldset id="todoFormBox">
-        <legend id="todoFormTitle">新增代辦事項</legend>
-        <div class="row">
-          <div class="field"><label>物件編號（Ragic）</label><input id="td_bukken_no" placeholder="例：00087"></div>
-          <div class="field wide"><label>物件名稱／地址</label><input id="td_bukken_name" placeholder="例：京都市下京区忠庵町316デトム・ワン烏丸五条204"></div>
-        </div>
-        <div class="row">
-          <div class="field wide"><label>代辦事項內容</label><input id="td_content" placeholder="例：目前有人申請租房中"></div>
-          <div class="field"><label>擔當人員</label><select id="td_staff"></select></div>
-        </div>
-        <div class="row">
-          <div class="field"><label>狀態</label>
-            <select id="td_status"><option>待辦中</option><option>處理中</option><option>已完成</option><option>已取消</option></select>
-          </div>
-          <div class="field"><label>完成日期</label><input id="td_complete_date" type="date"></div>
-        </div>
-        <div class="field wide"><label>備註</label><textarea id="td_note"></textarea></div>
+      <fieldset>
+        <legend>代辦事項（直接讀取 Ragic 即時資料）</legend>
+        <p style="font-size:12px;color:#555;">這裡的資料是即時從 Ragic 抓取的，不是另外手動輸入的一份。要修改內容，請直接到 Ragic 裡編輯，這裡按「重新整理」就會抓到最新狀態。</p>
         <div class="toolbar no-print">
-          <button class="btn" onclick="saveTodo()">💾 儲存這筆代辦事項</button>
-          <button class="btn secondary" id="todoCancelBtn" onclick="resetTodoForm()" style="display:none;">取消編輯</button>
+          <button class="btn" onclick="loadTodosFromRagic()">🔄 重新整理（重新抓取 Ragic）</button>
         </div>
+        <div id="todoStatus" style="font-size:12px;color:#888;margin-top:6px;"></div>
       </fieldset>
 
       <fieldset>
-        <legend>所有代辦事項（即時同步）</legend>
+        <legend>篩選</legend>
         <div class="row">
-          <div class="field"><label>篩選：物件編號</label><input id="td_filter_bukken" oninput="renderTodoList()" placeholder="輸入編號搜尋"></div>
+          <div class="field"><label>篩選：物件編號／地址</label><input id="td_filter_bukken" oninput="renderTodoList()" placeholder="輸入編號或地址搜尋"></div>
           <div class="field"><label>篩選：狀態</label>
-            <select id="td_filter_status" onchange="renderTodoList()"><option value="">全部</option><option>待辦中</option><option>處理中</option><option>已完成</option><option>已取消</option></select>
+            <select id="td_filter_status" onchange="renderTodoList()"><option value="">全部</option><option>待辦中</option><option>已完成</option></select>
           </div>
           <div class="field" id="td_filter_staff_field"><label>篩選：擔當人員</label>
             <select id="td_filter_staff" onchange="renderTodoList()"><option value="">全部</option></select>
@@ -2936,7 +2922,6 @@ function applyCurrentUserUI(){
     trackerCurrentUser.name + (trackerCurrentUser.viewAllCases ? '（可查看全部案子）' : '（只能查看自己擔當的案子）');
   startStaffListListener();
   startCaseListener();
-  startTodoListener();
 }
 
 function startCaseListener(){
@@ -3002,28 +2987,6 @@ function populateStaffSelects(){
   } else {
     staffSelect.disabled = false;
     if(staffFilterField) staffFilterField.style.display = '';
-  }
-
-  // 代辦事項でも同じ人員名簿を使う
-  const tdStaffSelect = document.getElementById('td_staff');
-  const tdFilterSelect = document.getElementById('td_filter_staff');
-  if(tdStaffSelect && tdFilterSelect){
-    const prevTdStaffVal = tdStaffSelect.value;
-    const prevTdFilterVal = tdFilterSelect.value;
-    tdStaffSelect.innerHTML = names.map(n=>`<option>${n}</option>`).join('');
-    tdFilterSelect.innerHTML = '<option value="">全部</option>' + names.map(n=>`<option>${n}</option>`).join('');
-    if(names.includes(prevTdStaffVal)) tdStaffSelect.value = prevTdStaffVal;
-    if(names.includes(prevTdFilterVal)) tdFilterSelect.value = prevTdFilterVal;
-
-    const tdStaffFilterField = document.getElementById('td_filter_staff_field');
-    if(trackerCurrentUser && !trackerCurrentUser.viewAllCases){
-      if(names.includes(trackerCurrentUser.name)) tdStaffSelect.value = trackerCurrentUser.name;
-      tdStaffSelect.disabled = true;
-      if(tdStaffFilterField) tdStaffFilterField.style.display = 'none';
-    } else {
-      tdStaffSelect.disabled = false;
-      if(tdStaffFilterField) tdStaffFilterField.style.display = '';
-    }
   }
 }
 
@@ -3752,90 +3715,65 @@ function generateCancel(){
   `;
 }
 
+
 /* =========================================================================
-   代辦事項（代管物件・Firestore「todos」集合）
+   代辦事項（Ragic API から即時取得・読み取り専用）
    ========================================================================= */
+
+/* ↓↓↓ 財務レポートツール（Render）で設定した api_secret と同じ値をここに貼り付けてください ↓↓↓ */
+const TODO_API_SECRET = "YOUR_API_SECRET";
+/* ↑↑↑ ここまで ↑↑↑ */
+
 let todoCache = [];
-let editingTodoId = null;
 
-function startTodoListener(){
-  trackerDB.collection('todos').orderBy('updatedAt', 'desc').onSnapshot(snapshot=>{
-    let all = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    if(trackerCurrentUser && !trackerCurrentUser.viewAllCases){
-      all = all.filter(t => t.staff === trackerCurrentUser.name);
-    }
-    todoCache = all;
+function loadTodosFromRagic(){
+  const statusEl = document.getElementById('todoStatus');
+  if(!FINANCE_TOOL_URL || FINANCE_TOOL_URL.includes('YOUR-APP-NAME')){
+    statusEl.textContent = '尚未設定財報系統網址（FINANCE_TOOL_URL），請聯絡管理員設定。';
+    return;
+  }
+  if(!TODO_API_SECRET || TODO_API_SECRET === 'YOUR_API_SECRET'){
+    statusEl.textContent = '尚未設定 API 金鑰（TODO_API_SECRET），請聯絡管理員設定。';
+    return;
+  }
+  statusEl.textContent = '讀取中…';
+  const base = FINANCE_TOOL_URL.endsWith('/') ? FINANCE_TOOL_URL : FINANCE_TOOL_URL + '/';
+  fetch(base + 'api/todos', {
+    headers: { 'X-API-Key': TODO_API_SECRET }
+  }).then(r=>{
+    if(!r.ok) throw new Error('伺服器回應錯誤（' + r.status + '）');
+    return r.json();
+  }).then(data=>{
+    if(data.error){ statusEl.textContent = '讀取失敗：' + data.error; return; }
+    todoCache = data.todos || [];
+    populateTodoStaffFilter();
     renderTodoList();
-  }, err=>{
-    console.error(err);
-  });
-}
-
-function resetTodoForm(){
-  editingTodoId = null;
-  ['td_bukken_no','td_bukken_name','td_content','td_complete_date','td_note'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(el) el.value = '';
-  });
-  document.getElementById('td_status').value = '待辦中';
-  if(trackerCurrentUser && !trackerCurrentUser.viewAllCases){
-    document.getElementById('td_staff').value = trackerCurrentUser.name;
-  } else if(document.getElementById('td_staff').options.length){
-    document.getElementById('td_staff').selectedIndex = 0;
-  }
-  document.getElementById('todoFormTitle').textContent = '新增代辦事項';
-  document.getElementById('todoCancelBtn').style.display = 'none';
-}
-
-function saveTodo(){
-  if(!trackerDB){ alert('資料庫尚未連線。'); return; }
-  const data = {
-    bukkenNo: $('td_bukken_no'),
-    bukkenName: $('td_bukken_name'),
-    content: $('td_content'),
-    staff: $('td_staff'),
-    status: $('td_status'),
-    completeDate: $('td_complete_date'),
-    note: $('td_note'),
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  };
-  if(!data.bukkenNo && !data.bukkenName){
-    alert('請至少填寫物件編號或物件名稱。');
-    return;
-  }
-  if(!data.content){
-    alert('請填寫代辦事項內容。');
-    return;
-  }
-  const promise = editingTodoId
-    ? trackerDB.collection('todos').doc(editingTodoId).update(data)
-    : trackerDB.collection('todos').add({...data, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
-  promise.then(()=>{
-    resetTodoForm();
+    statusEl.textContent = `已從 Ragic 讀取 ${todoCache.length} 筆代辦事項（${new Date().toLocaleTimeString('zh-TW')} 更新）`;
   }).catch(err=>{
-    alert('儲存失敗：' + err.message);
+    statusEl.textContent = '讀取失敗：' + err.message + '（請確認財報系統是否正常運作、網路是否正常）';
   });
 }
 
-function editTodo(id){
-  const t = todoCache.find(x => x.id === id);
-  if(!t) return;
-  editingTodoId = id;
-  document.getElementById('td_bukken_no').value = t.bukkenNo || '';
-  document.getElementById('td_bukken_name').value = t.bukkenName || '';
-  document.getElementById('td_content').value = t.content || '';
-  document.getElementById('td_staff').value = t.staff || '';
-  document.getElementById('td_status').value = t.status || '待辦中';
-  document.getElementById('td_complete_date').value = t.completeDate || '';
-  document.getElementById('td_note').value = t.note || '';
-  document.getElementById('todoFormTitle').textContent = '編輯代辦事項';
-  document.getElementById('todoCancelBtn').style.display = 'inline-block';
-  document.querySelector('#todoFormBox').scrollIntoView({behavior:'smooth'});
+function populateTodoStaffFilter(){
+  const select = document.getElementById('td_filter_staff');
+  if(!select) return;
+  const prevVal = select.value;
+  const staffNames = [...new Set(todoCache.map(t=>t.staff).filter(s=>s))].sort();
+  select.innerHTML = '<option value="">全部</option>' + staffNames.map(n=>`<option>${n}</option>`).join('');
+  if(staffNames.includes(prevVal)) select.value = prevVal;
+
+  const staffFilterField = document.getElementById('td_filter_staff_field');
+  if(trackerCurrentUser && !trackerCurrentUser.viewAllCases){
+    if(staffFilterField) staffFilterField.style.display = 'none';
+  } else {
+    if(staffFilterField) staffFilterField.style.display = '';
+  }
 }
 
-function deleteTodo(id){
-  if(!confirm('確定要刪除這筆代辦事項嗎？刪除後無法復原。')) return;
-  trackerDB.collection('todos').doc(id).delete();
+function todoStatus(t){
+  if(t.complete_date) return '已完成';
+  if(t.status_flag) return '待辦中';
+  return '待辦中';
 }
 
 function renderTodoList(){
@@ -3846,41 +3784,38 @@ function renderTodoList(){
   const filterStaff = $('td_filter_staff');
 
   let list = todoCache.filter(t=>{
+    if(trackerCurrentUser && !trackerCurrentUser.viewAllCases && t.staff !== trackerCurrentUser.name) return false;
     if(filterBukken){
-      const hay = ((t.bukkenNo||'') + ' ' + (t.bukkenName||'')).toLowerCase();
+      const hay = ((t.property_no||'') + ' ' + (t.property_address||'')).toLowerCase();
       if(!hay.includes(filterBukken)) return false;
     }
-    if(filterStatus && t.status !== filterStatus) return false;
+    if(filterStatus && todoStatus(t) !== filterStatus) return false;
     if(filterStaff && t.staff !== filterStaff) return false;
     return true;
   });
 
   if(list.length === 0){
-    container.innerHTML = '<p style="color:#888;">目前沒有符合條件的代辦事項。</p>';
+    container.innerHTML = '<p style="color:#888;">目前沒有符合條件的代辦事項（或尚未按上方「重新整理」讀取資料）。</p>';
     return;
   }
 
   container.innerHTML = list.map(t=>{
-    const status = t.status || '待辦中';
+    const status = todoStatus(t);
     return `
       <div class="case-card">
         <div class="ctop">
           <div>
-            <span class="cname">${t.bukkenNo?'【'+t.bukkenNo+'】':''}${t.bukkenName || '(未填物件)'}</span>
-            <div class="cmeta">擔當：${t.staff||'－'}　完成日期：${t.completeDate||'－'}</div>
+            <span class="cname">${t.property_no?'【'+t.property_no+'】':''}${t.property_address || '(未填地址)'}</span>
+            <div class="cmeta">客戶：${t.customer_name||'－'}　擔當：${t.staff||'－'}　完成日期：${t.complete_date||'－'}</div>
           </div>
           <span class="stage-badge todo-status-${status}">${status}</span>
         </div>
-        <div class="cmeta" style="margin-top:6px;font-size:13px;color:#333;">${t.content||''}</div>
-        ${t.note?`<div class="cmeta">備註：${t.note}</div>`:''}
-        <div class="cactions">
-          <button class="btn small secondary" onclick="editTodo('${t.id}')">編輯</button>
-          <button class="btn small danger" onclick="deleteTodo('${t.id}')">刪除</button>
-        </div>
+        <div class="cmeta" style="margin-top:6px;font-size:13px;color:#333;white-space:pre-wrap;">${(t.content||'').replace(/</g,'&lt;')}</div>
       </div>
     `;
   }).join('');
 }
+
 </script>
 </body>
 </html>
