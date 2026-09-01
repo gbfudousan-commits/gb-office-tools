@@ -3725,7 +3725,7 @@ function generateCancel(){
    ========================================================================= */
 
 /* ↓↓↓ 財務レポートツール（Render）で設定した api_secret と同じ値をここに貼り付けてください ↓↓↓ */
-const TODO_API_SECRET = "YOUR_API_SECRET_HERE";
+const TODO_API_SECRET = "aB123Cd456Ef789Gb889420";
 /* ↑↑↑ ここまで ↑↑↑ */
 
 let todoCache = [];
@@ -3736,7 +3736,7 @@ function loadTodosFromRagic(){
     statusEl.textContent = '尚未設定財報系統網址（FINANCE_TOOL_URL），請聯絡管理員設定。';
     return;
   }
-  if(!TODO_API_SECRET || TODO_API_SECRET === 'aB123Cd456Ef789Gb889420'){
+  if(!TODO_API_SECRET || TODO_API_SECRET === 'YOUR_API_SECRET_HERE'){
     statusEl.textContent = '尚未設定 API 金鑰（TODO_API_SECRET），請聯絡管理員設定。';
     return;
   }
