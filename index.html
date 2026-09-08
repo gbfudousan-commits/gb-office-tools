@@ -1635,6 +1635,7 @@
         <input type="text" id="pp-searchBox" placeholder="輸入物件編號、地址或客戶姓名搜尋">
         <button class="btn primary" onclick="openForm(null)">＋ 新增物件</button>
       </div>
+      <div id="pp-filterBar" style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin:4px 0 14px;padding:12px;background:var(--pp-sub-bg);border:1px solid var(--pp-line);border-radius:var(--pp-radius);"></div>
       <div id="pp-listCount" style="font-size:12px;color:var(--pp-muted);margin-bottom:8px;"></div>
       <div style="overflow-x:auto;">
         <table class="list-table" id="pp-listTable">
@@ -4126,13 +4127,98 @@ function formatValue(field, rawVal){
 /* ---------------- 列表頁 ---------------- */
 let ppCurrentPage = 1;
 const PP_PAGE_SIZE = 20;
+let ppFilters = {}; // { fieldId: 選項值 } 或 { fieldId: {min, max} }（皆為儲存用的原始單位）
+
+function ppFilterUnitFactor(f){
+  if(!f) return 1;
+  if(f.id==='purchase_price') return 10000; // 篩選框輸入的是「萬」
+  if(f.type==='formula' && f.displayFormat==='percent') return 0.01; // 篩選框輸入的是百分比數字（例如 10 代表 10%）
+  return 1;
+}
+function renderFilterBar(){
+  const bar = document.getElementById('pp-filterBar');
+  if(!bar) return;
+  const filterFields = fieldConfig.filter(f=>f.filterable);
+  if(!filterFields.length){ bar.style.display='none'; bar.innerHTML=''; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = filterFields.map(f=>{
+    if(f.type==='select' || f.type==='multiselect'){
+      const cur = ppFilters[f.id] || '';
+      return `<div class="field" style="min-width:140px;flex:0 0 auto;">
+        <label>${f.label}</label>
+        <select onchange="ppSetFilterSelect('${f.id}', this.value)">
+          <option value="">全部</option>
+          ${(f.options||[]).map(o=>`<option value="${o}" ${o===cur?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>`;
+    }
+    if(f.type==='number' || f.type==='formula'){
+      const factor = ppFilterUnitFactor(f);
+      const cur = ppFilters[f.id] || {};
+      const minDisplay = (cur.min!=null && cur.min!=='') ? (cur.min/factor) : '';
+      const maxDisplay = (cur.max!=null && cur.max!=='') ? (cur.max/factor) : '';
+      const unitLabel = f.id==='purchase_price' ? '（單位：萬）' : (f.type==='formula' && f.displayFormat==='percent' ? '（單位：%）' : '');
+      return `<div class="field" style="min-width:200px;flex:0 0 auto;">
+        <label>${f.label}${unitLabel}</label>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="number" placeholder="最低" value="${minDisplay}" style="width:80px;" onchange="ppSetFilterRange('${f.id}','min', this.value)">
+          <span>～</span>
+          <input type="number" placeholder="最高" value="${maxDisplay}" style="width:80px;" onchange="ppSetFilterRange('${f.id}','max', this.value)">
+        </div>
+      </div>`;
+    }
+    return '';
+  }).join('') + `<button class="btn small" style="align-self:flex-end;" onclick="ppClearFilters()">清除篩選</button>`;
+}
+function ppSetFilterSelect(fieldId, val){
+  if(!val) delete ppFilters[fieldId];
+  else ppFilters[fieldId] = val;
+  ppCurrentPage = 1;
+  renderList();
+}
+function ppSetFilterRange(fieldId, key, val){
+  const f = fieldConfig.find(x=>x.id===fieldId);
+  const factor = ppFilterUnitFactor(f);
+  if(!ppFilters[fieldId] || typeof ppFilters[fieldId] !== 'object') ppFilters[fieldId] = {};
+  ppFilters[fieldId][key] = val==='' ? '' : Number(val) * factor;
+  if((ppFilters[fieldId].min==null || ppFilters[fieldId].min==='') && (ppFilters[fieldId].max==null || ppFilters[fieldId].max==='')){
+    delete ppFilters[fieldId];
+  }
+  ppCurrentPage = 1;
+  renderList();
+}
+function ppClearFilters(){
+  ppFilters = {};
+  ppCurrentPage = 1;
+  renderFilterBar();
+  renderList();
+}
 
 function renderList(){
   const listCols = fieldConfig.filter(f=>f.showInList);
   document.getElementById('pp-listHeadRow').innerHTML = listCols.map(f=>`<th>${f.label}</th>`).join('');
   const body = document.getElementById('pp-listBody');
   const kw = (document.getElementById('pp-searchBox').value||'').trim();
-  const filtered = records.filter(r=> !kw || (r.property_no+r.address+r.customer_name).includes(kw));
+
+  const filtered = records.filter(r=>{
+    if(kw && !(r.property_no+r.address+r.customer_name).includes(kw)) return false;
+    for(const fieldId in ppFilters){
+      const f = fieldConfig.find(x=>x.id===fieldId);
+      if(!f) continue;
+      const filterVal = ppFilters[fieldId];
+      const val = f.type==='formula' ? computeFormula(f, r) : r[fieldId];
+      if(f.type==='select'){
+        if(val !== filterVal) return false;
+      }else if(f.type==='multiselect'){
+        if(!(Array.isArray(val) && val.includes(filterVal))) return false;
+      }else if(f.type==='number' || f.type==='formula'){
+        const num = Number(val)||0;
+        if(filterVal.min!=null && filterVal.min!=='' && num < filterVal.min) return false;
+        if(filterVal.max!=null && filterVal.max!=='' && num > filterVal.max) return false;
+      }
+    }
+    return true;
+  });
 
   const totalCount = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / PP_PAGE_SIZE));
@@ -4161,6 +4247,7 @@ function renderList(){
   }).join('');
 
   renderListPagination(totalPages);
+  renderFilterBar();
 }
 function renderListPagination(totalPages){
   const el = document.getElementById('pp-listPagination');
@@ -4585,6 +4672,7 @@ function renderSubsectionBlock(sectionId, sub){
 function renderFieldRows(fields, isSubtable){
   if(!fields.length) return `<div style="font-size:12px;color:var(--pp-muted);padding:4px 0 8px;">（這裡還沒有欄位，按上面「＋ 欄位」新增）</div>`;
   const typeOptions = ['text','number','date','select','multiselect','formula','file','serial'];
+  const filterableTypes = ['select','multiselect','number','formula'];
   return fields.map(f=>{
     const globalIdx = fieldConfig.indexOf(f);
     let extra = '';
@@ -4606,6 +4694,11 @@ function renderFieldRows(fields, isSubtable){
       </div>`;
     }else{
       extra = `<span style="font-size:12px;color:var(--pp-muted);">—</span>`;
+    }
+    if(!isSubtable && filterableTypes.includes(f.type)){
+      extra += `<label style="display:block;margin-top:6px;font-size:11px;color:var(--pp-muted);cursor:pointer;">
+        <input type="checkbox" ${f.filterable?'checked':''} onchange="toggleFilterable(${globalIdx}, this.checked)" style="width:auto;vertical-align:middle;"> 顯示在列表篩選區
+      </label>`;
     }
     return `<div class="fs-row">
       <div class="move-btns">
@@ -4698,6 +4791,12 @@ function updateSerialConfig(idx, key, val){
   markDirty();
   fieldConfig[idx][key] = key==='serialDigits' ? Number(val)||5 : val;
   renderFieldSettings();
+}
+function toggleFilterable(idx, checked){
+  markDirty();
+  fieldConfig[idx].filterable = checked;
+  renderFieldSettings();
+  renderFilterBar();
 }
 function deleteField(idx){
   if(!confirm('確定要刪除「'+fieldConfig[idx].label+'」這個欄位嗎？')) return;
