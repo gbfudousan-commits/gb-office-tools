@@ -224,6 +224,178 @@
     .panel.printing{display:block !important;}
     .cal-table{page-break-inside:avoid;break-inside:avoid;}
   }
+
+/* ============ 物件資料管理（新功能，命名空間 #panel-properties 底下） ============ */
+
+  #panel-properties{
+    --pp-bg:#f6f4ef;
+    --pp-surface:#ffffff;
+    --pp-ink:#24302a;
+    --pp-muted:#6b7269;
+    --pp-line:#e4e0d6;
+    --pp-accent:#2f6f4f;
+    --pp-accent-soft:#e7f0ea;
+    --pp-amber:#a9722f;
+    --pp-amber-soft:#f5ebdc;
+    --pp-danger:#a4433a;
+    --pp-danger-soft:#f6e8e6;
+    --pp-formula-bg:#f1f6f3;
+    --pp-sub-bg:#fbfaf7;
+    --pp-radius:6px;
+  }
+#panel-properties *{box-sizing:border-box;}
+
+#panel-properties .shell{max-width:1100px;margin:0 auto;padding:28px 20px 80px;}
+#panel-properties header.top{margin-bottom:22px;}
+#panel-properties header.top h1{font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:.02em;}
+#panel-properties header.top p{margin:0;color:var(--pp-muted);font-size:13px;}
+#panel-properties .badge-proto{
+    display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;
+    background:var(--pp-amber-soft);color:var(--pp-amber);margin-left:8px;
+    vertical-align:middle;font-weight:600;
+  }
+#panel-properties nav.pp-tabs{display:flex;gap:2px;border-bottom:1px solid var(--pp-line);margin-bottom:22px;}
+#panel-properties nav.pp-tabs button{
+    appearance:none;border:none;background:transparent;font-size:14px;font-family:inherit;
+    color:var(--pp-muted);padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+#panel-properties nav.pp-tabs button.active{color:var(--pp-ink);border-bottom-color:var(--pp-accent);font-weight:600;}
+#panel-properties nav.pp-tabs button:hover{color:var(--pp-ink);}
+#panel-properties .pp-panel{display:none;}
+#panel-properties .pp-panel.active{display:block;}
+#panel-properties .card{background:var(--pp-surface);border:1px solid var(--pp-line);border-radius:var(--pp-radius);padding:18px 20px;}
+#panel-properties .card + .card{margin-top:16px;}
+
+  /* ---- list ---- */
+#panel-properties .list-toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+#panel-properties .list-toolbar input[type=text]{
+    flex:1;min-width:180px;padding:8px 10px;border:1px solid var(--pp-line);
+    border-radius:var(--pp-radius);font-size:13px;font-family:inherit;
+  }
+#panel-properties .btn{
+    appearance:none;border:1px solid var(--pp-line);background:var(--pp-surface);color:var(--pp-ink);
+    padding:8px 14px;border-radius:var(--pp-radius);font-size:13px;font-family:inherit;cursor:pointer;
+  }
+#panel-properties .btn:hover{border-color:var(--pp-accent);color:var(--pp-accent);}
+#panel-properties .btn.primary{background:var(--pp-accent);border-color:var(--pp-accent);color:#fff;}
+#panel-properties .btn.primary:hover{opacity:.9;color:#fff;}
+#panel-properties .btn.ghost{border-color:transparent;background:transparent;padding:6px 8px;}
+#panel-properties .btn.small{padding:4px 10px;font-size:12px;}
+#panel-properties .btn.danger:hover{border-color:var(--pp-danger);color:var(--pp-danger);}
+
+#panel-properties table.list-table{width:100%;border-collapse:collapse;font-size:13px;}
+#panel-properties table.list-table th{
+    text-align:left;font-weight:600;color:var(--pp-muted);font-size:12px;
+    padding:8px 10px;border-bottom:1px solid var(--pp-line);white-space:nowrap;
+  }
+#panel-properties table.list-table td{padding:10px 10px;border-bottom:1px solid var(--pp-line);vertical-align:top;}
+#panel-properties table.list-table tr:hover td{background:#faf9f5;cursor:pointer;}
+#panel-properties .tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;}
+#panel-properties .tag.jizyu{background:#fbe9d7;color:#a9622f;}
+#panel-properties .tag.chintai{background:#dbeaf7;color:#2f6a9c;}
+#panel-properties .tag.boshu{background:#dcefe3;color:#2f8a55;}
+#panel-properties .tag.hanbai{background:#f6dede;color:#a3423b;}
+#panel-properties .tag.ikkodate{background:#fbe9d7;color:#a9622f;}
+#panel-properties .tag.manshon{background:#f5dde7;color:#a8406e;}
+#panel-properties .tag.biru{background:#f7f0c8;color:#8a7a1f;}
+#panel-properties .num{text-align:right;font-variant-numeric:tabular-nums;}
+
+  /* ---- form ---- */
+#panel-properties .form-section-title{
+    font-size:13px;font-weight:700;color:#fff;background:var(--pp-accent);
+    padding:7px 12px;border-radius:4px;margin:20px 0 10px;
+  }
+#panel-properties .form-section-title:first-child{margin-top:0;}
+#panel-properties .form-subsection-title{
+    font-size:12px;font-weight:700;color:var(--pp-accent);margin:14px 0 8px;
+    padding-left:2px;border-left:3px solid var(--pp-accent);padding-left:8px;
+  }
+#panel-properties .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 20px;margin-bottom:6px;}
+  @media (max-width:640px){#panel-properties .form-grid{grid-template-columns:1fr;}}
+#panel-properties .field{display:flex;flex-direction:column;gap:4px;}
+#panel-properties .field label{font-size:12px;color:var(--pp-muted);font-weight:600;}
+#panel-properties .field input, #panel-properties .field select{
+    padding:8px 10px;border:1px solid var(--pp-line);border-radius:var(--pp-radius);
+    font-size:13px;font-family:inherit;background:#fff;color:var(--pp-ink);
+  }
+#panel-properties .field.formula input{background:var(--pp-formula-bg);border-style:dashed;color:var(--pp-accent);font-weight:700;}
+#panel-properties .field .formula-note{font-size:11px;color:var(--pp-muted);}
+#panel-properties .form-actions{margin-top:22px;display:flex;gap:10px;}
+
+  /* ---- field settings (階層式) ---- */
+#panel-properties .note-box{
+    background:var(--pp-accent-soft);border:1px solid #cfe3d6;border-radius:var(--pp-radius);
+    padding:12px 14px;font-size:12.5px;color:#2c5940;margin-bottom:16px;
+  }
+#panel-properties .section-block{border:1px solid var(--pp-line);border-radius:var(--pp-radius);margin-bottom:14px;overflow:hidden;}
+#panel-properties .section-header{
+    display:flex;align-items:center;gap:10px;background:var(--pp-accent-soft);
+    padding:10px 14px;
+  }
+#panel-properties .section-header input{
+    font-size:14px;font-weight:700;color:var(--pp-ink);border:1px solid transparent;
+    background:transparent;padding:4px 6px;border-radius:4px;flex:1;font-family:inherit;
+  }
+#panel-properties .section-header input:hover, #panel-properties .section-header input:focus{border-color:var(--pp-line);background:#fff;}
+#panel-properties .section-header .move-btns{display:flex;gap:2px;}
+#panel-properties .section-body{padding:10px 14px 14px;}
+#panel-properties .subsection-block{background:var(--pp-sub-bg);border:1px solid var(--pp-line);border-radius:4px;padding:10px 12px;margin-bottom:10px;}
+#panel-properties .subsection-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+#panel-properties .subsection-header input{
+    font-size:12.5px;font-weight:700;color:var(--pp-accent);border:1px solid transparent;
+    background:transparent;padding:3px 6px;border-radius:4px;flex:1;font-family:inherit;
+  }
+#panel-properties .subsection-header input:hover, #panel-properties .subsection-header input:focus{border-color:var(--pp-line);background:#fff;}
+
+#panel-properties .fs-row{
+    display:grid;grid-template-columns:26px 1fr 100px 1fr 70px;
+    gap:8px;align-items:start;padding:6px 0;border-bottom:1px solid var(--pp-line);font-size:13px;
+  }
+#panel-properties .fs-row:last-child{border-bottom:none;}
+#panel-properties .fs-row input, #panel-properties .fs-row select{
+    width:100%;padding:6px 8px;border:1px solid var(--pp-line);border-radius:4px;
+    font-size:13px;font-family:inherit;
+  }
+#panel-properties .move-btns{display:flex;flex-direction:column;gap:1px;}
+#panel-properties .move-btns button{border:none;background:transparent;cursor:pointer;color:var(--pp-muted);font-size:10px;line-height:1;padding:1px;}
+#panel-properties .move-btns button:hover{color:var(--pp-accent);}
+
+#panel-properties .options-editor{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+#panel-properties .opt-chip{
+    display:flex;align-items:center;gap:4px;background:#eef2ee;border-radius:20px;
+    padding:3px 4px 3px 10px;font-size:12px;
+  }
+#panel-properties .opt-chip button{border:none;background:transparent;color:var(--pp-muted);cursor:pointer;font-size:13px;padding:2px 6px;}
+#panel-properties .opt-chip button:hover{color:var(--pp-danger);}
+#panel-properties .opt-add{display:flex;gap:4px;align-items:center;}
+#panel-properties .opt-add input{width:80px;padding:4px 6px;font-size:12px;border:1px solid var(--pp-line);border-radius:20px;}
+#panel-properties .formula-input{width:100%;padding:6px 8px;border:1px dashed var(--pp-line);border-radius:4px;font-size:12px;font-family:monospace;}
+
+#panel-properties .add-row-bar{margin-top:8px;}
+#panel-properties table.subtable{width:100%;border-collapse:collapse;margin-top:4px;font-size:13px;}
+#panel-properties table.subtable th{
+    text-align:left;font-size:11px;color:var(--pp-muted);font-weight:700;
+    padding:6px 8px;border-bottom:1px solid var(--pp-line);white-space:nowrap;
+  }
+#panel-properties table.subtable td{padding:6px 8px;border-bottom:1px solid var(--pp-line);vertical-align:top;}
+#panel-properties table.subtable input, #panel-properties table.subtable select{
+    width:100%;padding:6px 8px;border:1px solid var(--pp-line);border-radius:4px;font-size:13px;font-family:inherit;
+  }
+#panel-properties .subtable-empty{color:var(--pp-muted);font-size:12px;text-align:center;padding:14px 0 !important;}
+#panel-properties .save-bar{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed var(--pp-line);}
+#panel-properties .save-status{font-size:12.5px;font-weight:600;}
+#panel-properties .save-status.dirty{color:var(--pp-amber);}
+#panel-properties .save-status.saved{color:var(--pp-accent);}
+#panel-properties .multiselect-box{display:flex;flex-wrap:wrap;gap:10px;padding:8px 10px;border:1px solid var(--pp-line);border-radius:var(--pp-radius);background:#fff;}
+#panel-properties .ms-opt{display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;}
+#panel-properties .ms-opt input{width:auto;}
+#panel-properties .subtable-formula{background:var(--pp-formula-bg) !important;color:var(--pp-accent);font-weight:700;}
+#panel-properties .subtable-serial{background:#f4f3ef !important;color:var(--pp-muted);}
+#panel-properties .ms-cell{display:flex;flex-wrap:wrap;gap:6px;}
+#panel-properties .ms-opt-sm{display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer;white-space:nowrap;}
+#panel-properties .ms-opt-sm input{width:auto;}
+#panel-properties .add-section-bar{margin-top:6px;padding-top:14px;border-top:1px dashed var(--pp-line);display:flex;gap:10px;}
+
 </style>
 <style id="dynamicPageStyle"></style>
 </head>
@@ -251,6 +423,7 @@
       <a href="#" class="header-link" id="financeHeaderLink" style="display:none;" target="_blank" rel="noopener">公司財報 →</a>
       <a href="#" class="header-link" id="trackerHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-tracker').classList.add('active');return false;">進度追蹤 →</a>
       <a href="#" class="header-link" id="todoHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-todo').classList.add('active');if(todoCache.length===0)loadTodosFromRagic();return false;">代辦事項 →</a>
+      <a href="#" class="header-link" id="propertiesHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-properties').classList.add('active');renderList();return false;">物件管理 →</a>
       <a href="#" class="header-link" onclick="siteLogout();return false;" style="font-size:13px;">登出</a>
     </div>
   </div>
@@ -1439,6 +1612,71 @@
         <div id="todoListContainer"></div>
       </fieldset>
     </div>
+  </div>
+
+  <div class="panel" id="panel-properties">
+
+<div class="shell">
+  <header class="top">
+    <h1>物件資料管理</h1>
+    <p>直接讀寫 Firebase 上的物件資料（原 Ragic「物件資訊」表單已搬移至此）。</p>
+  </header>
+
+  <nav class="pp-tabs">
+    <button class="pp-tab-btn active" data-tab="list">列表</button>
+    <button class="pp-tab-btn" data-tab="form">新增／編輯</button>
+    <button class="pp-tab-btn" id="ppSettingsTabBtn" data-tab="settings" style="display:none;">欄位設定</button>
+  </nav>
+
+  <!-- ============ 列表 ============ -->
+  <section class="pp-panel active" id="pp-panel-list">
+    <div class="card">
+      <div class="list-toolbar">
+        <input type="text" id="pp-searchBox" placeholder="輸入物件編號、地址或客戶姓名搜尋">
+        <button class="btn primary" onclick="openForm(null)">＋ 新增物件</button>
+      </div>
+      <div id="pp-listCount" style="font-size:12px;color:var(--pp-muted);margin-bottom:8px;"></div>
+      <div style="overflow-x:auto;">
+        <table class="list-table" id="pp-listTable">
+          <thead><tr id="pp-listHeadRow"></tr></thead>
+          <tbody id="pp-listBody"></tbody>
+        </table>
+      </div>
+      <div id="pp-listPagination" style="display:flex;gap:6px;justify-content:center;margin-top:16px;flex-wrap:wrap;"></div>
+    </div>
+  </section>
+
+  <!-- ============ 表單 ============ -->
+  <section class="pp-panel" id="pp-panel-form">
+    <div class="card">
+      <div class="note-box">試著改一下「租金」「購買金額」這些數字，看看「投報率換算」是不是會自動重新計算。</div>
+      <div id="pp-formSections"></div>
+      <div class="form-actions">
+        <button class="btn primary" id="ppSaveFormBtn" onclick="saveForm()">儲存</button>
+        <button class="btn" onclick="switchTab('list')">取消</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 欄位設定 ============ -->
+  <section class="pp-panel" id="pp-panel-settings">
+    <div class="card">
+      <div class="note-box">
+        每個「大分類」區塊右上角有自己的「＋ 欄位」按鈕，新欄位就會加在那裡，不會再跑錯地方。下拉選單的選項可以直接在下面新增／刪除。欄位類型多了「文件添加」，可以像 Ragic 一樣直接上傳 PDF 等檔案。
+      </div>
+      <div class="save-bar">
+        <button class="btn primary" onclick="saveFieldSettings()">儲存變更</button>
+        <span id="pp-saveStatusBar" class="save-status saved">✓ 已儲存</span>
+      </div>
+      <div id="pp-sectionsContainer"></div>
+      <div class="add-section-bar">
+        <button class="btn" onclick="addSection()">＋ 新增大分類</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+
   </div>
 
   </div><!-- /.preview-wrap -->
@@ -2890,7 +3128,8 @@ function initFirebaseTracker(){
             name: data.name || '',
             viewAllCases: data.viewAllCases === true,
             viewFinance: data.viewFinance === true,
-            manageStaff: data.manageStaff === true
+            manageStaff: data.manageStaff === true,
+            manageProperties: data.manageProperties === true
           };
           gate.style.display = 'none';
           applyCurrentUserUI();
@@ -2900,6 +3139,7 @@ function initFirebaseTracker(){
         });
       } else {
         trackerCurrentUser = null;
+        if(typeof ppUnsubProperties === 'function'){ ppUnsubProperties(); ppUnsubProperties = null; }
         gate.style.display = 'flex';
       }
     });
@@ -2932,6 +3172,7 @@ function applyCurrentUserUI(){
     trackerCurrentUser.name + (trackerCurrentUser.viewAllCases ? '（可查看全部案子）' : '（只能查看自己擔當的案子）');
   startStaffListListener();
   startCaseListener();
+  if(typeof ppInit === 'function') ppInit();
 }
 
 function startCaseListener(){
@@ -3731,7 +3972,7 @@ function generateCancel(){
    ========================================================================= */
 
 /* ↓↓↓ 財務レポートツール（Render）で設定した api_secret と同じ値をここに貼り付けてください ↓↓↓ */
-const TODO_API_SECRET = "aB123Cd456Ef789Gb889420";
+const TODO_API_SECRET = "YOUR_API_SECRET_HERE";
 /* ↑↑↑ ここまで ↑↑↑ */
 
 let todoCache = [];
@@ -3824,6 +4065,683 @@ function renderTodoList(){
       </div>
     `;
   }).join('');
+}
+
+
+/* =========================================================================
+   ⑪ 物件資料管理（Firebase Firestore・原 Ragic「物件資訊」表單搬移至此）
+   ========================================================================= */
+
+/* =========================================================
+   分類結構與欄位設定：正式版改成從 Firestore 的 settings/properties_field_config 讀取，
+   不再寫死在程式碼裡（這樣「欄位設定」畫面改的東西才會真的存起來、大家共用）。
+   ========================================================= */
+let sections = [];
+let fieldConfig = [];
+let records = [];
+let editingIndex = null;
+let ppFieldConfigLoaded = false;
+let ppUnsubProperties = null;
+
+/* 目前登入者是否有「物件資料」的全權（對應 Firestore 規則的 manageProperties）*/
+function ppCanManageAll(){
+  return !!(trackerCurrentUser && trackerCurrentUser.manageProperties);
+}
+/* 目前這筆物件，登入者是否能編輯（全權者皆可；業務只能編自己「客戶擔當」的物件）*/
+function ppCanEditRecord(rec){
+  if(ppCanManageAll()) return true;
+  if(!trackerCurrentUser || !rec) return false;
+  return rec.staff_in_charge === trackerCurrentUser.name;
+}
+
+/* ---------------- 分頁切換 ---------------- */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> switchTab(btn.dataset.tab));
+});
+function switchTab(name){
+  document.querySelectorAll('#panel-properties .pp-tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('#panel-properties .pp-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pp-panel-'+name).classList.add('active');
+  if(name==='list') renderList();
+  if(name==='settings') renderFieldSettings();
+}
+
+/* ---------------- 公式計算 ---------------- */
+function computeFormula(field, rec, scopeFields){
+  try{
+    const plainFields = scopeFields || fieldConfig.filter(f=>f.type!=='formula');
+    const fn = new Function(...plainFields.map(f=>f.id), 'return ('+field.formula+');');
+    const args = plainFields.map(f=> Number(rec[f.id])||0 );
+    let val = fn(...args);
+    if(!isFinite(val)) val = 0;
+    return val;
+  }catch(e){ return 0; }
+}
+function formatValue(field, rawVal){
+  if(field.type==='formula' && field.displayFormat==='percent') return (rawVal*100).toFixed(2)+'%';
+  if(field.type==='number') return '¥'+Number(rawVal||0).toLocaleString('ja-JP');
+  return rawVal ?? '';
+}
+
+/* ---------------- 列表頁 ---------------- */
+let ppCurrentPage = 1;
+const PP_PAGE_SIZE = 20;
+
+function renderList(){
+  const listCols = fieldConfig.filter(f=>f.showInList);
+  document.getElementById('pp-listHeadRow').innerHTML = listCols.map(f=>`<th>${f.label}</th>`).join('');
+  const body = document.getElementById('pp-listBody');
+  const kw = (document.getElementById('pp-searchBox').value||'').trim();
+  const filtered = records.filter(r=> !kw || (r.property_no+r.address+r.customer_name).includes(kw));
+
+  const totalCount = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PP_PAGE_SIZE));
+  if(ppCurrentPage > totalPages) ppCurrentPage = totalPages;
+  if(ppCurrentPage < 1) ppCurrentPage = 1;
+
+  const startIdx = (ppCurrentPage - 1) * PP_PAGE_SIZE;
+  const pageItems = filtered.slice(startIdx, startIdx + PP_PAGE_SIZE);
+
+  const countEl = document.getElementById('pp-listCount');
+  if(countEl){
+    countEl.textContent = totalCount === 0
+      ? '共 0 筆'
+      : `共 ${totalCount} 筆，第 ${ppCurrentPage} / ${totalPages} 頁（每頁 ${PP_PAGE_SIZE} 筆）`;
+  }
+
+  body.innerHTML = pageItems.map((rec)=>{
+    const realIdx = records.indexOf(rec);
+    return '<tr onclick="openForm('+realIdx+')">' + listCols.map(f=>{
+      let val = f.type==='formula' ? computeFormula(f, rec) : rec[f.id];
+      if(f.type==='select') return `<td>${tagHtml(val)}</td>`;
+      if(f.type==='multiselect') return `<td>${(Array.isArray(val)?val:[]).map(tagHtml).join(' ')}</td>`;
+      if(f.type==='number' || f.type==='formula') return `<td class="num">${formatValue(f, val)}</td>`;
+      return `<td>${val ?? ''}</td>`;
+    }).join('') + '</tr>';
+  }).join('');
+
+  renderListPagination(totalPages);
+}
+function renderListPagination(totalPages){
+  const el = document.getElementById('pp-listPagination');
+  if(!el) return;
+  if(totalPages <= 1){ el.innerHTML = ''; return; }
+  let html = '';
+  html += `<button class="btn small" ${ppCurrentPage===1?'disabled':''} onclick="ppGoToPage(${ppCurrentPage-1})">‹ 上一頁</button>`;
+  // 頁數太多時只顯示目前頁附近的頁碼，避免一大排按鈕
+  const windowSize = 2;
+  for(let p=1; p<=totalPages; p++){
+    const nearCurrent = Math.abs(p-ppCurrentPage) <= windowSize;
+    const isEdge = p===1 || p===totalPages;
+    if(nearCurrent || isEdge){
+      html += `<button class="btn small ${p===ppCurrentPage?'primary':''}" onclick="ppGoToPage(${p})">${p}</button>`;
+    }else if(Math.abs(p-ppCurrentPage) === windowSize+1){
+      html += `<span style="padding:0 4px;color:var(--pp-muted);">…</span>`;
+    }
+  }
+  html += `<button class="btn small" ${ppCurrentPage===totalPages?'disabled':''} onclick="ppGoToPage(${ppCurrentPage+1})">下一頁 ›</button>`;
+  el.innerHTML = html;
+}
+function ppGoToPage(p){
+  ppCurrentPage = p;
+  renderList();
+}
+function tagHtml(val){
+  const map = {'自住':'jizyu','賃貸中':'chintai','募集中':'boshu','販売中':'hanbai',
+    '一戸建':'ikkodate','マンション':'manshon','ビル':'biru'};
+  const cls = map[val] || 'jizyu';
+  return val ? `<span class="tag ${cls}">${val}</span>` : '';
+}
+document.getElementById('pp-searchBox').addEventListener('input', ()=>{ ppCurrentPage = 1; renderList(); });
+
+/* ---------------- 表單頁 ---------------- */
+let currentSubtableData = {}; // { sectionId: [ {欄id:值,...}, ... ] } 目前表單上編輯中的子表格資料
+
+/* 依權限決定：這次打開表單能不能編輯、要不要隱藏「客戶擔當」欄位 */
+function ppFormAccessInfo(rec){
+  if(ppCanManageAll()) return {readOnly:false, hideStaff:false};
+  if(rec===null) return {readOnly:false, hideStaff:false}; // 新增自己的案子：正常填寫，擔當儲存時會自動鎖定成自己
+  const isOwn = trackerCurrentUser && rec.staff_in_charge === trackerCurrentUser.name;
+  return {readOnly:!isOwn, hideStaff:!isOwn};
+}
+
+function openForm(idx){ editingIndex = idx; currentSubtableData = {}; renderForm(); switchTab('form'); }
+function renderForm(){
+  const rec = editingIndex===null ? {} : records[editingIndex];
+  const access = ppFormAccessInfo(editingIndex===null ? null : rec);
+  const container = document.getElementById('pp-formSections');
+  let html = '';
+  if(access.readOnly){
+    html += `<div class="note-box" style="background:var(--pp-amber-soft);border-color:#e8d3ad;color:#7a5420;">
+      這個物件的客戶擔當不是您，這裡只能查看，不能修改或儲存。</div>`;
+  }
+  sections.forEach(sec=>{
+    html += `<div class="form-section-title">${sec.name}</div>`;
+    if(sec.type==='subtable'){
+      if(!(sec.id in currentSubtableData)){
+        currentSubtableData[sec.id] = JSON.parse(JSON.stringify(rec[sec.id] || []));
+      }
+      html += renderSubtableSection(sec, access);
+      return;
+    }
+    const directFields = fieldConfig.filter(f=>f.sectionId===sec.id && !f.subsectionId);
+    if(directFields.length){
+      html += `<div class="form-grid">${directFields.map(f=>renderFieldInput(f, rec, access)).join('')}</div>`;
+    }
+    sec.subsections.forEach(sub=>{
+      const subFields = fieldConfig.filter(f=>f.subsectionId===sub.id);
+      if(!subFields.length) return;
+      html += `<div class="form-subsection-title">${sub.name}</div>
+        <div class="form-grid">${subFields.map(f=>renderFieldInput(f, rec, access)).join('')}</div>`;
+    });
+  });
+  container.innerHTML = html;
+  const saveBtn = document.getElementById('ppSaveFormBtn');
+  if(saveBtn) saveBtn.style.display = access.readOnly ? 'none' : '';
+  container.querySelectorAll('input[data-fid], select[data-fid]').forEach(inp=>{
+    inp.addEventListener('input', recalcFormulas);
+    inp.addEventListener('change', recalcFormulas);
+  });
+}
+function renderSubtableSection(sec, access){
+  access = access || {readOnly:false};
+  const cols = fieldConfig.filter(f=>f.sectionId===sec.id);
+  const rows = currentSubtableData[sec.id] || [];
+  let html = `<table class="subtable">
+    <thead><tr>${cols.map(c=>`<th>${c.label}</th>`).join('')}<th style="width:40px;"></th></tr></thead>
+    <tbody>`;
+  if(!rows.length){
+    html += `<tr><td colspan="${cols.length+1}" class="subtable-empty">目前還沒有資料${access.readOnly?'':'，按下面「＋ 新增一列」開始新增'}</td></tr>`;
+  }
+  rows.forEach((row, rIdx)=>{
+    html += '<tr>' + cols.map(c=>`<td>${renderSubtableCell(sec.id, rIdx, c, row[c.id], access.readOnly)}</td>`).join('') +
+      `<td>${access.readOnly?'':`<button class="btn ghost danger small" onclick="deleteSubtableRow('${sec.id}',${rIdx})">×</button>`}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  if(!access.readOnly){
+    html += `<div class="add-row-bar"><button class="btn small" onclick="addSubtableRow('${sec.id}')">＋ 新增一列</button></div>`;
+  }
+  return html;
+}
+function renderSubtableCell(sectionId, rowIdx, col, val, readOnly){
+  val = val ?? '';
+  const onchange = `updateSubtableCell('${sectionId}',${rowIdx},'${col.id}', this.value)`;
+  const ro = readOnly ? 'disabled' : '';
+  if(readOnly){
+    // 唯讀模式：不管欄位類型，統一用純文字顯示，避免誤觸編輯
+    if(col.type==='multiselect'){
+      const arr = Array.isArray(val) ? val : (val ? [val] : []);
+      return `<span>${arr.join('、') || '—'}</span>`;
+    }
+    if(col.type==='formula'){
+      const rowRec = currentSubtableData[sectionId][rowIdx];
+      const scope = fieldConfig.filter(f=>f.sectionId===sectionId && f.type!=='formula');
+      const computed = computeFormula(col, rowRec, scope);
+      return `<span>${formatValue(col, computed)}</span>`;
+    }
+    return `<span>${val || '—'}</span>`;
+  }
+  if(col.type==='select'){
+    return `<select onchange="${onchange}">
+      <option value=""></option>
+      ${(col.options||[]).map(o=>`<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('')}
+    </select>`;
+  }
+  if(col.type==='multiselect'){
+    const arr = Array.isArray(val) ? val : (val ? [val] : []);
+    return `<div class="ms-cell" data-sub-multi="${sectionId}|${rowIdx}|${col.id}">
+      ${(col.options||[]).map(o=>`<label class="ms-opt-sm"><input type="checkbox" value="${o}" ${arr.includes(o)?'checked':''} onchange="updateSubtableMultiCell(this)"> ${o}</label>`).join('')}
+    </div>`;
+  }
+  if(col.type==='formula'){
+    const rowRec = currentSubtableData[sectionId][rowIdx];
+    const scope = fieldConfig.filter(f=>f.sectionId===sectionId && f.type!=='formula');
+    const computed = computeFormula(col, rowRec, scope);
+    return `<input type="text" readonly class="subtable-formula" value="${formatValue(col, computed)}" data-subformula-display="${sectionId}|${rowIdx}|${col.id}">`;
+  }
+  if(col.type==='serial'){
+    return `<input type="text" readonly class="subtable-serial" value="${val}">`;
+  }
+  if(col.type==='date'){
+    return `<input type="date" value="${val}" onchange="${onchange}">`;
+  }
+  if(col.type==='file'){
+    const fname = typeof val==='string' ? val : '';
+    return `<input type="file" onchange="updateSubtableCell('${sectionId}',${rowIdx},'${col.id}', this.files[0]?this.files[0].name:'')">
+      <div class="formula-note">${fname ? '已選擇：'+fname : '尚未上傳（檔案上傳功能尚未開放，暫時只能記錄檔名，需要時請直接聯絡管理員協助）'}</div>`;
+  }
+  const inputType = col.type==='number' ? 'number' : 'text';
+  return `<input type="${inputType}" value="${val}" onchange="${onchange}">`;
+}
+function updateSubtableCell(sectionId, rowIdx, colId, val){
+  currentSubtableData[sectionId][rowIdx][colId] = val;
+  recalcSubtableFormulas(sectionId, rowIdx);
+}
+function updateSubtableMultiCell(checkboxEl){
+  const container = checkboxEl.closest('[data-sub-multi]');
+  const [sectionId, rowIdxStr, colId] = container.dataset.subMulti.split('|');
+  const rowIdx = Number(rowIdxStr);
+  const checked = Array.from(container.querySelectorAll('input[type=checkbox]:checked')).map(c=>c.value);
+  currentSubtableData[sectionId][rowIdx][colId] = checked;
+}
+function recalcSubtableFormulas(sectionId, rowIdx){
+  const rowRec = currentSubtableData[sectionId][rowIdx];
+  const formulaCols = fieldConfig.filter(f=>f.sectionId===sectionId && f.type==='formula');
+  const scope = fieldConfig.filter(f=>f.sectionId===sectionId && f.type!=='formula');
+  formulaCols.forEach(col=>{
+    const computed = computeFormula(col, rowRec, scope);
+    const el = document.querySelector(`[data-subformula-display="${sectionId}|${rowIdx}|${col.id}"]`);
+    if(el) el.value = formatValue(col, computed);
+  });
+}
+function addSubtableRow(sectionId){
+  const cols = fieldConfig.filter(f=>f.sectionId===sectionId);
+  const blank = {};
+  cols.forEach(c=>{
+    if(c.type==='serial'){
+      const digits = c.serialDigits||5;
+      blank[c.id] = (c.serialPrefix||'') + String(c.serialNext||1).padStart(digits,'0');
+      c.serialNext = (c.serialNext||1) + 1;
+    }else if(c.type==='multiselect'){
+      blank[c.id] = [];
+    }else{
+      blank[c.id] = '';
+    }
+  });
+  if(!currentSubtableData[sectionId]) currentSubtableData[sectionId] = [];
+  currentSubtableData[sectionId].push(blank);
+  renderForm();
+}
+function deleteSubtableRow(sectionId, rowIdx){
+  currentSubtableData[sectionId].splice(rowIdx,1);
+  renderForm();
+}
+function renderFieldInput(f, rec, access){
+  access = access || {readOnly:false, hideStaff:false};
+  const val = rec[f.id] ?? '';
+  const ro = access.readOnly;
+
+  // 客戶擔當：不是自己負責的案件，業務看不到這欄實際內容
+  if(f.id === 'staff_in_charge' && access.hideStaff){
+    return `<div class="field">
+      <label>${f.label}</label>
+      <input type="text" readonly value="（無權限查看）" style="background:#f4f3ef;color:var(--pp-muted);">
+    </div>`;
+  }
+
+  if(f.type==='formula'){
+    const computed = computeFormula(f, rec);
+    return `<div class="field formula">
+      <label>${f.label}</label>
+      <input type="text" readonly value="${formatValue(f, computed)}" data-formula-display="${f.id}">
+      <span class="formula-note">自動計算：${f.formula}</span>
+    </div>`;
+  }
+  if(f.type==='select'){
+    return `<div class="field">
+      <label>${f.label}</label>
+      <select data-fid="${f.id}" ${ro?'disabled':''}>
+        <option value=""></option>
+        ${(f.options||[]).map(o=>`<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('')}
+      </select>
+    </div>`;
+  }
+  if(f.type==='date'){
+    return `<div class="field"><label>${f.label}</label><input type="date" data-fid="${f.id}" value="${val}" ${ro?'disabled':''}></div>`;
+  }
+  if(f.type==='serial'){
+    const digits = f.serialDigits||5;
+    const preview = editingIndex===null
+      ? (f.serialPrefix||'')+String(f.serialNext||1).padStart(digits,'0')
+      : (val || '');
+    return `<div class="field">
+      <label>${f.label}</label>
+      <input type="text" readonly value="${preview}" style="background:#f4f3ef;color:var(--pp-muted);">
+      <span class="formula-note">${editingIndex===null ? '系統自動編號，儲存後產生' : '系統自動產生，不能手動修改'}</span>
+    </div>`;
+  }
+  if(f.type==='multiselect'){
+    const arr = Array.isArray(val) ? val : (val ? [val] : []);
+    return `<div class="field" data-fid-multi="${f.id}">
+      <label>${f.label}</label>
+      <div class="multiselect-box">
+        ${(f.options||[]).map(o=>`<label class="ms-opt"><input type="checkbox" value="${o}" ${arr.includes(o)?'checked':''} ${ro?'disabled':''}> ${o}</label>`).join('')}
+      </div>
+    </div>`;
+  }
+  if(f.type==='file'){
+    const fname = val && val.name ? val.name : (typeof val==='string' ? val : '');
+    return `<div class="field">
+      <label>${f.label}</label>
+      <input type="file" data-fid="${f.id}" data-filefield="1" onchange="handleFileSelect(this)" ${ro?'disabled':''}>
+      <span class="formula-note" data-file-current="${f.id}">${fname ? '目前檔案：'+fname : '尚未上傳檔案'}</span>
+    </div>`;
+  }
+  const inputType = f.type==='number' ? 'number' : 'text';
+  return `<div class="field"><label>${f.label}</label>
+    <input type="${inputType}" data-fid="${f.id}" value="${val}" ${(f.readonly||ro)?'readonly':''}></div>`;
+}
+function recalcFormulas(){
+  const tempRec = {};
+  document.querySelectorAll('#pp-formSections [data-fid]').forEach(el=>{ tempRec[el.dataset.fid] = el.value; });
+  fieldConfig.filter(f=>f.type==='formula').forEach(f=>{
+    const computed = computeFormula(f, tempRec);
+    const displayEl = document.querySelector(`[data-formula-display="${f.id}"]`);
+    if(displayEl) displayEl.value = formatValue(f, computed);
+  });
+}
+function handleFileSelect(inputEl){
+  const fname = inputEl.files && inputEl.files[0] ? inputEl.files[0].name : '';
+  const noteEl = document.querySelector(`[data-file-current="${inputEl.dataset.fid}"]`);
+  if(noteEl) noteEl.textContent = fname ? '已選擇檔案：'+fname+'（檔案上傳功能尚未開放，暫時只能記錄檔名）' : '尚未上傳檔案';
+}
+async function saveForm(){
+  const rec = {};
+  document.querySelectorAll('#pp-formSections [data-fid]').forEach(el=>{
+    if(el.type==='file'){
+      rec[el.dataset.fid] = el.files && el.files[0] ? el.files[0].name : (rec[el.dataset.fid]||'');
+      return;
+    }
+    rec[el.dataset.fid] = el.type==='number' ? Number(el.value)||0 : el.value;
+  });
+  // 多選下拉選單：從勾選框收集成陣列
+  document.querySelectorAll('#pp-formSections [data-fid-multi]').forEach(box=>{
+    const fid = box.dataset.fidMulti;
+    const checked = Array.from(box.querySelectorAll('input[type=checkbox]:checked')).map(c=>c.value);
+    rec[fid] = checked;
+  });
+  sections.filter(s=>s.type==='subtable').forEach(sec=>{
+    rec[sec.id] = currentSubtableData[sec.id] || [];
+  });
+
+  // 業務人員新增物件時，「客戶擔當」強制鎖定為自己的名字，避免新增到別人名下
+  // （這裡是畫面上的防呆；資料庫規則那邊也有同樣的檢查，雙重保險）
+  if(!ppCanManageAll() && trackerCurrentUser){
+    rec.staff_in_charge = trackerCurrentUser.name;
+  }
+
+  const serialField = fieldConfig.find(f=>f.type==='serial');
+
+  try{
+    if(editingIndex===null){
+      // 新增：用 Firestore 交易，確保流水號不會因為多人同時新增而重複
+      const settingsRef = trackerDB.collection('settings').doc('properties_field_config');
+      let newDocId = null;
+      await trackerDB.runTransaction(async (tx)=>{
+        const settingsSnap = await tx.get(settingsRef);
+        const cfg = settingsSnap.data() || {sections, fieldConfig};
+        const liveFieldConfig = cfg.fieldConfig || fieldConfig;
+        const liveSerial = liveFieldConfig.find(f=>f.type==='serial');
+        if(liveSerial && serialField){
+          const digits = liveSerial.serialDigits || 5;
+          const nextNo = (liveSerial.serialPrefix||'') + String(liveSerial.serialNext||1).padStart(digits,'0');
+          rec[serialField.id] = nextNo;
+          newDocId = nextNo;
+          liveSerial.serialNext = (liveSerial.serialNext||1) + 1;
+          tx.set(settingsRef, cfg);
+        }
+        const propRef = trackerDB.collection('properties').doc(newDocId || ('p_'+Date.now()));
+        tx.set(propRef, rec);
+      });
+      if(serialField) serialField.serialNext = (serialField.serialNext||1) + 1; // 讓畫面上的下一個編號預覽同步更新
+    }else{
+      const docId = records[editingIndex][serialField ? serialField.id : 'property_no'];
+      await trackerDB.collection('properties').doc(String(docId)).set(rec);
+    }
+    currentSubtableData = {};
+    switchTab('list');
+  }catch(err){
+    console.error(err);
+    alert('儲存失敗，可能是權限不足（例如試圖修改不是自己負責的物件）或網路問題：\n' + err.message);
+  }
+}
+
+/* ---------------- 欄位設定頁（階層式：大分類 > 小分類 > 欄位） ---------------- */
+let settingsDirty = false;
+function markDirty(){
+  settingsDirty = true;
+  const el = document.getElementById('pp-saveStatusBar');
+  if(el){ el.textContent = '● 尚未儲存的變更'; el.className = 'save-status dirty'; }
+}
+async function saveFieldSettings(){
+  if(!ppCanManageAll()){
+    alert('您沒有編輯欄位設定的權限。');
+    return;
+  }
+  const el = document.getElementById('pp-saveStatusBar');
+  try{
+    await trackerDB.collection('settings').doc('properties_field_config').set({sections, fieldConfig});
+    settingsDirty = false;
+    const now = new Date();
+    const hhmmss = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+    if(el){ el.textContent = '✓ 已儲存　'+hhmmss; el.className = 'save-status saved'; }
+  }catch(err){
+    console.error(err);
+    alert('儲存欄位設定失敗：' + err.message);
+  }
+}
+function renderFieldSettings(){
+  const container = document.getElementById('pp-sectionsContainer');
+  container.innerHTML = sections.map((sec, secIdx)=>{
+    const directFields = fieldConfig.filter(f=>f.sectionId===sec.id && !f.subsectionId);
+    const isSubtable = sec.type==='subtable';
+    return `<div class="section-block">
+      <div class="section-header">
+        <div class="move-btns">
+          <button onclick="moveSection(${secIdx},-1)" title="上移">▲</button>
+          <button onclick="moveSection(${secIdx},1)" title="下移">▼</button>
+        </div>
+        <input value="${sec.name}" onchange="renameSection('${sec.id}', this.value)">
+        <select onchange="changeSectionType('${sec.id}', this.value)">
+          <option value="normal" ${!isSubtable?'selected':''}>一般欄位</option>
+          <option value="subtable" ${isSubtable?'selected':''}>子表格（可增加多列）</option>
+        </select>
+        <button class="btn small" onclick="addField('${sec.id}', null)">＋ 欄位</button>
+        <button class="btn ghost danger small" onclick="deleteSection('${sec.id}')">刪除分類</button>
+      </div>
+      <div class="section-body">
+        ${renderFieldRows(directFields, isSubtable)}
+        ${sec.subsections.map(sub=>renderSubsectionBlock(sec.id, sub)).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+function changeSectionType(sectionId, val){
+  markDirty();
+  sections.find(s=>s.id===sectionId).type = val;
+  renderFieldSettings();
+}
+function renderSubsectionBlock(sectionId, sub){
+  const subFields = fieldConfig.filter(f=>f.subsectionId===sub.id);
+  return `<div class="subsection-block">
+    <div class="subsection-header">
+      <input value="${sub.name}" onchange="renameSubsection('${sectionId}','${sub.id}', this.value)">
+      <button class="btn small" onclick="addField('${sectionId}', '${sub.id}')">＋ 欄位</button>
+      <button class="btn ghost danger small" onclick="deleteSubsection('${sectionId}','${sub.id}')">刪除小分類</button>
+    </div>
+    ${renderFieldRows(subFields, false)}
+  </div>`;
+}
+function renderFieldRows(fields, isSubtable){
+  if(!fields.length) return `<div style="font-size:12px;color:var(--pp-muted);padding:4px 0 8px;">（這裡還沒有欄位，按上面「＋ 欄位」新增）</div>`;
+  const typeOptions = ['text','number','date','select','multiselect','formula','file','serial'];
+  return fields.map(f=>{
+    const globalIdx = fieldConfig.indexOf(f);
+    let extra = '';
+    if(f.type==='select' || f.type==='multiselect'){
+      extra = `<div class="options-editor">
+        ${(f.options||[]).map((o,oi)=>`<span class="opt-chip">${o}<button onclick="removeOption(${globalIdx},${oi})">×</button></span>`).join('')}
+        <span class="opt-add">
+          <input type="text" placeholder="新選項" onkeydown="if(event.key==='Enter'){addOption(${globalIdx}, this.value); this.value='';}">
+          <button class="btn ghost small" onclick="const inp=this.previousElementSibling; addOption(${globalIdx}, inp.value); inp.value='';">加入</button>
+        </span>
+      </div>`;
+    }else if(f.type==='formula'){
+      extra = `<input class="formula-input" value="${f.formula}" onchange="updateFormula(${globalIdx}, this.value)">`;
+    }else if(f.type==='serial'){
+      extra = `<div style="display:flex;gap:6px;align-items:center;font-size:12px;">
+        字首<input type="text" value="${f.serialPrefix||''}" style="width:48px;" onchange="updateSerialConfig(${globalIdx},'serialPrefix', this.value)">
+        位數<input type="number" value="${f.serialDigits||5}" min="1" max="10" style="width:48px;" onchange="updateSerialConfig(${globalIdx},'serialDigits', this.value)">
+        <span style="color:var(--pp-muted);">下一號：${f.serialPrefix||''}${String(f.serialNext||1).padStart(f.serialDigits||5,'0')}</span>
+      </div>`;
+    }else{
+      extra = `<span style="font-size:12px;color:var(--pp-muted);">—</span>`;
+    }
+    return `<div class="fs-row">
+      <div class="move-btns">
+        <button onclick="moveFieldWithinGroup(${globalIdx},-1)" title="上移">▲</button>
+        <button onclick="moveFieldWithinGroup(${globalIdx},1)" title="下移">▼</button>
+      </div>
+      <input value="${f.label}" onchange="renameField(${globalIdx}, this.value)">
+      <select onchange="changeFieldType(${globalIdx}, this.value)">
+        ${typeOptions.map(t=>`<option value="${t}" ${t===f.type?'selected':''}>${typeLabel(t)}</option>`).join('')}
+      </select>
+      <div>${extra}</div>
+      <button class="btn ghost danger small" onclick="deleteField(${globalIdx})">刪除</button>
+    </div>`;
+  }).join('');
+}
+function typeLabel(t){
+  return {text:'文字', number:'數字', date:'日期', select:'下拉選單（單選）', multiselect:'下拉選單（多選）',
+    formula:'計算欄位', file:'文件添加', serial:'流水號（系統自動編）'}[t];
+}
+
+/* ---- 大分類操作 ---- */
+function addSection(){
+  const name = prompt('新的大分類名稱？（例如：工事狀況）');
+  if(!name) return;
+  markDirty();
+  sections.push({id:'sec_'+Date.now(), name, type:'normal', subsections:[]});
+  renderFieldSettings();
+}
+function renameSection(id, val){ markDirty(); sections.find(s=>s.id===id).name = val; }
+function deleteSection(id){
+  const hasFields = fieldConfig.some(f=>f.sectionId===id);
+  if(hasFields && !confirm('這個大分類底下還有欄位，刪除分類會一併刪除裡面所有欄位，確定嗎？')) return;
+  markDirty();
+  fieldConfig = fieldConfig.filter(f=>f.sectionId!==id);
+  sections = sections.filter(s=>s.id!==id);
+  renderFieldSettings();
+}
+function moveSection(idx, dir){
+  const t = idx+dir;
+  if(t<0 || t>=sections.length) return;
+  markDirty();
+  [sections[idx], sections[t]] = [sections[t], sections[idx]];
+  renderFieldSettings();
+}
+
+/* ---- 小分類操作 ---- */
+function addSubsection(sectionId){
+  const name = prompt('新的小分類名稱？（例如：水電瓦斯開通狀況）');
+  if(!name) return;
+  markDirty();
+  sections.find(s=>s.id===sectionId).subsections.push({id:'sub_'+Date.now(), name});
+  renderFieldSettings();
+}
+function renameSubsection(sectionId, subId, val){
+  markDirty();
+  sections.find(s=>s.id===sectionId).subsections.find(u=>u.id===subId).name = val;
+}
+function deleteSubsection(sectionId, subId){
+  const hasFields = fieldConfig.some(f=>f.subsectionId===subId);
+  if(hasFields && !confirm('這個小分類底下還有欄位，刪除小分類會一併刪除裡面所有欄位，確定嗎？')) return;
+  markDirty();
+  fieldConfig = fieldConfig.filter(f=>f.subsectionId!==subId);
+  const sec = sections.find(s=>s.id===sectionId);
+  sec.subsections = sec.subsections.filter(u=>u.id!==subId);
+  renderFieldSettings();
+}
+
+/* ---- 欄位操作 ---- */
+function addField(sectionId, subsectionId){
+  const label = prompt('新欄位名稱？');
+  if(!label) return;
+  markDirty();
+  fieldConfig.push({id:'f_'+Date.now(), label, type:'text', sectionId, subsectionId: subsectionId||null});
+  renderFieldSettings();
+}
+function renameField(idx, val){ markDirty(); fieldConfig[idx].label = val; }
+function changeFieldType(idx, val){
+  markDirty();
+  fieldConfig[idx].type = val;
+  if((val==='select'||val==='multiselect') && !fieldConfig[idx].options) fieldConfig[idx].options=[];
+  if(val==='formula' && !fieldConfig[idx].formula) fieldConfig[idx].formula='0';
+  if(val==='serial'){
+    if(!fieldConfig[idx].serialPrefix) fieldConfig[idx].serialPrefix='';
+    if(!fieldConfig[idx].serialDigits) fieldConfig[idx].serialDigits=5;
+    if(!fieldConfig[idx].serialNext) fieldConfig[idx].serialNext=1;
+  }
+  renderFieldSettings();
+}
+function updateSerialConfig(idx, key, val){
+  markDirty();
+  fieldConfig[idx][key] = key==='serialDigits' ? Number(val)||5 : val;
+  renderFieldSettings();
+}
+function deleteField(idx){
+  if(!confirm('確定要刪除「'+fieldConfig[idx].label+'」這個欄位嗎？')) return;
+  markDirty();
+  fieldConfig.splice(idx,1);
+  renderFieldSettings();
+}
+function updateFormula(idx, val){ markDirty(); fieldConfig[idx].formula = val; }
+function addOption(idx, val){
+  val = (val||'').trim();
+  if(!val) return;
+  markDirty();
+  if(!fieldConfig[idx].options) fieldConfig[idx].options=[];
+  fieldConfig[idx].options.push(val);
+  renderFieldSettings();
+}
+function removeOption(idx, optIdx){
+  markDirty();
+  fieldConfig[idx].options.splice(optIdx,1);
+  renderFieldSettings();
+}
+function moveFieldWithinGroup(idx, dir){
+  const f = fieldConfig[idx];
+  const groupIdxs = fieldConfig.map((x,i)=>({x,i}))
+    .filter(o=>o.x.sectionId===f.sectionId && o.x.subsectionId===f.subsectionId)
+    .map(o=>o.i);
+  const pos = groupIdxs.indexOf(idx);
+  const targetPos = pos+dir;
+  if(targetPos<0 || targetPos>=groupIdxs.length) return;
+  markDirty();
+  const targetIdx = groupIdxs[targetPos];
+  [fieldConfig[idx], fieldConfig[targetIdx]] = [fieldConfig[targetIdx], fieldConfig[idx]];
+  renderFieldSettings();
+}
+
+/* ---------------- 初始化（在主站登入成功、trackerCurrentUser 準備好後由 ppInit() 呼叫） ---------------- */
+function ppInit(){
+  const settingsBtn = document.getElementById('ppSettingsTabBtn');
+  if(settingsBtn) settingsBtn.style.display = ppCanManageAll() ? '' : 'none';
+
+  trackerDB.collection('settings').doc('properties_field_config').onSnapshot(snap=>{
+    if(snap.exists){
+      const data = snap.data();
+      sections = data.sections || [];
+      fieldConfig = data.fieldConfig || [];
+    }
+    ppFieldConfigLoaded = true;
+    const activeTab = document.querySelector('#panel-properties .pp-tab-btn.active');
+    const activeName = activeTab ? activeTab.dataset.tab : 'list';
+    if(activeName==='list') renderList();
+    if(activeName==='settings') renderFieldSettings();
+  }, err=>{
+    console.error(err);
+    alert('物件資料的欄位設定讀取失敗：' + err.message);
+  });
+
+  if(typeof ppUnsubProperties === 'function') ppUnsubProperties();
+  ppUnsubProperties = trackerDB.collection('properties').onSnapshot(snapshot=>{
+    records = snapshot.docs.map(d=>d.data());
+    renderList();
+  }, err=>{
+    console.error(err);
+    alert('物件資料讀取失敗，請確認 Firestore 規則或網路連線：' + err.message);
+  });
 }
 
 </script>
