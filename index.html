@@ -4095,7 +4095,7 @@ function ppCanEditRecord(rec){
 }
 
 /* ---------------- 分頁切換 ---------------- */
-document.querySelectorAll('.tab-btn').forEach(btn=>{
+document.querySelectorAll('#panel-properties .pp-tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=> switchTab(btn.dataset.tab));
 });
 function switchTab(name){
@@ -4391,13 +4391,19 @@ function renderFieldInput(f, rec, access){
   }
   if(f.type==='serial'){
     const digits = f.serialDigits||5;
-    const preview = editingIndex===null
-      ? (f.serialPrefix||'')+String(f.serialNext||1).padStart(digits,'0')
-      : (val || '');
+    if(editingIndex===null){
+      const preview = (f.serialPrefix||'')+String(f.serialNext||1).padStart(digits,'0');
+      return `<div class="field">
+        <label>${f.label}</label>
+        <input type="text" readonly value="${preview}" style="background:#f4f3ef;color:var(--pp-muted);">
+        <span class="formula-note">系統自動編號，儲存後產生</span>
+      </div>`;
+    }
+    // 編輯既有物件時：可以手動修改（例如系統有問題需要自己修正），但要小心改成跟別的物件重複的編號
     return `<div class="field">
       <label>${f.label}</label>
-      <input type="text" readonly value="${preview}" style="background:#f4f3ef;color:var(--pp-muted);">
-      <span class="formula-note">${editingIndex===null ? '系統自動編號，儲存後產生' : '系統自動產生，不能手動修改'}</span>
+      <input type="text" data-fid="${f.id}" value="${val}" ${ro?'readonly':''}>
+      <span class="formula-note">可以手動修改，但請確認不要跟其他物件編號重複</span>
     </div>`;
   }
   if(f.type==='multiselect'){
@@ -4485,8 +4491,22 @@ async function saveForm(){
       });
       if(serialField) serialField.serialNext = (serialField.serialNext||1) + 1; // 讓畫面上的下一個編號預覽同步更新
     }else{
-      const docId = records[editingIndex][serialField ? serialField.id : 'property_no'];
-      await trackerDB.collection('properties').doc(String(docId)).set(rec);
+      const oldDocId = records[editingIndex][serialField ? serialField.id : 'property_no'];
+      const newDocId = serialField ? rec[serialField.id] : oldDocId;
+      if(newDocId && String(newDocId) !== String(oldDocId)){
+        // 物件編號被手動改掉了：檢查新編號有沒有跟別的物件撞號，撞號就擋下來
+        const clash = records.some((r, i)=> i!==editingIndex && String(r[serialField.id])===String(newDocId));
+        if(clash){
+          alert('物件編號「'+newDocId+'」已經被別的物件使用了，請改成別的編號。');
+          return;
+        }
+        const oldRef = trackerDB.collection('properties').doc(String(oldDocId));
+        const newRef = trackerDB.collection('properties').doc(String(newDocId));
+        await newRef.set(rec);
+        await oldRef.delete();
+      }else{
+        await trackerDB.collection('properties').doc(String(oldDocId)).set(rec);
+      }
     }
     currentSubtableData = {};
     switchTab('list');
