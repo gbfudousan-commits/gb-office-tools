@@ -395,6 +395,13 @@
 #panel-properties .ms-opt-sm{display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer;white-space:nowrap;}
 #panel-properties .ms-opt-sm input{width:auto;}
 #panel-properties .add-section-bar{margin-top:6px;padding-top:14px;border-top:1px dashed var(--pp-line);display:flex;gap:10px;}
+#panel-properties .pp-cust-suggest{
+  position:absolute;top:100%;left:0;right:0;z-index:20;
+  background:#fff;border:1px solid var(--pp-line);border-radius:var(--pp-radius);
+  max-height:220px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.08);margin-top:2px;
+}
+#panel-properties .pp-cust-suggest-item{padding:8px 10px;font-size:13px;cursor:pointer;}
+#panel-properties .pp-cust-suggest-item:hover{background:var(--pp-accent-soft);}
 
 /* ============ 客戶資料管理（新功能，命名空間 #panel-customers 底下） ============ */
 
@@ -4699,6 +4706,22 @@ function renderFieldInput(f, rec, access){
     </div>`;
   }
 
+  // 客戶編號：跟「客戶資料」模組連動的自動完成輸入框——
+  // 可以打字從客戶清單裡篩選（顯示「客戶編號 客戶姓名」），也可以直接手動輸入客戶編號，
+  // 選了或打對既有的客戶編號，客戶姓名會自動帶出來，不用再打一次。
+  if(f.id === 'customer_no'){
+    return `<div class="field" style="position:relative;">
+      <label>${f.label}</label>
+      <input type="text" data-fid="${f.id}" value="${val}" ${ro?'readonly':''}
+        autocomplete="off"
+        oninput="ppCustomerAutocomplete(this)"
+        onfocus="ppCustomerAutocomplete(this)"
+        onblur="setTimeout(()=>ppHideCustomerSuggest(this), 150)">
+      <div class="pp-cust-suggest" style="display:none;"></div>
+      <span class="formula-note">可打字篩選客戶清單，也可以直接手動輸入客戶編號</span>
+    </div>`;
+  }
+
   if(f.type==='formula'){
     const computed = computeFormula(f, rec);
     return `<div class="field formula">
@@ -4771,6 +4794,57 @@ function handleFileSelect(inputEl){
   const noteEl = document.querySelector(`[data-file-current="${inputEl.dataset.fid}"]`);
   if(noteEl) noteEl.textContent = fname ? '已選擇檔案：'+fname+'（檔案上傳功能尚未開放，暫時只能記錄檔名）' : '尚未上傳檔案';
 }
+
+/* ---------------- 客戶編號自動完成（連動「客戶資料」模組的 ccRecords） ---------------- */
+function ppCustomerAutocomplete(inputEl){
+  const box = inputEl.parentElement.querySelector('.pp-cust-suggest');
+  if(!box) return;
+  const kw = (inputEl.value||'').trim();
+  const list = (typeof ccRecords !== 'undefined' && Array.isArray(ccRecords)) ? ccRecords : [];
+
+  let matches = list;
+  if(kw){
+    matches = list.filter(c => (c.customer_no||'').includes(kw) || (c.customer_name||'').includes(kw));
+  }
+  matches = matches.slice(0, 30);
+
+  if(!matches.length){
+    box.style.display = 'none';
+    box.innerHTML = '';
+  }else{
+    box.innerHTML = matches.map(c=>{
+      const no = (c.customer_no||'').replace(/'/g, "\\'");
+      const name = (c.customer_name||'').replace(/'/g, "\\'");
+      return `<div class="pp-cust-suggest-item" onmousedown="ppSelectCustomer(this, '${no}', '${name}')">${c.customer_no||''}　${c.customer_name||''}</div>`;
+    }).join('');
+    box.style.display = 'block';
+  }
+
+  // 手動輸入時，如果剛好完全對到某個既有客戶編號，自動把客戶姓名帶出來
+  const exact = list.find(c => c.customer_no === kw);
+  if(exact){
+    const container = inputEl.closest('#pp-formSections') || document;
+    const nameInput = container.querySelector('[data-fid="customer_name"]');
+    if(nameInput) nameInput.value = exact.customer_name || '';
+  }
+}
+function ppSelectCustomer(itemEl, customerNo, customerName){
+  const box = itemEl.closest('.pp-cust-suggest');
+  const field = box.previousElementSibling;
+  if(field){
+    field.value = customerNo;
+    const container = field.closest('#pp-formSections') || document;
+    const nameInput = container.querySelector('[data-fid="customer_name"]');
+    if(nameInput) nameInput.value = customerName || '';
+  }
+  box.style.display = 'none';
+  box.innerHTML = '';
+}
+function ppHideCustomerSuggest(inputEl){
+  const box = inputEl.parentElement.querySelector('.pp-cust-suggest');
+  if(box) box.style.display = 'none';
+}
+
 async function saveForm(){
   const rec = {};
   document.querySelectorAll('#pp-formSections [data-fid]').forEach(el=>{
