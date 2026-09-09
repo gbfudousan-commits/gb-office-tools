@@ -575,6 +575,358 @@
 #panel-customers .ms-opt-sm input{width:auto;}
 #panel-customers .add-section-bar{margin-top:6px;padding-top:14px;border-top:1px dashed var(--cc-line);display:flex;gap:10px;}
 
+/* ============ 月次報告書管理（新功能，命名空間 #panel-monthlyreports 底下） ============ */
+
+  #panel-monthlyreports{
+    --mr-bg:#f6f4ef;
+    --mr-surface:#ffffff;
+    --mr-ink:#24302a;
+    --mr-muted:#6b7269;
+    --mr-line:#e4e0d6;
+    --mr-accent:#2f6f4f;
+    --mr-accent-soft:#e7f0ea;
+    --mr-amber:#a9722f;
+    --mr-amber-soft:#f5ebdc;
+    --mr-danger:#a4433a;
+    --mr-danger-soft:#f6e8e6;
+    --mr-formula-bg:#f1f6f3;
+    --mr-sub-bg:#fbfaf7;
+    --mr-radius:6px;
+  }
+#panel-monthlyreports *{box-sizing:border-box;}
+
+#panel-monthlyreports .shell{max-width:1100px;margin:0 auto;padding:28px 20px 80px;}
+#panel-monthlyreports header.top{margin-bottom:22px;}
+#panel-monthlyreports header.top h1{font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:.02em;}
+#panel-monthlyreports header.top p{margin:0;color:var(--mr-muted);font-size:13px;}
+#panel-monthlyreports .badge-proto{
+    display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;
+    background:var(--mr-amber-soft);color:var(--mr-amber);margin-left:8px;
+    vertical-align:middle;font-weight:600;
+  }
+#panel-monthlyreports nav.mr-tabs{display:flex;gap:2px;border-bottom:1px solid var(--mr-line);margin-bottom:22px;}
+#panel-monthlyreports nav.mr-tabs button{
+    appearance:none;border:none;background:transparent;font-size:14px;font-family:inherit;
+    color:var(--mr-muted);padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+#panel-monthlyreports nav.mr-tabs button.active{color:var(--mr-ink);border-bottom-color:var(--mr-accent);font-weight:600;}
+#panel-monthlyreports nav.mr-tabs button:hover{color:var(--mr-ink);}
+#panel-monthlyreports .mr-panel{display:none;}
+#panel-monthlyreports .mr-panel.active{display:block;}
+#panel-monthlyreports .card{background:var(--mr-surface);border:1px solid var(--mr-line);border-radius:var(--mr-radius);padding:18px 20px;}
+#panel-monthlyreports .card + .card{margin-top:16px;}
+
+  /* ---- list ---- */
+#panel-monthlyreports .list-toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+#panel-monthlyreports .list-toolbar input[type=text]{
+    flex:1;min-width:180px;padding:8px 10px;border:1px solid var(--mr-line);
+    border-radius:var(--mr-radius);font-size:13px;font-family:inherit;
+  }
+#panel-monthlyreports .btn{
+    appearance:none;border:1px solid var(--mr-line);background:var(--mr-surface);color:var(--mr-ink);
+    padding:8px 14px;border-radius:var(--mr-radius);font-size:13px;font-family:inherit;cursor:pointer;
+  }
+#panel-monthlyreports .btn:hover{border-color:var(--mr-accent);color:var(--mr-accent);}
+#panel-monthlyreports .btn.primary{background:var(--mr-accent);border-color:var(--mr-accent);color:#fff;}
+#panel-monthlyreports .btn.primary:hover{opacity:.9;color:#fff;}
+#panel-monthlyreports .btn.ghost{border-color:transparent;background:transparent;padding:6px 8px;}
+#panel-monthlyreports .btn.small{padding:4px 10px;font-size:12px;}
+#panel-monthlyreports .btn.danger:hover{border-color:var(--mr-danger);color:var(--mr-danger);}
+
+#panel-monthlyreports table.list-table{width:100%;border-collapse:collapse;font-size:13px;}
+#panel-monthlyreports table.list-table th{
+    text-align:left;font-weight:600;color:var(--mr-muted);font-size:12px;
+    padding:8px 10px;border-bottom:1px solid var(--mr-line);white-space:nowrap;
+  }
+#panel-monthlyreports table.list-table td{padding:10px 10px;border-bottom:1px solid var(--mr-line);vertical-align:top;}
+#panel-monthlyreports table.list-table tr:hover td{background:#faf9f5;cursor:pointer;}
+#panel-monthlyreports .tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;}
+#panel-monthlyreports .tag.jizyu{background:#fbe9d7;color:#a9622f;}
+#panel-monthlyreports .tag.chintai{background:#dbeaf7;color:#2f6a9c;}
+#panel-monthlyreports .tag.boshu{background:#dcefe3;color:#2f8a55;}
+#panel-monthlyreports .tag.hanbai{background:#f6dede;color:#a3423b;}
+#panel-monthlyreports .tag.ikkodate{background:#fbe9d7;color:#a9622f;}
+#panel-monthlyreports .tag.manshon{background:#f5dde7;color:#a8406e;}
+#panel-monthlyreports .tag.biru{background:#f7f0c8;color:#8a7a1f;}
+#panel-monthlyreports .num{text-align:right;font-variant-numeric:tabular-nums;}
+
+  /* ---- form ---- */
+#panel-monthlyreports .form-section-title{
+    font-size:13px;font-weight:700;color:#fff;background:var(--mr-accent);
+    padding:7px 12px;border-radius:4px;margin:20px 0 10px;
+  }
+#panel-monthlyreports .form-section-title:first-child{margin-top:0;}
+#panel-monthlyreports .form-subsection-title{
+    font-size:12px;font-weight:700;color:var(--mr-accent);margin:14px 0 8px;
+    padding-left:2px;border-left:3px solid var(--mr-accent);padding-left:8px;
+  }
+#panel-monthlyreports .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 20px;margin-bottom:6px;}
+  @media (max-width:640px){#panel-monthlyreports .form-grid{grid-template-columns:1fr;}}
+#panel-monthlyreports .field{display:flex;flex-direction:column;gap:4px;}
+#panel-monthlyreports .field label{font-size:12px;color:var(--mr-muted);font-weight:600;}
+#panel-monthlyreports .field input, #panel-monthlyreports .field select{
+    padding:8px 10px;border:1px solid var(--mr-line);border-radius:var(--mr-radius);
+    font-size:13px;font-family:inherit;background:#fff;color:var(--mr-ink);
+  }
+#panel-monthlyreports .field.formula input{background:var(--mr-formula-bg);border-style:dashed;color:var(--mr-accent);font-weight:700;}
+#panel-monthlyreports .field .formula-note{font-size:11px;color:var(--mr-muted);}
+#panel-monthlyreports .form-actions{margin-top:22px;display:flex;gap:10px;}
+
+  /* ---- field settings (階層式) ---- */
+#panel-monthlyreports .note-box{
+    background:var(--mr-accent-soft);border:1px solid #cfe3d6;border-radius:var(--mr-radius);
+    padding:12px 14px;font-size:12.5px;color:#2c5940;margin-bottom:16px;
+  }
+#panel-monthlyreports .section-block{border:1px solid var(--mr-line);border-radius:var(--mr-radius);margin-bottom:14px;overflow:hidden;}
+#panel-monthlyreports .section-header{
+    display:flex;align-items:center;gap:10px;background:var(--mr-accent-soft);
+    padding:10px 14px;
+  }
+#panel-monthlyreports .section-header input{
+    font-size:14px;font-weight:700;color:var(--mr-ink);border:1px solid transparent;
+    background:transparent;padding:4px 6px;border-radius:4px;flex:1;font-family:inherit;
+  }
+#panel-monthlyreports .section-header input:hover, #panel-monthlyreports .section-header input:focus{border-color:var(--mr-line);background:#fff;}
+#panel-monthlyreports .section-header .move-btns{display:flex;gap:2px;}
+#panel-monthlyreports .section-body{padding:10px 14px 14px;}
+#panel-monthlyreports .subsection-block{background:var(--mr-sub-bg);border:1px solid var(--mr-line);border-radius:4px;padding:10px 12px;margin-bottom:10px;}
+#panel-monthlyreports .subsection-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+#panel-monthlyreports .subsection-header input{
+    font-size:12.5px;font-weight:700;color:var(--mr-accent);border:1px solid transparent;
+    background:transparent;padding:3px 6px;border-radius:4px;flex:1;font-family:inherit;
+  }
+#panel-monthlyreports .subsection-header input:hover, #panel-monthlyreports .subsection-header input:focus{border-color:var(--mr-line);background:#fff;}
+
+#panel-monthlyreports .fs-row{
+    display:grid;grid-template-columns:26px 1fr 100px 1fr 70px;
+    gap:8px;align-items:start;padding:6px 0;border-bottom:1px solid var(--mr-line);font-size:13px;
+  }
+#panel-monthlyreports .fs-row:last-child{border-bottom:none;}
+#panel-monthlyreports .fs-row input, #panel-monthlyreports .fs-row select{
+    width:100%;padding:6px 8px;border:1px solid var(--mr-line);border-radius:4px;
+    font-size:13px;font-family:inherit;
+  }
+#panel-monthlyreports .move-btns{display:flex;flex-direction:column;gap:1px;}
+#panel-monthlyreports .move-btns button{border:none;background:transparent;cursor:pointer;color:var(--mr-muted);font-size:10px;line-height:1;padding:1px;}
+#panel-monthlyreports .move-btns button:hover{color:var(--mr-accent);}
+
+#panel-monthlyreports .options-editor{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+#panel-monthlyreports .opt-chip{
+    display:flex;align-items:center;gap:4px;background:#eef2ee;border-radius:20px;
+    padding:3px 4px 3px 10px;font-size:12px;
+  }
+#panel-monthlyreports .opt-chip button{border:none;background:transparent;color:var(--mr-muted);cursor:pointer;font-size:13px;padding:2px 6px;}
+#panel-monthlyreports .opt-chip button:hover{color:var(--mr-danger);}
+#panel-monthlyreports .opt-add{display:flex;gap:4px;align-items:center;}
+#panel-monthlyreports .opt-add input{width:80px;padding:4px 6px;font-size:12px;border:1px solid var(--mr-line);border-radius:20px;}
+#panel-monthlyreports .formula-input{width:100%;padding:6px 8px;border:1px dashed var(--mr-line);border-radius:4px;font-size:12px;font-family:monospace;}
+
+#panel-monthlyreports .add-row-bar{margin-top:8px;}
+#panel-monthlyreports table.subtable{width:100%;border-collapse:collapse;margin-top:4px;font-size:13px;}
+#panel-monthlyreports table.subtable th{
+    text-align:left;font-size:11px;color:var(--mr-muted);font-weight:700;
+    padding:6px 8px;border-bottom:1px solid var(--mr-line);white-space:nowrap;
+  }
+#panel-monthlyreports table.subtable td{padding:6px 8px;border-bottom:1px solid var(--mr-line);vertical-align:top;}
+#panel-monthlyreports table.subtable input, #panel-monthlyreports table.subtable select{
+    width:100%;padding:6px 8px;border:1px solid var(--mr-line);border-radius:4px;font-size:13px;font-family:inherit;
+  }
+#panel-monthlyreports .subtable-empty{color:var(--mr-muted);font-size:12px;text-align:center;padding:14px 0 !important;}
+#panel-monthlyreports .save-bar{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed var(--mr-line);}
+#panel-monthlyreports .save-status{font-size:12.5px;font-weight:600;}
+#panel-monthlyreports .save-status.dirty{color:var(--mr-amber);}
+#panel-monthlyreports .save-status.saved{color:var(--mr-accent);}
+#panel-monthlyreports .multiselect-box{display:flex;flex-wrap:wrap;gap:10px;padding:8px 10px;border:1px solid var(--mr-line);border-radius:var(--mr-radius);background:#fff;}
+#panel-monthlyreports .ms-opt{display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;}
+#panel-monthlyreports .ms-opt input{width:auto;}
+#panel-monthlyreports .subtable-formula{background:var(--mr-formula-bg) !important;color:var(--mr-accent);font-weight:700;}
+#panel-monthlyreports .subtable-serial{background:#f4f3ef !important;color:var(--mr-muted);}
+#panel-monthlyreports .ms-cell{display:flex;flex-wrap:wrap;gap:6px;}
+#panel-monthlyreports .ms-opt-sm{display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer;white-space:nowrap;}
+#panel-monthlyreports .ms-opt-sm input{width:auto;}
+#panel-monthlyreports .add-section-bar{margin-top:6px;padding-top:14px;border-top:1px dashed var(--mr-line);display:flex;gap:10px;}
+#panel-monthlyreports .mr-cust-suggest{
+  position:absolute;top:100%;left:0;right:0;z-index:20;
+  background:#fff;border:1px solid var(--mr-line);border-radius:var(--mr-radius);
+  max-height:220px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.08);margin-top:2px;
+}
+#panel-monthlyreports .mr-cust-suggest-item{padding:8px 10px;font-size:13px;cursor:pointer;}
+#panel-monthlyreports .mr-cust-suggest-item:hover{background:var(--mr-accent-soft);}
+
+/* ============ 客戶資料管理（新功能，命名空間 #panel-customers 底下） ============ */
+
+  #panel-customers{
+    --cc-bg:#f6f4ef;
+    --cc-surface:#ffffff;
+    --cc-ink:#24302a;
+    --cc-muted:#6b7269;
+    --cc-line:#e4e0d6;
+    --cc-accent:#2f6f4f;
+    --cc-accent-soft:#e7f0ea;
+    --cc-amber:#a9722f;
+    --cc-amber-soft:#f5ebdc;
+    --cc-danger:#a4433a;
+    --cc-danger-soft:#f6e8e6;
+    --cc-formula-bg:#f1f6f3;
+    --cc-sub-bg:#fbfaf7;
+    --cc-radius:6px;
+  }
+#panel-customers *{box-sizing:border-box;}
+
+#panel-customers .shell{max-width:1100px;margin:0 auto;padding:28px 20px 80px;}
+#panel-customers header.top{margin-bottom:22px;}
+#panel-customers header.top h1{font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:.02em;}
+#panel-customers header.top p{margin:0;color:var(--cc-muted);font-size:13px;}
+#panel-customers .badge-proto{
+    display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;
+    background:var(--cc-amber-soft);color:var(--cc-amber);margin-left:8px;
+    vertical-align:middle;font-weight:600;
+  }
+#panel-customers nav.cc-tabs{display:flex;gap:2px;border-bottom:1px solid var(--cc-line);margin-bottom:22px;}
+#panel-customers nav.cc-tabs button{
+    appearance:none;border:none;background:transparent;font-size:14px;font-family:inherit;
+    color:var(--cc-muted);padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+#panel-customers nav.cc-tabs button.active{color:var(--cc-ink);border-bottom-color:var(--cc-accent);font-weight:600;}
+#panel-customers nav.cc-tabs button:hover{color:var(--cc-ink);}
+#panel-customers .cc-panel{display:none;}
+#panel-customers .cc-panel.active{display:block;}
+#panel-customers .card{background:var(--cc-surface);border:1px solid var(--cc-line);border-radius:var(--cc-radius);padding:18px 20px;}
+#panel-customers .card + .card{margin-top:16px;}
+
+  /* ---- list ---- */
+#panel-customers .list-toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+#panel-customers .list-toolbar input[type=text]{
+    flex:1;min-width:180px;padding:8px 10px;border:1px solid var(--cc-line);
+    border-radius:var(--cc-radius);font-size:13px;font-family:inherit;
+  }
+#panel-customers .btn{
+    appearance:none;border:1px solid var(--cc-line);background:var(--cc-surface);color:var(--cc-ink);
+    padding:8px 14px;border-radius:var(--cc-radius);font-size:13px;font-family:inherit;cursor:pointer;
+  }
+#panel-customers .btn:hover{border-color:var(--cc-accent);color:var(--cc-accent);}
+#panel-customers .btn.primary{background:var(--cc-accent);border-color:var(--cc-accent);color:#fff;}
+#panel-customers .btn.primary:hover{opacity:.9;color:#fff;}
+#panel-customers .btn.ghost{border-color:transparent;background:transparent;padding:6px 8px;}
+#panel-customers .btn.small{padding:4px 10px;font-size:12px;}
+#panel-customers .btn.danger{background:var(--cc-danger);border-color:var(--cc-danger);color:#fff;}
+#panel-customers .btn.danger:hover{opacity:.85;}
+
+#panel-customers table.list-table{width:100%;border-collapse:collapse;font-size:13px;}
+#panel-customers table.list-table th{
+    text-align:left;font-weight:600;color:var(--cc-muted);font-size:12px;
+    padding:8px 10px;border-bottom:1px solid var(--cc-line);white-space:nowrap;
+  }
+#panel-customers table.list-table td{padding:10px 10px;border-bottom:1px solid var(--cc-line);vertical-align:top;}
+#panel-customers table.list-table tr:hover td{background:#faf9f5;cursor:pointer;}
+#panel-customers .tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;}
+#panel-customers .tag.jizyu{background:#fbe9d7;color:#a9622f;}
+#panel-customers .tag.chintai{background:#dbeaf7;color:#2f6a9c;}
+#panel-customers .tag.boshu{background:#dcefe3;color:#2f8a55;}
+#panel-customers .tag.hanbai{background:#f6dede;color:#a3423b;}
+#panel-customers .tag.ikkodate{background:#fbe9d7;color:#a9622f;}
+#panel-customers .tag.manshon{background:#f5dde7;color:#a8406e;}
+#panel-customers .tag.biru{background:#f7f0c8;color:#8a7a1f;}
+#panel-customers .num{text-align:right;font-variant-numeric:tabular-nums;}
+
+  /* ---- form ---- */
+#panel-customers .form-section-title{
+    font-size:13px;font-weight:700;color:#fff;background:var(--cc-accent);
+    padding:7px 12px;border-radius:4px;margin:20px 0 10px;
+  }
+#panel-customers .form-section-title:first-child{margin-top:0;}
+#panel-customers .form-subsection-title{
+    font-size:12px;font-weight:700;color:var(--cc-accent);margin:14px 0 8px;
+    padding-left:2px;border-left:3px solid var(--cc-accent);padding-left:8px;
+  }
+#panel-customers .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 20px;margin-bottom:6px;}
+  @media (max-width:640px){#panel-customers .form-grid{grid-template-columns:1fr;}}
+#panel-customers .field{display:flex;flex-direction:column;gap:4px;}
+#panel-customers .field label{font-size:12px;color:var(--cc-muted);font-weight:600;}
+#panel-customers .field input, #panel-customers .field select{
+    padding:8px 10px;border:1px solid var(--cc-line);border-radius:var(--cc-radius);
+    font-size:13px;font-family:inherit;background:#fff;color:var(--cc-ink);
+  }
+#panel-customers .field.formula input{background:var(--cc-formula-bg);border-style:dashed;color:var(--cc-accent);font-weight:700;}
+#panel-customers .field .formula-note{font-size:11px;color:var(--cc-muted);}
+#panel-customers .form-actions{margin-top:22px;display:flex;gap:10px;}
+
+  /* ---- field settings (階層式) ---- */
+#panel-customers .note-box{
+    background:var(--cc-accent-soft);border:1px solid #cfe3d6;border-radius:var(--cc-radius);
+    padding:12px 14px;font-size:12.5px;color:#2c5940;margin-bottom:16px;
+  }
+#panel-customers .section-block{border:1px solid var(--cc-line);border-radius:var(--cc-radius);margin-bottom:14px;overflow:hidden;}
+#panel-customers .section-header{
+    display:flex;align-items:center;gap:10px;background:var(--cc-accent-soft);
+    padding:10px 14px;
+  }
+#panel-customers .section-header input{
+    font-size:14px;font-weight:700;color:var(--cc-ink);border:1px solid transparent;
+    background:transparent;padding:4px 6px;border-radius:4px;flex:1;font-family:inherit;
+  }
+#panel-customers .section-header input:hover, #panel-customers .section-header input:focus{border-color:var(--cc-line);background:#fff;}
+#panel-customers .section-header .move-btns{display:flex;gap:2px;}
+#panel-customers .section-body{padding:10px 14px 14px;}
+#panel-customers .subsection-block{background:var(--cc-sub-bg);border:1px solid var(--cc-line);border-radius:4px;padding:10px 12px;margin-bottom:10px;}
+#panel-customers .subsection-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+#panel-customers .subsection-header input{
+    font-size:12.5px;font-weight:700;color:var(--cc-accent);border:1px solid transparent;
+    background:transparent;padding:3px 6px;border-radius:4px;flex:1;font-family:inherit;
+  }
+#panel-customers .subsection-header input:hover, #panel-customers .subsection-header input:focus{border-color:var(--cc-line);background:#fff;}
+
+#panel-customers .fs-row{
+    display:grid;grid-template-columns:26px 1fr 100px 1fr 70px;
+    gap:8px;align-items:start;padding:6px 0;border-bottom:1px solid var(--cc-line);font-size:13px;
+  }
+#panel-customers .fs-row:last-child{border-bottom:none;}
+#panel-customers .fs-row input, #panel-customers .fs-row select{
+    width:100%;padding:6px 8px;border:1px solid var(--cc-line);border-radius:4px;
+    font-size:13px;font-family:inherit;
+  }
+#panel-customers .move-btns{display:flex;flex-direction:column;gap:1px;}
+#panel-customers .move-btns button{border:none;background:transparent;cursor:pointer;color:var(--cc-muted);font-size:10px;line-height:1;padding:1px;}
+#panel-customers .move-btns button:hover{color:var(--cc-accent);}
+
+#panel-customers .options-editor{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+#panel-customers .opt-chip{
+    display:flex;align-items:center;gap:4px;background:#eef2ee;border-radius:20px;
+    padding:3px 4px 3px 10px;font-size:12px;
+  }
+#panel-customers .opt-chip button{border:none;background:transparent;color:var(--cc-muted);cursor:pointer;font-size:13px;padding:2px 6px;}
+#panel-customers .opt-chip button:hover{color:var(--cc-danger);}
+#panel-customers .opt-add{display:flex;gap:4px;align-items:center;}
+#panel-customers .opt-add input{width:80px;padding:4px 6px;font-size:12px;border:1px solid var(--cc-line);border-radius:20px;}
+#panel-customers .formula-input{width:100%;padding:6px 8px;border:1px dashed var(--cc-line);border-radius:4px;font-size:12px;font-family:monospace;}
+
+#panel-customers .add-row-bar{margin-top:8px;}
+#panel-customers table.subtable{width:100%;border-collapse:collapse;margin-top:4px;font-size:13px;}
+#panel-customers table.subtable th{
+    text-align:left;font-size:11px;color:var(--cc-muted);font-weight:700;
+    padding:6px 8px;border-bottom:1px solid var(--cc-line);white-space:nowrap;
+  }
+#panel-customers table.subtable td{padding:6px 8px;border-bottom:1px solid var(--cc-line);vertical-align:top;}
+#panel-customers table.subtable input, #panel-customers table.subtable select{
+    width:100%;padding:6px 8px;border:1px solid var(--cc-line);border-radius:4px;font-size:13px;font-family:inherit;
+  }
+#panel-customers .subtable-empty{color:var(--cc-muted);font-size:12px;text-align:center;padding:14px 0 !important;}
+#panel-customers .save-bar{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px dashed var(--cc-line);}
+#panel-customers .save-status{font-size:12.5px;font-weight:600;}
+#panel-customers .save-status.dirty{color:var(--cc-amber);}
+#panel-customers .save-status.saved{color:var(--cc-accent);}
+#panel-customers .multiselect-box{display:flex;flex-wrap:wrap;gap:10px;padding:8px 10px;border:1px solid var(--cc-line);border-radius:var(--cc-radius);background:#fff;}
+#panel-customers .ms-opt{display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;}
+#panel-customers .ms-opt input{width:auto;}
+#panel-customers .subtable-formula{background:var(--cc-formula-bg) !important;color:var(--cc-accent);font-weight:700;}
+#panel-customers .subtable-serial{background:#f4f3ef !important;color:var(--cc-muted);}
+#panel-customers .ms-cell{display:flex;flex-wrap:wrap;gap:6px;}
+#panel-customers .ms-opt-sm{display:flex;align-items:center;gap:3px;font-size:12px;cursor:pointer;white-space:nowrap;}
+#panel-customers .ms-opt-sm input{width:auto;}
+#panel-customers .add-section-bar{margin-top:6px;padding-top:14px;border-top:1px dashed var(--cc-line);display:flex;gap:10px;}
+
+
+
 
 </style>
 <style id="dynamicPageStyle"></style>
@@ -605,6 +957,7 @@
       <a href="#" class="header-link" id="todoHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-todo').classList.add('active');if(todoCache.length===0)loadTodosFromRagic();return false;">代辦事項 →</a>
       <a href="#" class="header-link" id="propertiesHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-properties').classList.add('active');renderList();return false;">物件管理 →</a>
       <a href="#" class="header-link" id="customersHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-customers').classList.add('active');ccRenderList();return false;">客戶資料 →</a>
+      <a href="#" class="header-link" id="monthlyReportsHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-monthlyreports').classList.add('active');mrRenderList();return false;">月次報告書 →</a>
       <a href="#" class="header-link" onclick="siteLogout();return false;" style="font-size:13px;">登出</a>
     </div>
   </div>
@@ -1926,6 +2279,72 @@
 
 
   </div>
+
+<div class="panel" id="panel-monthlyreports">
+
+<div class="shell">
+  <header class="top">
+    <h1>月次報告書管理</h1>
+    <p>直接讀寫 Firebase 上的月次報告書（原 Ragic「月次報告書」表單已搬移至此）。只有管理員能看到這個功能。</p>
+  </header>
+
+  <nav class="mr-tabs">
+    <button class="mr-tab-btn active" data-tab="list">列表</button>
+    <button class="mr-tab-btn" data-tab="form">新增／編輯</button>
+    <button class="mr-tab-btn" id="mrSettingsTabBtn" data-tab="settings" style="display:none;">欄位設定</button>
+  </nav>
+
+  <!-- ============ 列表 ============ -->
+  <section class="mr-panel active" id="mr-panel-list">
+    <div class="card">
+      <div class="list-toolbar">
+        <input type="text" id="mr-searchBox" placeholder="輸入報表編號、物件編號、地址或客戶姓名搜尋">
+        <button class="btn primary" onclick="mrOpenForm(null)">＋ 新增報表</button>
+      </div>
+      <div id="mr-filterBar" style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin:4px 0 14px;padding:12px;background:var(--mr-sub-bg);border:1px solid var(--mr-line);border-radius:var(--mr-radius);"></div>
+      <div id="mr-listCount" style="font-size:12px;color:var(--mr-muted);margin-bottom:8px;"></div>
+      <div style="overflow-x:auto;">
+        <table class="list-table" id="mr-listTable">
+          <thead><tr id="mr-listHeadRow"></tr></thead>
+          <tbody id="mr-listBody"></tbody>
+        </table>
+      </div>
+      <div id="mr-listPagination" style="display:flex;gap:6px;justify-content:center;margin-top:16px;flex-wrap:wrap;"></div>
+    </div>
+  </section>
+
+  <!-- ============ 表單 ============ -->
+  <section class="mr-panel" id="mr-panel-form">
+    <div class="card">
+      <div class="note-box">試著改一下「租金」「購買金額」這些數字，看看「投報率換算」是不是會自動重新計算。</div>
+      <div id="mr-formSections"></div>
+      <div class="form-actions">
+        <button class="btn primary" id="mrSaveFormBtn" onclick="mrSaveForm()">儲存</button>
+        <button class="btn" onclick="mrSwitchTab('list')">取消</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 欄位設定 ============ -->
+  <section class="mr-panel" id="mr-panel-settings">
+    <div class="card">
+      <div class="note-box">
+        每個「大分類」區塊右上角有自己的「＋ 欄位」按鈕，新欄位就會加在那裡，不會再跑錯地方。下拉選單的選項可以直接在下面新增／刪除。欄位類型多了「文件添加」，可以像 Ragic 一樣直接上傳 PDF 等檔案。
+      </div>
+      <div class="save-bar">
+        <button class="btn primary" onclick="mrSaveFieldSettings()">儲存變更</button>
+        <span id="mr-saveStatusBar" class="save-status saved">✓ 已儲存</span>
+      </div>
+      <div id="mr-sectionsContainer"></div>
+      <div class="add-section-bar">
+        <button class="btn" onclick="mrAddSection()">＋ 新增大分類</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+  </div>
+
 
   </div><!-- /.preview-wrap -->
 
@@ -3378,7 +3797,8 @@ function initFirebaseTracker(){
             viewFinance: data.viewFinance === true,
             manageStaff: data.manageStaff === true,
             manageProperties: data.manageProperties === true,
-            manageCustomers: data.manageCustomers === true
+            manageCustomers: data.manageCustomers === true,
+            manageReports: data.manageReports === true
           };
           gate.style.display = 'none';
           applyCurrentUserUI();
@@ -3390,6 +3810,8 @@ function initFirebaseTracker(){
         trackerCurrentUser = null;
         if(typeof ppUnsubProperties === 'function'){ ppUnsubProperties(); ppUnsubProperties = null; }
         if(typeof ccUnsubProperties === 'function'){ ccUnsubProperties(); ccUnsubProperties = null; }
+        if(typeof mrUnsubProperties === 'function'){ mrUnsubProperties(); mrUnsubProperties = null; }
+        if(typeof mrUnsubPropertyList === 'function'){ mrUnsubPropertyList(); mrUnsubPropertyList = null; }
         gate.style.display = 'flex';
       }
     });
@@ -3424,6 +3846,7 @@ function applyCurrentUserUI(){
   startCaseListener();
   if(typeof ppInit === 'function') ppInit();
   if(typeof ccInit === 'function') ccInit();
+  if(typeof mrInit === 'function') mrInit();
 }
 
 function startCaseListener(){
@@ -4333,6 +4756,9 @@ let records = [];
 let editingIndex = null;
 let ppFieldConfigLoaded = false;
 let ppUnsubProperties = null;
+let ppCustomerList = [];
+let ppCustomerListLoaded = false;
+let ppUnsubCustomerList = null;
 
 /* 目前登入者是否有「物件資料」的全權（對應 Firestore 規則的 manageProperties）*/
 function ppCanManageAll(){
@@ -4800,7 +5226,13 @@ function ppCustomerAutocomplete(inputEl){
   const box = inputEl.parentElement.querySelector('.pp-cust-suggest');
   if(!box) return;
   const kw = (inputEl.value||'').trim();
-  const list = (typeof ccRecords !== 'undefined' && Array.isArray(ccRecords)) ? ccRecords : [];
+  const list = ppCustomerList;
+
+  if(!ppCustomerListLoaded){
+    box.innerHTML = `<div class="pp-cust-suggest-item" style="color:var(--pp-muted);cursor:default;">客戶資料載入中…請稍候幾秒再試一次</div>`;
+    box.style.display = 'block';
+    return;
+  }
 
   let matches = list;
   if(kw){
@@ -4809,8 +5241,10 @@ function ppCustomerAutocomplete(inputEl){
   matches = matches.slice(0, 30);
 
   if(!matches.length){
-    box.style.display = 'none';
-    box.innerHTML = '';
+    box.innerHTML = kw
+      ? `<div class="pp-cust-suggest-item" style="color:var(--pp-muted);cursor:default;">沒有符合的客戶，可以直接手動輸入新的客戶編號</div>`
+      : `<div class="pp-cust-suggest-item" style="color:var(--pp-muted);cursor:default;">目前還沒有任何客戶資料</div>`;
+    box.style.display = 'block';
   }else{
     box.innerHTML = matches.map(c=>{
       const no = (c.customer_no||'').replace(/'/g, "\\'");
@@ -5177,6 +5611,16 @@ function ppInit(){
   }, err=>{
     console.error(err);
     alert('物件資料讀取失敗，請確認 Firestore 規則或網路連線：' + err.message);
+  });
+
+  // 「客戶編號」自動完成用的客戶清單：物件資料自己獨立監聽，
+  // 不依賴「客戶資料」模組是否已經載入完成，避免時間差導致下拉選單抓不到資料。
+  if(typeof ppUnsubCustomerList === 'function') ppUnsubCustomerList();
+  ppUnsubCustomerList = trackerDB.collection('customers').onSnapshot(snapshot=>{
+    ppCustomerList = snapshot.docs.map(d=>d.data());
+    ppCustomerListLoaded = true;
+  }, err=>{
+    console.error(err);
   });
 }
 
@@ -5985,6 +6429,939 @@ function ccInit(){
     alert('客戶資料讀取失敗，請確認 Firestore 規則或網路連線：' + err.message);
   });
 }
+
+
+/* =========================================================================
+   ⑬ 月次報告書管理（Firebase Firestore・原 Ragic「月次報告書」表單搬移至此）
+   只有管理員（manageReports 權限）能看到、能操作，其他人完全看不到這個功能。
+   ========================================================================= */
+
+/* =========================================================
+   分類結構與欄位設定：正式版改成從 Firestore 的 settings/monthly_reports_field_config 讀取，
+   不再寫死在程式碼裡（這樣「欄位設定」畫面改的東西才會真的存起來、大家共用）。
+   ========================================================= */
+let mrSections = [];
+let mrFieldConfig = [];
+let mrRecords = [];
+let mrEditingIndex = null;
+let mrFieldConfigLoaded = false;
+let mrUnsubProperties = null;
+let mrPropertyList = [];
+let mrPropertyListLoaded = false;
+let mrUnsubPropertyList = null;
+
+/* 是否有「月次報告書」的全權（對應 Firestore 規則的 manageReports）——
+   這個模組沒有部分權限的概念，能看到這個功能的人就是能全部操作的人。 */
+function mrCanManageAll(){
+  return !!(trackerCurrentUser && trackerCurrentUser.manageReports);
+}
+function mrCanEditRecord(rec){
+  return true;
+}
+
+/* ---------------- 分頁切換 ---------------- */
+document.querySelectorAll('#panel-monthlyreports .mr-tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> mrSwitchTab(btn.dataset.tab));
+});
+function mrSwitchTab(name){
+  document.querySelectorAll('#panel-monthlyreports .mr-tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('#panel-monthlyreports .mr-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('mr-panel-'+name).classList.add('active');
+  if(name==='list') mrRenderList();
+  if(name==='settings') mrRenderFieldSettings();
+}
+
+/* ---------------- 公式計算 ---------------- */
+function mrComputeFormula(field, rec, scopeFields){
+  try{
+    const plainFields = scopeFields || mrFieldConfig.filter(f=>f.type!=='formula');
+    const fn = new Function(...plainFields.map(f=>f.id), 'return ('+field.formula+');');
+    const args = plainFields.map(f=> Number(rec[f.id])||0 );
+    let val = fn(...args);
+    if(!isFinite(val)) val = 0;
+    return val;
+  }catch(e){ return 0; }
+}
+function mrFormatValue(field, rawVal){
+  if(field.type==='formula' && field.displayFormat==='percent') return (rawVal*100).toFixed(2)+'%';
+  if(field.type==='number') return '¥'+Number(rawVal||0).toLocaleString('ja-JP');
+  return rawVal ?? '';
+}
+
+/* ---------------- 列表頁 ---------------- */
+let mrCurrentPage = 1;
+const MR_PAGE_SIZE = 20;
+let mrFilters = {}; // { fieldId: 選項值 } 或 { fieldId: {min, max} }（皆為儲存用的原始單位）
+
+function mrFilterUnitFactor(f){
+  if(!f) return 1;
+  if(f.id==='purchase_price') return 10000; // 篩選框輸入的是「萬」
+  if(f.type==='formula' && f.displayFormat==='percent') return 0.01; // 篩選框輸入的是百分比數字（例如 10 代表 10%）
+  return 1;
+}
+function mrRenderFilterBar(){
+  const bar = document.getElementById('mr-filterBar');
+  if(!bar) return;
+  const filterFields = mrFieldConfig.filter(f=>f.filterable);
+  if(!filterFields.length){ bar.style.display='none'; bar.innerHTML=''; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = filterFields.map(f=>{
+    if(f.type==='select' || f.type==='multiselect'){
+      const cur = mrFilters[f.id] || '';
+      return `<div class="field" style="min-width:140px;flex:0 0 auto;">
+        <label>${f.label}</label>
+        <select onchange="mrSetFilterSelect('${f.id}', this.value)">
+          <option value="">全部</option>
+          ${(f.options||[]).map(o=>`<option value="${o}" ${o===cur?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>`;
+    }
+    if(f.type==='number' || f.type==='formula'){
+      const factor = mrFilterUnitFactor(f);
+      const cur = mrFilters[f.id] || {};
+      const minDisplay = (cur.min!=null && cur.min!=='') ? (cur.min/factor) : '';
+      const maxDisplay = (cur.max!=null && cur.max!=='') ? (cur.max/factor) : '';
+      const unitLabel = f.id==='purchase_price' ? '（單位：萬）' : (f.type==='formula' && f.displayFormat==='percent' ? '（單位：%）' : '');
+      return `<div class="field" style="min-width:200px;flex:0 0 auto;">
+        <label>${f.label}${unitLabel}</label>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="number" placeholder="最低" value="${minDisplay}" style="width:80px;" onchange="mrSetFilterRange('${f.id}','min', this.value)">
+          <span>～</span>
+          <input type="number" placeholder="最高" value="${maxDisplay}" style="width:80px;" onchange="mrSetFilterRange('${f.id}','max', this.value)">
+        </div>
+      </div>`;
+    }
+    return '';
+  }).join('') + `<button class="btn small" style="align-self:flex-end;" onclick="mrClearFilters()">清除篩選</button>`;
+}
+function mrSetFilterSelect(fieldId, val){
+  if(!val) delete mrFilters[fieldId];
+  else mrFilters[fieldId] = val;
+  mrCurrentPage = 1;
+  mrRenderList();
+}
+function mrSetFilterRange(fieldId, key, val){
+  const f = mrFieldConfig.find(x=>x.id===fieldId);
+  const factor = mrFilterUnitFactor(f);
+  if(!mrFilters[fieldId] || typeof mrFilters[fieldId] !== 'object') mrFilters[fieldId] = {};
+  mrFilters[fieldId][key] = val==='' ? '' : Number(val) * factor;
+  if((mrFilters[fieldId].min==null || mrFilters[fieldId].min==='') && (mrFilters[fieldId].max==null || mrFilters[fieldId].max==='')){
+    delete mrFilters[fieldId];
+  }
+  mrCurrentPage = 1;
+  mrRenderList();
+}
+function mrClearFilters(){
+  mrFilters = {};
+  mrCurrentPage = 1;
+  mrRenderFilterBar();
+  mrRenderList();
+}
+
+function mrRenderList(){
+  const listCols = mrFieldConfig.filter(f=>f.showInList);
+  document.getElementById('mr-listHeadRow').innerHTML = listCols.map(f=>`<th>${f.label}</th>`).join('');
+  const body = document.getElementById('mr-listBody');
+  const kw = (document.getElementById('mr-searchBox').value||'').trim();
+
+  const filtered = mrRecords.filter(r=>{
+    if(kw && !((r.report_no||'')+r.property_no+r.address+r.customer_name).includes(kw)) return false;
+    for(const fieldId in mrFilters){
+      const f = mrFieldConfig.find(x=>x.id===fieldId);
+      if(!f) continue;
+      const filterVal = mrFilters[fieldId];
+      const val = f.type==='formula' ? mrComputeFormula(f, r) : r[fieldId];
+      if(f.type==='select'){
+        if(val !== filterVal) return false;
+      }else if(f.type==='multiselect'){
+        if(!(Array.isArray(val) && val.includes(filterVal))) return false;
+      }else if(f.type==='number' || f.type==='formula'){
+        const num = Number(val)||0;
+        if(filterVal.min!=null && filterVal.min!=='' && num < filterVal.min) return false;
+        if(filterVal.max!=null && filterVal.max!=='' && num > filterVal.max) return false;
+      }
+    }
+    return true;
+  });
+
+  const totalCount = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / MR_PAGE_SIZE));
+  if(mrCurrentPage > totalPages) mrCurrentPage = totalPages;
+  if(mrCurrentPage < 1) mrCurrentPage = 1;
+
+  const startIdx = (mrCurrentPage - 1) * MR_PAGE_SIZE;
+  const pageItems = filtered.slice(startIdx, startIdx + MR_PAGE_SIZE);
+
+  const countEl = document.getElementById('mr-listCount');
+  if(countEl){
+    countEl.textContent = totalCount === 0
+      ? '共 0 筆'
+      : `共 ${totalCount} 筆，第 ${mrCurrentPage} / ${totalPages} 頁（每頁 ${MR_PAGE_SIZE} 筆）`;
+  }
+
+  body.innerHTML = pageItems.map((rec)=>{
+    const realIdx = mrRecords.indexOf(rec);
+    return '<tr onclick="mrOpenForm('+realIdx+')">' + listCols.map(f=>{
+      let val = f.type==='formula' ? mrComputeFormula(f, rec) : rec[f.id];
+      if(f.type==='select') return `<td>${mrTagHtml(val)}</td>`;
+      if(f.type==='multiselect') return `<td>${(Array.isArray(val)?val:[]).map(mrTagHtml).join(' ')}</td>`;
+      if(f.type==='number' || f.type==='formula') return `<td class="num">${mrFormatValue(f, val)}</td>`;
+      return `<td>${val ?? ''}</td>`;
+    }).join('') + '</tr>';
+  }).join('');
+
+  mrRenderListPagination(totalPages);
+  mrRenderFilterBar();
+}
+function mrRenderListPagination(totalPages){
+  const el = document.getElementById('mr-listPagination');
+  if(!el) return;
+  if(totalPages <= 1){ el.innerHTML = ''; return; }
+  let html = '';
+  html += `<button class="btn small" ${mrCurrentPage===1?'disabled':''} onclick="mrGoToPage(${mrCurrentPage-1})">‹ 上一頁</button>`;
+  // 頁數太多時只顯示目前頁附近的頁碼，避免一大排按鈕
+  const windowSize = 2;
+  for(let p=1; p<=totalPages; p++){
+    const nearCurrent = Math.abs(p-mrCurrentPage) <= windowSize;
+    const isEdge = p===1 || p===totalPages;
+    if(nearCurrent || isEdge){
+      html += `<button class="btn small ${p===mrCurrentPage?'primary':''}" onclick="mrGoToPage(${p})">${p}</button>`;
+    }else if(Math.abs(p-mrCurrentPage) === windowSize+1){
+      html += `<span style="padding:0 4px;color:var(--mr-muted);">…</span>`;
+    }
+  }
+  html += `<button class="btn small" ${mrCurrentPage===totalPages?'disabled':''} onclick="mrGoToPage(${mrCurrentPage+1})">下一頁 ›</button>`;
+  el.innerHTML = html;
+}
+function mrGoToPage(p){
+  mrCurrentPage = p;
+  mrRenderList();
+}
+function mrTagHtml(val){
+  const map = {'自住':'jizyu','賃貸中':'chintai','募集中':'boshu','販売中':'hanbai',
+    '一戸建':'ikkodate','マンション':'manshon','ビル':'biru'};
+  const cls = map[val] || 'jizyu';
+  return val ? `<span class="tag ${cls}">${val}</span>` : '';
+}
+document.getElementById('mr-searchBox').addEventListener('input', ()=>{ mrCurrentPage = 1; mrRenderList(); });
+
+/* ---------------- 表單頁 ---------------- */
+let mrCurrentSubtableData = {}; // { sectionId: [ {欄id:值,...}, ... ] } 目前表單上編輯中的子表格資料
+
+/* 這個模組沒有唯讀限制：能看到就代表是管理員，能完全編輯 */
+function mrFormAccessInfo(rec){
+  return {readOnly:false, hideStaff:false};
+}
+
+function mrOpenForm(idx){ mrEditingIndex = idx; mrCurrentSubtableData = {}; mrRenderForm(); mrSwitchTab('form'); }
+function mrRenderForm(){
+  const rec = mrEditingIndex===null ? {} : mrRecords[mrEditingIndex];
+  const access = mrFormAccessInfo(mrEditingIndex===null ? null : rec);
+  const container = document.getElementById('mr-formSections');
+  let html = '';
+  if(access.readOnly){
+    html += `<div class="note-box" style="background:var(--mr-amber-soft);border-color:#e8d3ad;color:#7a5420;">
+      這個物件的客戶擔當不是您，這裡只能查看，不能修改或儲存。</div>`;
+  }
+  mrSections.forEach(sec=>{
+    html += `<div class="form-section-title">${sec.name}</div>`;
+    if(sec.type==='subtable'){
+      if(!(sec.id in mrCurrentSubtableData)){
+        mrCurrentSubtableData[sec.id] = JSON.parse(JSON.stringify(rec[sec.id] || []));
+      }
+      html += mrRenderSubtableSection(sec, access);
+      return;
+    }
+    const directFields = mrFieldConfig.filter(f=>f.sectionId===sec.id && !f.subsectionId);
+    if(directFields.length){
+      html += `<div class="form-grid">${directFields.map(f=>mrRenderFieldInput(f, rec, access)).join('')}</div>`;
+    }
+    sec.subsections.forEach(sub=>{
+      const subFields = mrFieldConfig.filter(f=>f.subsectionId===sub.id);
+      if(!subFields.length) return;
+      html += `<div class="form-subsection-title">${sub.name}</div>
+        <div class="form-grid">${subFields.map(f=>mrRenderFieldInput(f, rec, access)).join('')}</div>`;
+    });
+  });
+  container.innerHTML = html;
+  const saveBtn = document.getElementById('mrSaveFormBtn');
+  if(saveBtn) saveBtn.style.display = access.readOnly ? 'none' : '';
+  container.querySelectorAll('input[data-fid], select[data-fid]').forEach(inp=>{
+    inp.addEventListener('input', mrRecalcFormulas);
+    inp.addEventListener('change', mrRecalcFormulas);
+    inp.addEventListener('input', mrRecalcAutoFields);
+    inp.addEventListener('change', mrRecalcAutoFields);
+  });
+  mrRecalcAutoFields();
+}
+function mrRenderSubtableSection(sec, access){
+  access = access || {readOnly:false};
+  const cols = mrFieldConfig.filter(f=>f.sectionId===sec.id);
+  const rows = mrCurrentSubtableData[sec.id] || [];
+  let html = `<table class="subtable">
+    <thead><tr>${cols.map(c=>`<th>${c.label}</th>`).join('')}<th style="width:40px;"></th></tr></thead>
+    <tbody>`;
+  if(!rows.length){
+    html += `<tr><td colspan="${cols.length+1}" class="subtable-empty">目前還沒有資料${access.readOnly?'':'，按下面「＋ 新增一列」開始新增'}</td></tr>`;
+  }
+  rows.forEach((row, rIdx)=>{
+    html += '<tr>' + cols.map(c=>`<td>${mrRenderSubtableCell(sec.id, rIdx, c, row[c.id], access.readOnly)}</td>`).join('') +
+      `<td>${access.readOnly?'':`<button class="btn ghost danger small" onclick="mrDeleteSubtableRow('${sec.id}',${rIdx})">×</button>`}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  if(!access.readOnly){
+    html += `<div class="add-row-bar"><button class="btn small" onclick="mrAddSubtableRow('${sec.id}')">＋ 新增一列</button></div>`;
+  }
+  return html;
+}
+function mrRenderSubtableCell(sectionId, rowIdx, col, val, readOnly){
+  val = val ?? '';
+  const onchange = `mrUpdateSubtableCell('${sectionId}',${rowIdx},'${col.id}', this.value)`;
+  const ro = readOnly ? 'disabled' : '';
+  if(readOnly){
+    // 唯讀模式：不管欄位類型，統一用純文字顯示，避免誤觸編輯
+    if(col.type==='multiselect'){
+      const arr = Array.isArray(val) ? val : (val ? [val] : []);
+      return `<span>${arr.join('、') || '—'}</span>`;
+    }
+    if(col.type==='formula'){
+      const rowRec = mrCurrentSubtableData[sectionId][rowIdx];
+      const scope = mrFieldConfig.filter(f=>f.sectionId===sectionId && f.type!=='formula');
+      const computed = mrComputeFormula(col, rowRec, scope);
+      return `<span>${mrFormatValue(col, computed)}</span>`;
+    }
+    return `<span>${val || '—'}</span>`;
+  }
+  if(col.type==='select'){
+    return `<select onchange="${onchange}">
+      <option value=""></option>
+      ${(col.options||[]).map(o=>`<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('')}
+    </select>`;
+  }
+  if(col.type==='multiselect'){
+    const arr = Array.isArray(val) ? val : (val ? [val] : []);
+    return `<div class="ms-cell" data-sub-multi="${sectionId}|${rowIdx}|${col.id}">
+      ${(col.options||[]).map(o=>`<label class="ms-opt-sm"><input type="checkbox" value="${o}" ${arr.includes(o)?'checked':''} onchange="mrUpdateSubtableMultiCell(this)"> ${o}</label>`).join('')}
+    </div>`;
+  }
+  if(col.type==='formula'){
+    const rowRec = mrCurrentSubtableData[sectionId][rowIdx];
+    const scope = mrFieldConfig.filter(f=>f.sectionId===sectionId && f.type!=='formula');
+    const computed = mrComputeFormula(col, rowRec, scope);
+    return `<input type="text" readonly class="subtable-formula" value="${mrFormatValue(col, computed)}" data-subformula-display="${sectionId}|${rowIdx}|${col.id}">`;
+  }
+  if(col.type==='serial'){
+    return `<input type="text" readonly class="subtable-serial" value="${val}">`;
+  }
+  if(col.type==='date'){
+    return `<input type="date" value="${val}" onchange="${onchange}">`;
+  }
+  if(col.type==='file'){
+    const fname = typeof val==='string' ? val : '';
+    return `<input type="file" onchange="mrUpdateSubtableCell('${sectionId}',${rowIdx},'${col.id}', this.files[0]?this.files[0].name:'')">
+      <div class="formula-note">${fname ? '已選擇：'+fname : '尚未上傳（檔案上傳功能尚未開放，暫時只能記錄檔名，需要時請直接聯絡管理員協助）'}</div>`;
+  }
+  const inputType = col.type==='number' ? 'number' : 'text';
+  return `<input type="${inputType}" value="${val}" onchange="${onchange}">`;
+}
+function mrUpdateSubtableCell(sectionId, rowIdx, colId, val){
+  mrCurrentSubtableData[sectionId][rowIdx][colId] = val;
+  mrRecalcSubtableFormulas(sectionId, rowIdx);
+  mrRecalcAutoFields();
+}
+function mrUpdateSubtableMultiCell(checkboxEl){
+  const container = checkboxEl.closest('[data-sub-multi]');
+  const [sectionId, rowIdxStr, colId] = container.dataset.subMulti.split('|');
+  const rowIdx = Number(rowIdxStr);
+  const checked = Array.from(container.querySelectorAll('input[type=checkbox]:checked')).map(c=>c.value);
+  mrCurrentSubtableData[sectionId][rowIdx][colId] = checked;
+  mrRecalcAutoFields();
+}
+function mrRecalcSubtableFormulas(sectionId, rowIdx){
+  const rowRec = mrCurrentSubtableData[sectionId][rowIdx];
+  const formulaCols = mrFieldConfig.filter(f=>f.sectionId===sectionId && f.type==='formula');
+  const scope = mrFieldConfig.filter(f=>f.sectionId===sectionId && f.type!=='formula');
+  formulaCols.forEach(col=>{
+    const computed = mrComputeFormula(col, rowRec, scope);
+    const el = document.querySelector(`[data-subformula-display="${sectionId}|${rowIdx}|${col.id}"]`);
+    if(el) el.value = mrFormatValue(col, computed);
+  });
+}
+function mrAddSubtableRow(sectionId){
+  const cols = mrFieldConfig.filter(f=>f.sectionId===sectionId);
+  const blank = {};
+  cols.forEach(c=>{
+    if(c.type==='serial'){
+      const digits = c.serialDigits||5;
+      blank[c.id] = (c.serialPrefix||'') + String(c.serialNext||1).padStart(digits,'0');
+      c.serialNext = (c.serialNext||1) + 1;
+    }else if(c.type==='multiselect'){
+      blank[c.id] = [];
+    }else{
+      blank[c.id] = '';
+    }
+  });
+  if(!mrCurrentSubtableData[sectionId]) mrCurrentSubtableData[sectionId] = [];
+  mrCurrentSubtableData[sectionId].push(blank);
+  mrRenderForm();
+}
+function mrDeleteSubtableRow(sectionId, rowIdx){
+  mrCurrentSubtableData[sectionId].splice(rowIdx,1);
+  mrRenderForm();
+}
+function mrRenderFieldInput(f, rec, access){
+  access = access || {readOnly:false, hideStaff:false};
+  const val = rec[f.id] ?? '';
+  const ro = access.readOnly;
+
+  // 物件編號：跟「物件資料」模組連動的自動完成輸入框——
+  // 可以打字從物件清單裡篩選（顯示「物件編號 物件地址」），也可以直接手動輸入物件編號，
+  // 選了或打對既有的物件編號，物件地址、客戶編號、客戶姓名都會自動帶出來，不用再填。
+  if(f.id === 'property_no'){
+    return `<div class="field" style="position:relative;">
+      <label>${f.label}</label>
+      <input type="text" data-fid="${f.id}" value="${val}" ${ro?'readonly':''}
+        autocomplete="off"
+        oninput="mrPropertyAutocomplete(this)"
+        onfocus="mrPropertyAutocomplete(this)"
+        onblur="setTimeout(()=>mrHidePropertySuggest(this), 150)">
+      <div class="mr-cust-suggest" style="display:none;"></div>
+      <span class="formula-note">可打字篩選物件清單，也可以直接手動輸入物件編號</span>
+    </div>`;
+  }
+
+  // 以下這些欄位都是自動算出來的，不給手動編輯：
+  // 報表編號＝物件編號-年/月；上期餘額／上月報表＝自動找同一物件上一筆報表；
+  // 收入合計／支出合計＝子表格加總；結算合計＝收入-支出。
+  const autoFieldIds = ['report_no','prev_balance','prev_report','income_total','expense_total','settle_total'];
+  if(autoFieldIds.includes(f.id)){
+    return `<div class="field">
+      <label>${f.label}</label>
+      <input type="text" readonly value="${val}" data-auto-field="${f.id}" style="background:#f4f3ef;color:var(--mr-muted);">
+      <span class="formula-note">系統自動計算，不能手動修改</span>
+    </div>`;
+  }
+
+  if(f.type==='formula'){
+    const computed = mrComputeFormula(f, rec);
+    return `<div class="field formula">
+      <label>${f.label}</label>
+      <input type="text" readonly value="${mrFormatValue(f, computed)}" data-formula-display="${f.id}">
+      <span class="formula-note">自動計算：${f.formula}</span>
+    </div>`;
+  }
+  if(f.type==='select'){
+    return `<div class="field">
+      <label>${f.label}</label>
+      <select data-fid="${f.id}" ${ro?'disabled':''}>
+        <option value=""></option>
+        ${(f.options||[]).map(o=>`<option value="${o}" ${o===val?'selected':''}>${o}</option>`).join('')}
+      </select>
+    </div>`;
+  }
+  if(f.type==='date'){
+    return `<div class="field"><label>${f.label}</label><input type="date" data-fid="${f.id}" value="${val}" ${ro?'disabled':''}></div>`;
+  }
+  if(f.type==='serial'){
+    const digits = f.serialDigits||5;
+    if(mrEditingIndex===null){
+      const preview = (f.serialPrefix||'')+String(f.serialNext||1).padStart(digits,'0');
+      return `<div class="field">
+        <label>${f.label}</label>
+        <input type="text" readonly value="${preview}" style="background:#f4f3ef;color:var(--mr-muted);">
+        <span class="formula-note">系統自動編號，儲存後產生</span>
+      </div>`;
+    }
+    // 編輯既有物件時：可以手動修改（例如系統有問題需要自己修正），但要小心改成跟別的物件重複的編號
+    return `<div class="field">
+      <label>${f.label}</label>
+      <input type="text" data-fid="${f.id}" value="${val}" ${ro?'readonly':''}>
+      <span class="formula-note">可以手動修改，但請確認不要跟其他物件編號重複</span>
+    </div>`;
+  }
+  if(f.type==='multiselect'){
+    const arr = Array.isArray(val) ? val : (val ? [val] : []);
+    return `<div class="field" data-fid-multi="${f.id}">
+      <label>${f.label}</label>
+      <div class="multiselect-box">
+        ${(f.options||[]).map(o=>`<label class="ms-opt"><input type="checkbox" value="${o}" ${arr.includes(o)?'checked':''} ${ro?'disabled':''}> ${o}</label>`).join('')}
+      </div>
+    </div>`;
+  }
+  if(f.type==='file'){
+    const fname = val && val.name ? val.name : (typeof val==='string' ? val : '');
+    return `<div class="field">
+      <label>${f.label}</label>
+      <input type="file" data-fid="${f.id}" data-filefield="1" onchange="mrHandleFileSelect(this)" ${ro?'disabled':''}>
+      <span class="formula-note" data-file-current="${f.id}">${fname ? '目前檔案：'+fname : '尚未上傳檔案'}</span>
+    </div>`;
+  }
+  const inputType = f.type==='number' ? 'number' : 'text';
+  return `<div class="field"><label>${f.label}</label>
+    <input type="${inputType}" data-fid="${f.id}" value="${val}" ${(f.readonly||ro)?'readonly':''}></div>`;
+}
+function mrRecalcFormulas(){
+  const tempRec = {};
+  document.querySelectorAll('#mr-formSections [data-fid]').forEach(el=>{ tempRec[el.dataset.fid] = el.value; });
+  mrFieldConfig.filter(f=>f.type==='formula').forEach(f=>{
+    const computed = mrComputeFormula(f, tempRec);
+    const displayEl = document.querySelector(`[data-formula-display="${f.id}"]`);
+    if(displayEl) displayEl.value = mrFormatValue(f, computed);
+  });
+}
+function mrHandleFileSelect(inputEl){
+  const fname = inputEl.files && inputEl.files[0] ? inputEl.files[0].name : '';
+  const noteEl = document.querySelector(`[data-file-current="${inputEl.dataset.fid}"]`);
+  if(noteEl) noteEl.textContent = fname ? '已選擇檔案：'+fname+'（檔案上傳功能尚未開放，暫時只能記錄檔名）' : '尚未上傳檔案';
+}
+
+/* ---------------- 客戶編號自動完成（連動「客戶資料」模組的 ccRecords） ---------------- */
+function mrPropertyAutocomplete(inputEl){
+  const box = inputEl.parentElement.querySelector('.mr-cust-suggest');
+  if(!box) return;
+  const kw = (inputEl.value||'').trim();
+  const list = mrPropertyList;
+
+  if(!mrPropertyListLoaded){
+    box.innerHTML = `<div class="mr-cust-suggest-item" style="color:var(--mr-muted);cursor:default;">物件資料載入中…請稍候幾秒再試一次</div>`;
+    box.style.display = 'block';
+    return;
+  }
+
+  let matches = list;
+  if(kw){
+    matches = list.filter(p => (p.property_no||'').includes(kw) || (p.address||'').includes(kw));
+  }
+  matches = matches.slice(0, 30);
+
+  if(!matches.length){
+    box.innerHTML = kw
+      ? `<div class="mr-cust-suggest-item" style="color:var(--mr-muted);cursor:default;">沒有符合的物件，可以直接手動輸入物件編號</div>`
+      : `<div class="mr-cust-suggest-item" style="color:var(--mr-muted);cursor:default;">目前還沒有任何物件資料</div>`;
+    box.style.display = 'block';
+  }else{
+    box.innerHTML = matches.map(p=>{
+      const no = (p.property_no||'').replace(/'/g, "\\'");
+      const addr = (p.address||'').replace(/'/g, "\\'");
+      const custNo = (p.customer_no||'').replace(/'/g, "\\'");
+      const custName = (p.customer_name||'').replace(/'/g, "\\'");
+      return `<div class="mr-cust-suggest-item" onmousedown="mrSelectProperty(this, '${no}', '${addr}', '${custNo}', '${custName}')">${p.property_no||''}　${p.address||''}</div>`;
+    }).join('');
+    box.style.display = 'block';
+  }
+
+  // 手動輸入時，如果剛好完全對到某個既有物件編號，自動把地址、客戶編號、客戶姓名帶出來
+  const exact = list.find(p => p.property_no === kw);
+  if(exact) mrFillLinkedPropertyFields(inputEl, exact);
+}
+function mrFillLinkedPropertyFields(inputEl, prop){
+  const container = inputEl.closest('#mr-formSections') || document;
+  const addrInput = container.querySelector('[data-fid="address"]');
+  const custNoInput = container.querySelector('[data-fid="customer_no"]');
+  const custNameInput = container.querySelector('[data-fid="customer_name"]');
+  if(addrInput) addrInput.value = prop.address || '';
+  if(custNoInput) custNoInput.value = prop.customer_no || '';
+  if(custNameInput) custNameInput.value = prop.customer_name || '';
+  mrRecalcAutoFields();
+}
+function mrSelectProperty(itemEl, propertyNo, address, customerNo, customerName){
+  const box = itemEl.closest('.mr-cust-suggest');
+  const field = box.previousElementSibling;
+  if(field){
+    field.value = propertyNo;
+    mrFillLinkedPropertyFields(field, {address, customer_no:customerNo, customer_name:customerName});
+  }
+  box.style.display = 'none';
+  box.innerHTML = '';
+}
+function mrHidePropertySuggest(inputEl){
+  const box = inputEl.parentElement.querySelector('.mr-cust-suggest');
+  if(box) box.style.display = 'none';
+}
+
+/* ---------------- 自動計算欄位：收支合計、上期餘額、上月報表、報表編號 ---------------- */
+function mrComputeTotals(rec){
+  const incomeItems = rec.income_items || [];
+  const expenseItems = rec.expense_items || [];
+  const income_total = incomeItems.reduce((sum,row)=> sum + (Number(row.amount)||0), 0);
+  const expense_total = expenseItems.reduce((sum,row)=> sum + (Number(row.amount)||0), 0);
+  return {income_total, expense_total, settle_total: income_total - expense_total};
+}
+function mrFindPrevReport(propertyNo, year, month, excludeIdx){
+  const target = Number(year)*100 + Number(month);
+  if(!propertyNo || !target) return null;
+  let best = null, bestKey = -Infinity;
+  mrRecords.forEach((r, i)=>{
+    if(i===excludeIdx) return;
+    if(r.property_no !== propertyNo) return;
+    const key = Number(r.year)*100 + Number(r.month);
+    if(!isFinite(key)) return;
+    if(key < target && key > bestKey){ bestKey = key; best = r; }
+  });
+  return best;
+}
+function mrRecalcAutoFields(){
+  const container = document.getElementById('mr-formSections');
+  if(!container) return;
+  const getVal = (fid)=>{ const el = container.querySelector(`[data-fid="${fid}"]`); return el ? el.value : ''; };
+  const propertyNo = getVal('property_no');
+  const year = getVal('year');
+  const month = getVal('month');
+
+  const tempRec = {income_items: mrCurrentSubtableData.income_items || [], expense_items: mrCurrentSubtableData.expense_items || []};
+  const totals = mrComputeTotals(tempRec);
+  const prev = mrFindPrevReport(propertyNo, year, month, mrEditingIndex);
+  const reportNo = (propertyNo && year && month) ? `${propertyNo}-${year}/${month}` : '';
+
+  const setAuto = (fid, val)=>{ const el = container.querySelector(`[data-auto-field="${fid}"]`); if(el) el.value = val; };
+  setAuto('report_no', reportNo);
+  setAuto('prev_balance', prev ? (prev.settle_total||0) : 0);
+  setAuto('prev_report', prev ? prev.report_no : '（沒有更早的報表，視為第一期）');
+  setAuto('income_total', totals.income_total);
+  setAuto('expense_total', totals.expense_total);
+  setAuto('settle_total', totals.settle_total);
+}
+
+async function mrSaveForm(){
+  const rec = {};
+  document.querySelectorAll('#mr-formSections [data-fid]').forEach(el=>{
+    if(el.type==='file'){
+      rec[el.dataset.fid] = el.files && el.files[0] ? el.files[0].name : (rec[el.dataset.fid]||'');
+      return;
+    }
+    rec[el.dataset.fid] = el.type==='number' ? Number(el.value)||0 : el.value;
+  });
+  document.querySelectorAll('#mr-formSections [data-fid-multi]').forEach(box=>{
+    const fid = box.dataset.fidMulti;
+    const checked = Array.from(box.querySelectorAll('input[type=checkbox]:checked')).map(c=>c.value);
+    rec[fid] = checked;
+  });
+  mrSections.filter(s=>s.type==='subtable').forEach(sec=>{
+    rec[sec.id] = mrCurrentSubtableData[sec.id] || [];
+  });
+
+  if(!rec.property_no){ alert('請先填寫物件編號。'); return; }
+  if(!rec.year || !rec.month){ alert('請填寫報表年份與報表月份。'); return; }
+
+  const totals = mrComputeTotals(rec);
+  rec.income_total = totals.income_total;
+  rec.expense_total = totals.expense_total;
+  rec.settle_total = totals.settle_total;
+
+  const prev = mrFindPrevReport(rec.property_no, rec.year, rec.month, mrEditingIndex);
+  rec.prev_balance = prev ? (prev.settle_total||0) : 0;
+  rec.prev_report = prev ? prev.report_no : '';
+
+  const newDocId = `${rec.property_no}-${rec.year}/${rec.month}`;
+  rec.report_no = newDocId;
+
+  try{
+    if(mrEditingIndex===null){
+      const clash = mrRecords.some(r => r.report_no === newDocId);
+      if(clash){
+        alert('這個物件在 '+rec.year+' 年 '+rec.month+' 月已經有報表了，不能重複新增。');
+        return;
+      }
+      await trackerDB.collection('monthly_reports').doc(newDocId).set(rec);
+    }else{
+      const oldDocId = mrRecords[mrEditingIndex].report_no;
+      if(newDocId !== oldDocId){
+        const clash = mrRecords.some((r,i)=> i!==mrEditingIndex && r.report_no === newDocId);
+        if(clash){
+          alert('這個物件在 '+rec.year+' 年 '+rec.month+' 月已經有報表了，不能重複。');
+          return;
+        }
+        const oldRef = trackerDB.collection('monthly_reports').doc(String(oldDocId));
+        const newRef = trackerDB.collection('monthly_reports').doc(String(newDocId));
+        await newRef.set(rec);
+        await oldRef.delete();
+      }else{
+        await trackerDB.collection('monthly_reports').doc(String(oldDocId)).set(rec);
+      }
+    }
+    mrCurrentSubtableData = {};
+    mrSwitchTab('list');
+  }catch(err){
+    console.error(err);
+    alert('儲存失敗：' + err.message);
+  }
+}
+
+/* ---------------- 欄位設定頁（階層式：大分類 > 小分類 > 欄位） ---------------- */
+let mrSettingsDirty = false;
+function mrMarkDirty(){
+  mrSettingsDirty = true;
+  const el = document.getElementById('mr-saveStatusBar');
+  if(el){ el.textContent = '● 尚未儲存的變更'; el.className = 'save-status dirty'; }
+}
+async function mrSaveFieldSettings(){
+  if(!mrCanManageAll()){
+    alert('您沒有編輯欄位設定的權限。');
+    return;
+  }
+  const el = document.getElementById('mr-saveStatusBar');
+  try{
+    await trackerDB.collection('settings').doc('monthly_reports_field_config').set({sections: mrSections, fieldConfig: mrFieldConfig});
+    mrSettingsDirty = false;
+    const now = new Date();
+    const hhmmss = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+    if(el){ el.textContent = '✓ 已儲存　'+hhmmss; el.className = 'save-status saved'; }
+  }catch(err){
+    console.error(err);
+    alert('儲存欄位設定失敗：' + err.message);
+  }
+}
+function mrRenderFieldSettings(){
+  const container = document.getElementById('mr-sectionsContainer');
+  container.innerHTML = mrSections.map((sec, secIdx)=>{
+    const directFields = mrFieldConfig.filter(f=>f.sectionId===sec.id && !f.subsectionId);
+    const isSubtable = sec.type==='subtable';
+    return `<div class="section-block">
+      <div class="section-header">
+        <div class="move-btns">
+          <button onclick="mrMoveSection(${secIdx},-1)" title="上移">▲</button>
+          <button onclick="mrMoveSection(${secIdx},1)" title="下移">▼</button>
+        </div>
+        <input value="${sec.name}" onchange="mrRenameSection('${sec.id}', this.value)">
+        <select onchange="mrChangeSectionType('${sec.id}', this.value)">
+          <option value="normal" ${!isSubtable?'selected':''}>一般欄位</option>
+          <option value="subtable" ${isSubtable?'selected':''}>子表格（可增加多列）</option>
+        </select>
+        <button class="btn small" onclick="mrAddField('${sec.id}', null)">＋ 欄位</button>
+        <button class="btn ghost danger small" onclick="mrDeleteSection('${sec.id}')">刪除分類</button>
+      </div>
+      <div class="section-body">
+        ${mrRenderFieldRows(directFields, isSubtable)}
+        ${sec.subsections.map(sub=>mrRenderSubsectionBlock(sec.id, sub)).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+function mrChangeSectionType(sectionId, val){
+  mrMarkDirty();
+  mrSections.find(s=>s.id===sectionId).type = val;
+  mrRenderFieldSettings();
+}
+function mrRenderSubsectionBlock(sectionId, sub){
+  const subFields = mrFieldConfig.filter(f=>f.subsectionId===sub.id);
+  return `<div class="subsection-block">
+    <div class="subsection-header">
+      <input value="${sub.name}" onchange="mrRenameSubsection('${sectionId}','${sub.id}', this.value)">
+      <button class="btn small" onclick="mrAddField('${sectionId}', '${sub.id}')">＋ 欄位</button>
+      <button class="btn ghost danger small" onclick="mrDeleteSubsection('${sectionId}','${sub.id}')">刪除小分類</button>
+    </div>
+    ${mrRenderFieldRows(subFields, false)}
+  </div>`;
+}
+function mrRenderFieldRows(fields, isSubtable){
+  if(!fields.length) return `<div style="font-size:12px;color:var(--mr-muted);padding:4px 0 8px;">（這裡還沒有欄位，按上面「＋ 欄位」新增）</div>`;
+  const typeOptions = ['text','number','date','select','multiselect','formula','file','serial'];
+  const filterableTypes = ['select','multiselect','number','formula'];
+  return fields.map(f=>{
+    const globalIdx = mrFieldConfig.indexOf(f);
+    let extra = '';
+    if(f.type==='select' || f.type==='multiselect'){
+      extra = `<div class="options-editor">
+        ${(f.options||[]).map((o,oi)=>`<span class="opt-chip">${o}<button onclick="mrRemoveOption(${globalIdx},${oi})">×</button></span>`).join('')}
+        <span class="opt-add">
+          <input type="text" placeholder="新選項" onkeydown="if(event.key==='Enter'){mrAddOption(${globalIdx}, this.value); this.value='';}">
+          <button class="btn ghost small" onclick="const inp=this.previousElementSibling; mrAddOption(${globalIdx}, inp.value); inp.value='';">加入</button>
+        </span>
+      </div>`;
+    }else if(f.type==='formula'){
+      extra = `<input class="formula-input" value="${f.formula}" onchange="mrUpdateFormula(${globalIdx}, this.value)">`;
+    }else if(f.type==='serial'){
+      extra = `<div style="display:flex;gap:6px;align-items:center;font-size:12px;">
+        字首<input type="text" value="${f.serialPrefix||''}" style="width:48px;" onchange="mrUpdateSerialConfig(${globalIdx},'serialPrefix', this.value)">
+        位數<input type="number" value="${f.serialDigits||5}" min="1" max="10" style="width:48px;" onchange="mrUpdateSerialConfig(${globalIdx},'serialDigits', this.value)">
+        <span style="color:var(--mr-muted);">下一號：${f.serialPrefix||''}${String(f.serialNext||1).padStart(f.serialDigits||5,'0')}</span>
+      </div>`;
+    }else{
+      extra = `<span style="font-size:12px;color:var(--mr-muted);">—</span>`;
+    }
+    if(!isSubtable && filterableTypes.includes(f.type)){
+      extra += `<label style="display:block;margin-top:6px;font-size:11px;color:var(--mr-muted);cursor:pointer;">
+        <input type="checkbox" ${f.filterable?'checked':''} onchange="mrToggleFilterable(${globalIdx}, this.checked)" style="width:auto;vertical-align:middle;"> 顯示在列表篩選區
+      </label>`;
+    }
+    return `<div class="fs-row">
+      <div class="move-btns">
+        <button onclick="mrMoveFieldWithinGroup(${globalIdx},-1)" title="上移">▲</button>
+        <button onclick="mrMoveFieldWithinGroup(${globalIdx},1)" title="下移">▼</button>
+      </div>
+      <input value="${f.label}" onchange="mrRenameField(${globalIdx}, this.value)">
+      <select onchange="mrChangeFieldType(${globalIdx}, this.value)">
+        ${typeOptions.map(t=>`<option value="${t}" ${t===f.type?'selected':''}>${mrTypeLabel(t)}</option>`).join('')}
+      </select>
+      <div>${extra}</div>
+      <button class="btn ghost danger small" onclick="mrDeleteField(${globalIdx})">刪除</button>
+    </div>`;
+  }).join('');
+}
+function mrTypeLabel(t){
+  return {text:'文字', number:'數字', date:'日期', select:'下拉選單（單選）', multiselect:'下拉選單（多選）',
+    formula:'計算欄位', file:'文件添加', serial:'流水號（系統自動編）'}[t];
+}
+
+/* ---- 大分類操作 ---- */
+function mrAddSection(){
+  const name = prompt('新的大分類名稱？（例如：工事狀況）');
+  if(!name) return;
+  mrMarkDirty();
+  mrSections.push({id:'sec_'+Date.now(), name, type:'normal', subsections:[]});
+  mrRenderFieldSettings();
+}
+function mrRenameSection(id, val){ mrMarkDirty(); mrSections.find(s=>s.id===id).name = val; }
+function mrDeleteSection(id){
+  const hasFields = mrFieldConfig.some(f=>f.sectionId===id);
+  if(hasFields && !confirm('這個大分類底下還有欄位，刪除分類會一併刪除裡面所有欄位，確定嗎？')) return;
+  mrMarkDirty();
+  mrFieldConfig = mrFieldConfig.filter(f=>f.sectionId!==id);
+  mrSections = mrSections.filter(s=>s.id!==id);
+  mrRenderFieldSettings();
+}
+function mrMoveSection(idx, dir){
+  const t = idx+dir;
+  if(t<0 || t>=mrSections.length) return;
+  mrMarkDirty();
+  [mrSections[idx], mrSections[t]] = [mrSections[t], mrSections[idx]];
+  mrRenderFieldSettings();
+}
+
+/* ---- 小分類操作 ---- */
+function mrAddSubsection(sectionId){
+  const name = prompt('新的小分類名稱？（例如：水電瓦斯開通狀況）');
+  if(!name) return;
+  mrMarkDirty();
+  mrSections.find(s=>s.id===sectionId).subsections.push({id:'sub_'+Date.now(), name});
+  mrRenderFieldSettings();
+}
+function mrRenameSubsection(sectionId, subId, val){
+  mrMarkDirty();
+  mrSections.find(s=>s.id===sectionId).subsections.find(u=>u.id===subId).name = val;
+}
+function mrDeleteSubsection(sectionId, subId){
+  const hasFields = mrFieldConfig.some(f=>f.subsectionId===subId);
+  if(hasFields && !confirm('這個小分類底下還有欄位，刪除小分類會一併刪除裡面所有欄位，確定嗎？')) return;
+  mrMarkDirty();
+  mrFieldConfig = mrFieldConfig.filter(f=>f.subsectionId!==subId);
+  const sec = mrSections.find(s=>s.id===sectionId);
+  sec.subsections = sec.subsections.filter(u=>u.id!==subId);
+  mrRenderFieldSettings();
+}
+
+/* ---- 欄位操作 ---- */
+function mrAddField(sectionId, subsectionId){
+  const label = prompt('新欄位名稱？');
+  if(!label) return;
+  mrMarkDirty();
+  mrFieldConfig.push({id:'f_'+Date.now(), label, type:'text', sectionId, subsectionId: subsectionId||null});
+  mrRenderFieldSettings();
+}
+function mrRenameField(idx, val){ mrMarkDirty(); mrFieldConfig[idx].label = val; }
+function mrChangeFieldType(idx, val){
+  mrMarkDirty();
+  mrFieldConfig[idx].type = val;
+  if((val==='select'||val==='multiselect') && !mrFieldConfig[idx].options) mrFieldConfig[idx].options=[];
+  if(val==='formula' && !mrFieldConfig[idx].formula) mrFieldConfig[idx].formula='0';
+  if(val==='serial'){
+    if(!mrFieldConfig[idx].serialPrefix) mrFieldConfig[idx].serialPrefix='';
+    if(!mrFieldConfig[idx].serialDigits) mrFieldConfig[idx].serialDigits=5;
+    if(!mrFieldConfig[idx].serialNext) mrFieldConfig[idx].serialNext=1;
+  }
+  mrRenderFieldSettings();
+}
+function mrUpdateSerialConfig(idx, key, val){
+  mrMarkDirty();
+  mrFieldConfig[idx][key] = key==='serialDigits' ? Number(val)||5 : val;
+  mrRenderFieldSettings();
+}
+function mrToggleFilterable(idx, checked){
+  mrMarkDirty();
+  mrFieldConfig[idx].filterable = checked;
+  mrRenderFieldSettings();
+  mrRenderFilterBar();
+}
+function mrDeleteField(idx){
+  if(!confirm('確定要刪除「'+mrFieldConfig[idx].label+'」這個欄位嗎？')) return;
+  mrMarkDirty();
+  mrFieldConfig.splice(idx,1);
+  mrRenderFieldSettings();
+}
+function mrUpdateFormula(idx, val){ mrMarkDirty(); mrFieldConfig[idx].formula = val; }
+function mrAddOption(idx, val){
+  val = (val||'').trim();
+  if(!val) return;
+  mrMarkDirty();
+  if(!mrFieldConfig[idx].options) mrFieldConfig[idx].options=[];
+  mrFieldConfig[idx].options.push(val);
+  mrRenderFieldSettings();
+}
+function mrRemoveOption(idx, optIdx){
+  mrMarkDirty();
+  mrFieldConfig[idx].options.splice(optIdx,1);
+  mrRenderFieldSettings();
+}
+function mrMoveFieldWithinGroup(idx, dir){
+  const f = mrFieldConfig[idx];
+  const groupIdxs = mrFieldConfig.map((x,i)=>({x,i}))
+    .filter(o=>o.x.sectionId===f.sectionId && o.x.subsectionId===f.subsectionId)
+    .map(o=>o.i);
+  const pos = groupIdxs.indexOf(idx);
+  const targetPos = pos+dir;
+  if(targetPos<0 || targetPos>=groupIdxs.length) return;
+  mrMarkDirty();
+  const targetIdx = groupIdxs[targetPos];
+  [mrFieldConfig[idx], mrFieldConfig[targetIdx]] = [mrFieldConfig[targetIdx], mrFieldConfig[idx]];
+  mrRenderFieldSettings();
+}
+
+/* ---------------- 初始化（在主站登入成功、trackerCurrentUser 準備好後由 mrInit() 呼叫） ---------------- */
+function mrInit(){
+  const headerLink = document.getElementById('monthlyReportsHeaderLink');
+  if(headerLink) headerLink.style.display = mrCanManageAll() ? '' : 'none';
+  if(!mrCanManageAll()) return; // 月次報告書只有管理員能看，非管理員完全不嘗試讀取，避免跳出權限錯誤提示
+
+  const settingsBtn = document.getElementById('mrSettingsTabBtn');
+  if(settingsBtn) settingsBtn.style.display = mrCanManageAll() ? '' : 'none';
+
+  trackerDB.collection('settings').doc('monthly_reports_field_config').onSnapshot(snap=>{
+    if(snap.exists){
+      const data = snap.data();
+      mrSections = data.sections || [];
+      mrFieldConfig = data.fieldConfig || [];
+    }
+    mrFieldConfigLoaded = true;
+    const activeTab = document.querySelector('#panel-monthlyreports .mr-tab-btn.active');
+    const activeName = activeTab ? activeTab.dataset.tab : 'list';
+    if(activeName==='list') mrRenderList();
+    if(activeName==='settings') mrRenderFieldSettings();
+  }, err=>{
+    console.error(err);
+    alert('月次報告書的欄位設定讀取失敗：' + err.message);
+  });
+
+  if(typeof mrUnsubProperties === 'function') mrUnsubProperties();
+  mrUnsubProperties = trackerDB.collection('monthly_reports').onSnapshot(snapshot=>{
+    mrRecords = snapshot.docs.map(d=>d.data());
+    mrRenderList();
+  }, err=>{
+    console.error(err);
+    alert('月次報告書讀取失敗，請確認 Firestore 規則或網路連線：' + err.message);
+  });
+
+  // 「物件編號」自動完成用的物件清單：月次報告書自己獨立監聽物件資料，
+  // 不依賴「物件資料」模組是否已經載入完成，避免時間差導致下拉選單抓不到資料。
+  if(typeof mrUnsubPropertyList === 'function') mrUnsubPropertyList();
+  mrUnsubPropertyList = trackerDB.collection('properties').onSnapshot(snapshot=>{
+    mrPropertyList = snapshot.docs.map(d=>d.data());
+    mrPropertyListLoaded = true;
+  }, err=>{
+    console.error(err);
+  });
+}
+
+
 
 </script>
 </body>
