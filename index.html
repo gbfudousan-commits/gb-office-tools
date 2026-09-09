@@ -925,7 +925,41 @@
 #panel-customers .ms-opt-sm input{width:auto;}
 #panel-customers .add-section-bar{margin-top:6px;padding-top:14px;border-top:1px dashed var(--cc-line);display:flex;gap:10px;}
 
-
+/* ============ 客戶帳戶（新功能，命名空間 #panel-customer-accounts 底下） ============ */
+#panel-customer-accounts{
+  --ca-bg:#f6f4ef; --ca-surface:#ffffff; --ca-ink:#24302a; --ca-muted:#6b7269;
+  --ca-line:#e4e0d6; --ca-accent:#2f6f4f; --ca-radius:6px;
+}
+#panel-customer-accounts *{box-sizing:border-box;}
+#panel-customer-accounts .shell{max-width:1000px;margin:0 auto;padding:28px 20px 80px;}
+#panel-customer-accounts header.top{margin-bottom:22px;}
+#panel-customer-accounts header.top h1{font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:.02em;}
+#panel-customer-accounts header.top p{margin:0;color:var(--ca-muted);font-size:13px;}
+#panel-customer-accounts .card{background:var(--ca-surface);border:1px solid var(--ca-line);border-radius:var(--ca-radius);padding:18px 20px;}
+#panel-customer-accounts .list-toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+#panel-customer-accounts .list-toolbar input[type=text]{
+  flex:1;min-width:180px;padding:8px 10px;border:1px solid var(--ca-line);
+  border-radius:var(--ca-radius);font-size:13px;font-family:inherit;
+}
+#panel-customer-accounts .btn{
+  appearance:none;border:1px solid var(--ca-line);background:var(--ca-surface);color:var(--ca-ink);
+  padding:8px 14px;border-radius:var(--ca-radius);font-size:13px;font-family:inherit;cursor:pointer;
+}
+#panel-customer-accounts .btn:hover{border-color:var(--ca-accent);color:var(--ca-accent);}
+#panel-customer-accounts .btn.small{padding:4px 10px;font-size:12px;}
+#panel-customer-accounts table.list-table{width:100%;border-collapse:collapse;font-size:13px;}
+#panel-customer-accounts table.list-table th{
+  text-align:left;font-weight:600;color:var(--ca-muted);font-size:12px;
+  padding:8px 10px;border-bottom:1px solid var(--ca-line);white-space:nowrap;
+}
+#panel-customer-accounts table.list-table td{padding:10px 10px;border-bottom:1px solid var(--ca-line);vertical-align:top;}
+#panel-customer-accounts table.list-table tr:hover td{background:#faf9f5;cursor:pointer;}
+#panel-customer-accounts .num{text-align:right;font-variant-numeric:tabular-nums;}
+#panel-customer-accounts .note-box{
+  background:#e7f0ea;border:1px solid #cfe3d6;border-radius:var(--ca-radius);
+  padding:12px 14px;font-size:12.5px;color:#2c5940;margin-bottom:16px;
+}
+#panel-customer-accounts .neg{color:#a4433a;}
 
 
 </style>
@@ -958,6 +992,7 @@
       <a href="#" class="header-link" id="propertiesHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-properties').classList.add('active');renderList();return false;">物件管理 →</a>
       <a href="#" class="header-link" id="customersHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-customers').classList.add('active');ccRenderList();return false;">客戶資料 →</a>
       <a href="#" class="header-link" id="monthlyReportsHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-monthlyreports').classList.add('active');mrRenderList();return false;">月次報告書 →</a>
+      <a href="#" class="header-link" id="customerAccountsHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-customer-accounts').classList.add('active');caBackToList();return false;">客戶帳戶 →</a>
       <a href="#" class="header-link" onclick="siteLogout();return false;" style="font-size:13px;">登出</a>
     </div>
   </div>
@@ -2345,6 +2380,42 @@
 
   </div>
 
+<div class="panel" id="panel-customer-accounts">
+<div class="shell">
+  <header class="top">
+    <h1>客戶帳戶</h1>
+    <p>自動加總每位客戶名下所有物件的目前餘額（只有管理員能看到）。這裡純檢視用途，不能直接編輯，要調整數字請到「物件資料」或「月次報告書」修改。</p>
+  </header>
+
+  <div class="note-box">總餘額 = 這位客戶名下每一筆物件的「目前餘額」加總（目前餘額本身是自動抓該物件最新一期月次報告書的結算合計）。</div>
+
+  <div class="card" id="ca-listView">
+    <div class="list-toolbar">
+      <input type="text" id="ca-searchBox" placeholder="輸入客戶編號或客戶姓名搜尋">
+    </div>
+    <div id="ca-listCount" style="font-size:12px;color:var(--ca-muted);margin-bottom:8px;"></div>
+    <div style="overflow-x:auto;">
+      <table class="list-table">
+        <thead><tr><th>客戶編號</th><th>客戶姓名</th><th>總餘額</th></tr></thead>
+        <tbody id="ca-listBody"></tbody>
+      </table>
+    </div>
+    <div id="ca-listPagination" style="display:flex;gap:6px;justify-content:center;margin-top:16px;flex-wrap:wrap;"></div>
+  </div>
+
+  <div class="card" id="ca-detailView" style="display:none;">
+    <button class="btn small" onclick="caBackToList()">‹ 回客戶列表</button>
+    <h3 id="ca-detailTitle" style="margin:14px 0 10px;"></h3>
+    <div style="overflow-x:auto;">
+      <table class="list-table">
+        <thead><tr><th>物件編號</th><th>物件地址</th><th>目前餘額</th></tr></thead>
+        <tbody id="ca-detailBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+  </div>
 
   </div><!-- /.preview-wrap -->
 
@@ -3847,6 +3918,7 @@ function applyCurrentUserUI(){
   if(typeof ppInit === 'function') ppInit();
   if(typeof ccInit === 'function') ccInit();
   if(typeof mrInit === 'function') mrInit();
+  if(typeof caInit === 'function') caInit();
 }
 
 function startCaseListener(){
@@ -4759,6 +4831,21 @@ let ppUnsubProperties = null;
 let ppCustomerList = [];
 let ppCustomerListLoaded = false;
 let ppUnsubCustomerList = null;
+let ppMonthlyReportList = [];
+let ppMonthlyReportListLoaded = false;
+let ppUnsubMonthlyReportList = null;
+/* 找某個物件最新一期月次報告書的結算合計，找不到就回傳 null */
+function ppGetLatestBalance(propertyNo){
+  if(!propertyNo || !ppMonthlyReportListLoaded) return null;
+  let best = null, bestKey = -Infinity;
+  ppMonthlyReportList.forEach(r=>{
+    if(r.property_no !== propertyNo) return;
+    const key = Number(r.year)*100 + Number(r.month);
+    if(!isFinite(key)) return;
+    if(key > bestKey){ bestKey = key; best = r; }
+  });
+  return best ? (best.settle_total||0) : null;
+}
 
 /* 目前登入者是否有「物件資料」的全權（對應 Firestore 規則的 manageProperties）*/
 function ppCanManageAll(){
@@ -5121,8 +5208,16 @@ function deleteSubtableRow(sectionId, rowIdx){
 }
 function renderFieldInput(f, rec, access){
   access = access || {readOnly:false, hideStaff:false};
-  const val = rec[f.id] ?? '';
+  let val = rec[f.id] ?? '';
   const ro = access.readOnly;
+
+  // 目前餘額：自動抓該物件最新一期月次報告書的結算合計；
+  // 只有管理員才讀得到月次報告書，抓不到資料時就顯示物件資料裡原本存的值。
+  // 這欄還是一般可編輯欄位，手動改過再存檔，就會用手動改的值。
+  if(f.id === 'current_balance'){
+    const autoVal = ppGetLatestBalance(rec.property_no);
+    if(autoVal !== null) val = autoVal;
+  }
 
   // 客戶擔當：不是自己負責的案件，業務看不到這欄實際內容
   if(f.id === 'staff_in_charge' && access.hideStaff){
@@ -5203,8 +5298,9 @@ function renderFieldInput(f, rec, access){
     </div>`;
   }
   const inputType = f.type==='number' ? 'number' : 'text';
+  const noteHtml = f.id==='current_balance' ? '<span class="formula-note">自動帶入最新一期月次報告書的結算合計，也可以手動修改</span>' : '';
   return `<div class="field"><label>${f.label}</label>
-    <input type="${inputType}" data-fid="${f.id}" value="${val}" ${(f.readonly||ro)?'readonly':''}></div>`;
+    <input type="${inputType}" data-fid="${f.id}" value="${val}" ${(f.readonly||ro)?'readonly':''}>${noteHtml}</div>`;
 }
 function recalcFormulas(){
   const tempRec = {};
@@ -5622,6 +5718,18 @@ function ppInit(){
   }, err=>{
     console.error(err);
   });
+
+  // 「目前餘額」自動抓最新一期月次報告書的結算合計——只有管理員（manageReports）才讀得到
+  // 月次報告書，所以這裡只有管理員身分才會去監聽；其他人看到的目前餘額就是物件資料裡存的原值。
+  if(typeof ppUnsubMonthlyReportList === 'function') ppUnsubMonthlyReportList();
+  if(trackerCurrentUser && trackerCurrentUser.manageReports){
+    ppUnsubMonthlyReportList = trackerDB.collection('monthly_reports').onSnapshot(snapshot=>{
+      ppMonthlyReportList = snapshot.docs.map(d=>d.data());
+      ppMonthlyReportListLoaded = true;
+    }, err=>{
+      console.error(err);
+    });
+  }
 }
 
 
@@ -7385,6 +7493,125 @@ function mrInit(){
   });
 }
 
+
+
+/* =========================================================================
+   ⑭ 客戶帳戶（純檢視・自動加總，只有管理員能看到，不能在這裡直接編輯）
+   直接讀取「客戶資料」「物件資料」「月次報告書」三個模組已經載入的資料，
+   不需要另外建立 Firestore collection、也不需要另外監聽。
+   ========================================================================= */
+let caCurrentPage = 1;
+const CA_PAGE_SIZE = 20;
+let caViewingCustomerNo = null;
+
+function caCanView(){
+  return !!(trackerCurrentUser && trackerCurrentUser.manageReports);
+}
+function caInit(){
+  const headerLink = document.getElementById('customerAccountsHeaderLink');
+  if(headerLink) headerLink.style.display = caCanView() ? '' : 'none';
+}
+
+/* 某個物件的目前餘額：優先用月次報告書自動算出來的最新結算合計，
+   抓不到（例如還沒有任何報表）就退回物件資料裡存的目前餘額欄位值。 */
+function caPropertyBalance(prop){
+  const auto = (typeof ppGetLatestBalance === 'function') ? ppGetLatestBalance(prop.property_no) : null;
+  if(auto !== null && auto !== undefined) return auto;
+  return Number(prop.current_balance)||0;
+}
+function caCustomerTotal(customerNo){
+  const props = (typeof records !== 'undefined' ? records : []).filter(p=>p.customer_no===customerNo);
+  return props.reduce((sum,p)=> sum + caPropertyBalance(p), 0);
+}
+function caFormatMoney(n){
+  n = Number(n)||0;
+  const cls = n<0 ? 'neg' : '';
+  return `<span class="${cls}">¥${n.toLocaleString('ja-JP')}</span>`;
+}
+
+function caRenderList(){
+  const customers = (typeof ccRecords !== 'undefined' ? ccRecords : []);
+  const kw = (document.getElementById('ca-searchBox').value||'').trim();
+  const filtered = customers.filter(c=> !kw || ((c.customer_no||'')+(c.customer_name||'')).includes(kw));
+
+  const totalCount = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / CA_PAGE_SIZE));
+  if(caCurrentPage > totalPages) caCurrentPage = totalPages;
+  if(caCurrentPage < 1) caCurrentPage = 1;
+  const startIdx = (caCurrentPage - 1) * CA_PAGE_SIZE;
+  const pageItems = filtered.slice(startIdx, startIdx + CA_PAGE_SIZE);
+
+  const countEl = document.getElementById('ca-listCount');
+  if(countEl){
+    countEl.textContent = totalCount === 0 ? '共 0 筆'
+      : `共 ${totalCount} 筆，第 ${caCurrentPage} / ${totalPages} 頁（每頁 ${CA_PAGE_SIZE} 筆）`;
+  }
+
+  const body = document.getElementById('ca-listBody');
+  body.innerHTML = pageItems.map(c=>{
+    const total = caCustomerTotal(c.customer_no);
+    return `<tr onclick="caOpenDetail('${(c.customer_no||'').replace(/'/g,"\\'")}')">
+      <td>${c.customer_no||''}</td>
+      <td>${c.customer_name||''}</td>
+      <td class="num">${caFormatMoney(total)}</td>
+    </tr>`;
+  }).join('');
+
+  caRenderPagination(totalPages);
+}
+function caRenderPagination(totalPages){
+  const el = document.getElementById('ca-listPagination');
+  if(!el) return;
+  if(totalPages <= 1){ el.innerHTML=''; return; }
+  let html = `<button class="btn small" ${caCurrentPage===1?'disabled':''} onclick="caGoToPage(${caCurrentPage-1})">‹ 上一頁</button>`;
+  const windowSize = 2;
+  for(let p=1;p<=totalPages;p++){
+    const near = Math.abs(p-caCurrentPage)<=windowSize;
+    const edge = p===1||p===totalPages;
+    if(near||edge){
+      html += `<button class="btn small ${p===caCurrentPage?'primary':''}" onclick="caGoToPage(${p})">${p}</button>`;
+    }else if(Math.abs(p-caCurrentPage)===windowSize+1){
+      html += `<span style="padding:0 4px;color:var(--ca-muted);">…</span>`;
+    }
+  }
+  html += `<button class="btn small" ${caCurrentPage===totalPages?'disabled':''} onclick="caGoToPage(${caCurrentPage+1})">下一頁 ›</button>`;
+  el.innerHTML = html;
+}
+function caGoToPage(p){ caCurrentPage = p; caRenderList(); }
+
+function caOpenDetail(customerNo){
+  caViewingCustomerNo = customerNo;
+  const customers = (typeof ccRecords !== 'undefined' ? ccRecords : []);
+  const cust = customers.find(c=>c.customer_no===customerNo);
+  document.getElementById('ca-listView').style.display = 'none';
+  document.getElementById('ca-detailView').style.display = '';
+  document.getElementById('ca-detailTitle').textContent =
+    `${customerNo}　${cust ? cust.customer_name : ''}　總餘額：${caPlainMoney(caCustomerTotal(customerNo))}`;
+
+  const props = (typeof records !== 'undefined' ? records : []).filter(p=>p.customer_no===customerNo);
+  const body = document.getElementById('ca-detailBody');
+  if(!props.length){
+    body.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--ca-muted);">這位客戶目前沒有任何物件</td></tr>`;
+    return;
+  }
+  body.innerHTML = props.map(p=>`
+    <tr>
+      <td>${p.property_no||''}</td>
+      <td>${p.address||''}</td>
+      <td class="num">${caFormatMoney(caPropertyBalance(p))}</td>
+    </tr>`).join('');
+}
+function caPlainMoney(n){
+  n = Number(n)||0;
+  return (n<0?'-':'') + '¥' + Math.abs(n).toLocaleString('ja-JP');
+}
+function caBackToList(){
+  caViewingCustomerNo = null;
+  document.getElementById('ca-detailView').style.display = 'none';
+  document.getElementById('ca-listView').style.display = '';
+  caRenderList();
+}
+document.getElementById('ca-searchBox').addEventListener('input', ()=>{ caCurrentPage = 1; caRenderList(); });
 
 
 </script>
