@@ -5238,7 +5238,7 @@ function ppCustomerAutocomplete(inputEl){
   if(kw){
     matches = list.filter(c => (c.customer_no||'').includes(kw) || (c.customer_name||'').includes(kw));
   }
-  matches = matches.slice(0, 30);
+  matches = matches.slice(0, 300); // 上限提高，避免清單被截斷看不到後面的項目
 
   if(!matches.length){
     box.innerHTML = kw
@@ -6584,6 +6584,13 @@ function mrRenderList(){
     return true;
   });
 
+  // 依報表年月由新到舊排序，不同物件的報表混在一起、不特別分組
+  filtered.sort((a,b)=>{
+    const ka = Number(a.year||0)*100 + Number(a.month||0);
+    const kb = Number(b.year||0)*100 + Number(b.month||0);
+    return kb - ka;
+  });
+
   const totalCount = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / MR_PAGE_SIZE));
   if(mrCurrentPage > totalPages) mrCurrentPage = totalPages;
@@ -6603,6 +6610,8 @@ function mrRenderList(){
     const realIdx = mrRecords.indexOf(rec);
     return '<tr onclick="mrOpenForm('+realIdx+')">' + listCols.map(f=>{
       let val = f.type==='formula' ? mrComputeFormula(f, rec) : rec[f.id];
+      if(f.id==='year') return `<td>${mrYearTag(val)}</td>`;
+      if(f.id==='month') return `<td>${mrMonthTag(val)}</td>`;
       if(f.type==='select') return `<td>${mrTagHtml(val)}</td>`;
       if(f.type==='multiselect') return `<td>${(Array.isArray(val)?val:[]).map(mrTagHtml).join(' ')}</td>`;
       if(f.type==='number' || f.type==='formula') return `<td class="num">${mrFormatValue(f, val)}</td>`;
@@ -6642,6 +6651,21 @@ function mrTagHtml(val){
     '一戸建':'ikkodate','マンション':'manshon','ビル':'biru'};
   const cls = map[val] || 'jizyu';
   return val ? `<span class="tag ${cls}">${val}</span>` : '';
+}
+/* 年份／月份用分色小標籤顯示，不是金額所以不套用貨幣格式；
+   顏色用固定調色盤照數值循環分配，同一個年/月永遠同一個顏色。 */
+const MR_YEAR_PALETTE = ['#dcefe3','#dbeaf7','#fbe9d7','#f6dede','#f5dde7','#f7f0c8','#e7f0ea'];
+const MR_MONTH_PALETTE = ['#fbe0e0','#fbe9d7','#faf3c0','#dcefe3','#c9ece3','#dbeaf7',
+  '#dde3f7','#e9dcf7','#f5dde7','#f7d7e3','#f2d9c9','#e3ddc9'];
+function mrYearTag(year){
+  if(year===''||year==null) return '';
+  const idx = Math.abs(Number(year)) % MR_YEAR_PALETTE.length;
+  return `<span class="tag" style="background:${MR_YEAR_PALETTE[idx]};color:#33403a;">${year}</span>`;
+}
+function mrMonthTag(month){
+  if(month===''||month==null) return '';
+  const idx = ((Number(month)-1) % 12 + 12) % 12;
+  return `<span class="tag" style="background:${MR_MONTH_PALETTE[idx]};color:#33403a;">${month}</span>`;
 }
 document.getElementById('mr-searchBox').addEventListener('input', ()=>{ mrCurrentPage = 1; mrRenderList(); });
 
@@ -6932,7 +6956,7 @@ function mrPropertyAutocomplete(inputEl){
   if(kw){
     matches = list.filter(p => (p.property_no||'').includes(kw) || (p.address||'').includes(kw));
   }
-  matches = matches.slice(0, 30);
+  matches = matches.slice(0, 300); // 上限提高，避免清單被截斷看不到後面的項目
 
   if(!matches.length){
     box.innerHTML = kw
