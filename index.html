@@ -254,7 +254,7 @@
     background:var(--pp-amber-soft);color:var(--pp-amber);margin-left:8px;
     vertical-align:middle;font-weight:600;
   }
-#panel-properties nav.pp-tabs{display:flex;gap:2px;border-bottom:1px solid var(--pp-line);margin-bottom:22px;}
+#panel-properties nav.pp-tabs{display:flex;gap:2px;background:transparent;border-bottom:1px solid var(--pp-line);margin-bottom:22px;}
 #panel-properties nav.pp-tabs button{
     appearance:none;border:none;background:transparent;font-size:14px;font-family:inherit;
     color:var(--pp-muted);padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
@@ -432,7 +432,7 @@
     background:var(--cc-amber-soft);color:var(--cc-amber);margin-left:8px;
     vertical-align:middle;font-weight:600;
   }
-#panel-customers nav.cc-tabs{display:flex;gap:2px;border-bottom:1px solid var(--cc-line);margin-bottom:22px;}
+#panel-customers nav.cc-tabs{display:flex;gap:2px;background:transparent;border-bottom:1px solid var(--cc-line);margin-bottom:22px;}
 #panel-customers nav.cc-tabs button{
     appearance:none;border:none;background:transparent;font-size:14px;font-family:inherit;
     color:var(--cc-muted);padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
@@ -604,7 +604,7 @@
     background:var(--mr-amber-soft);color:var(--mr-amber);margin-left:8px;
     vertical-align:middle;font-weight:600;
   }
-#panel-monthlyreports nav.mr-tabs{display:flex;gap:2px;border-bottom:1px solid var(--mr-line);margin-bottom:22px;}
+#panel-monthlyreports nav.mr-tabs{display:flex;gap:2px;background:transparent;border-bottom:1px solid var(--mr-line);margin-bottom:22px;}
 #panel-monthlyreports nav.mr-tabs button{
     appearance:none;border:none;background:transparent;font-size:14px;font-family:inherit;
     color:var(--mr-muted);padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
@@ -782,7 +782,7 @@
     background:var(--cc-amber-soft);color:var(--cc-amber);margin-left:8px;
     vertical-align:middle;font-weight:600;
   }
-#panel-customers nav.cc-tabs{display:flex;gap:2px;border-bottom:1px solid var(--cc-line);margin-bottom:22px;}
+#panel-customers nav.cc-tabs{display:flex;gap:2px;background:transparent;border-bottom:1px solid var(--cc-line);margin-bottom:22px;}
 #panel-customers nav.cc-tabs button{
     appearance:none;border:none;background:transparent;font-size:14px;font-family:inherit;
     color:var(--cc-muted);padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
@@ -959,7 +959,7 @@
   background:#e7f0ea;border:1px solid #cfe3d6;border-radius:var(--ca-radius);
   padding:12px 14px;font-size:12.5px;color:#2c5940;margin-bottom:16px;
 }
-#panel-customer-accounts .neg{color:#a4433a;}
+#panel-customer-accounts .neg{color:#a4433a;font-weight:700;}
 
 
 </style>
@@ -2201,7 +2201,7 @@
   <section class="pp-panel active" id="pp-panel-list">
     <div class="card">
       <div class="list-toolbar">
-        <input type="text" id="pp-searchBox" placeholder="輸入物件編號、地址或客戶姓名搜尋">
+        <input type="text" id="pp-searchBox" placeholder="輸入物件編號、客戶編號、地址或客戶姓名搜尋">
         <button class="btn primary" onclick="openForm(null)">＋ 新增物件</button>
       </div>
       <div id="pp-filterBar" style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin:4px 0 14px;padding:12px;background:var(--pp-sub-bg);border:1px solid var(--pp-line);border-radius:var(--pp-radius);"></div>
@@ -2333,7 +2333,7 @@
   <section class="mr-panel active" id="mr-panel-list">
     <div class="card">
       <div class="list-toolbar">
-        <input type="text" id="mr-searchBox" placeholder="輸入報表編號、物件編號、地址或客戶姓名搜尋">
+        <input type="text" id="mr-searchBox" placeholder="輸入報表編號、物件編號、客戶編號、地址或客戶姓名搜尋">
         <button class="btn primary" onclick="mrOpenForm(null)">＋ 新增報表</button>
       </div>
       <div id="mr-filterBar" style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin:4px 0 14px;padding:12px;background:var(--mr-sub-bg);border:1px solid var(--mr-line);border-radius:var(--mr-radius);"></div>
@@ -4881,9 +4881,19 @@ function computeFormula(field, rec, scopeFields){
     return val;
   }catch(e){ return 0; }
 }
+/* 負數統一用粗體紅字顯示，三個模組共用這個小工具 */
+function wrapNegative(text, isNeg){
+  return isNeg ? `<b style="color:#c0392b;">${text}</b>` : text;
+}
 function formatValue(field, rawVal){
-  if(field.type==='formula' && field.displayFormat==='percent') return (rawVal*100).toFixed(2)+'%';
-  if(field.type==='number') return '¥'+Number(rawVal||0).toLocaleString('ja-JP');
+  if(field.type==='formula' && field.displayFormat==='percent'){
+    const pct = rawVal*100;
+    return wrapNegative(pct.toFixed(2)+'%', pct<0);
+  }
+  if(field.type==='number'){
+    const n = Number(rawVal||0);
+    return wrapNegative((n<0?'-':'')+'¥'+Math.abs(n).toLocaleString('ja-JP'), n<0);
+  }
   return rawVal ?? '';
 }
 
@@ -4964,7 +4974,7 @@ function renderList(){
   const kw = (document.getElementById('pp-searchBox').value||'').trim();
 
   const filtered = records.filter(r=>{
-    if(kw && !(r.property_no+r.address+r.customer_name).includes(kw)) return false;
+    if(kw && !(r.property_no+r.address+r.customer_name+(r.customer_no||'')).includes(kw)) return false;
     for(const fieldId in ppFilters){
       const f = fieldConfig.find(x=>x.id===fieldId);
       if(!f) continue;
@@ -5070,6 +5080,9 @@ function renderForm(){
     if(sec.type==='subtable'){
       if(!(sec.id in currentSubtableData)){
         currentSubtableData[sec.id] = JSON.parse(JSON.stringify(rec[sec.id] || []));
+        if(!currentSubtableData[sec.id].length && !access.readOnly){
+          currentSubtableData[sec.id].push(makeBlankSubtableRow(sec.id));
+        }
       }
       html += renderSubtableSection(sec, access);
       return;
@@ -5099,7 +5112,7 @@ function renderSubtableSection(sec, access){
   const rows = currentSubtableData[sec.id] || [];
   let html = `<table class="subtable">
     <thead><tr>${cols.map(c=>`<th>${c.label}</th>`).join('')}<th style="width:40px;"></th></tr></thead>
-    <tbody>`;
+    <tbody data-subtable-body="${sec.id}">`;
   if(!rows.length){
     html += `<tr><td colspan="${cols.length+1}" class="subtable-empty">目前還沒有資料${access.readOnly?'':'，按下面「＋ 新增一列」開始新增'}</td></tr>`;
   }
@@ -5166,6 +5179,7 @@ function renderSubtableCell(sectionId, rowIdx, col, val, readOnly){
 function updateSubtableCell(sectionId, rowIdx, colId, val){
   currentSubtableData[sectionId][rowIdx][colId] = val;
   recalcSubtableFormulas(sectionId, rowIdx);
+  checkAutoGrow(sectionId);
 }
 function updateSubtableMultiCell(checkboxEl){
   const container = checkboxEl.closest('[data-sub-multi]');
@@ -5173,18 +5187,16 @@ function updateSubtableMultiCell(checkboxEl){
   const rowIdx = Number(rowIdxStr);
   const checked = Array.from(container.querySelectorAll('input[type=checkbox]:checked')).map(c=>c.value);
   currentSubtableData[sectionId][rowIdx][colId] = checked;
+  checkAutoGrow(sectionId);
 }
-function recalcSubtableFormulas(sectionId, rowIdx){
-  const rowRec = currentSubtableData[sectionId][rowIdx];
-  const formulaCols = fieldConfig.filter(f=>f.sectionId===sectionId && f.type==='formula');
-  const scope = fieldConfig.filter(f=>f.sectionId===sectionId && f.type!=='formula');
-  formulaCols.forEach(col=>{
-    const computed = computeFormula(col, rowRec, scope);
-    const el = document.querySelector(`[data-subformula-display="${sectionId}|${rowIdx}|${col.id}"]`);
-    if(el) el.value = formatValue(col, computed);
+function rowHasContent(row, cols){
+  return cols.some(c=>{
+    const v = row[c.id];
+    if(Array.isArray(v)) return v.length>0;
+    return v!=='' && v!=null;
   });
 }
-function addSubtableRow(sectionId){
+function makeBlankSubtableRow(sectionId){
   const cols = fieldConfig.filter(f=>f.sectionId===sectionId);
   const blank = {};
   cols.forEach(c=>{
@@ -5198,6 +5210,38 @@ function addSubtableRow(sectionId){
       blank[c.id] = '';
     }
   });
+  return blank;
+}
+function checkAutoGrow(sectionId){
+  const rows = currentSubtableData[sectionId];
+  if(!rows || !rows.length) return;
+  const cols = fieldConfig.filter(f=>f.sectionId===sectionId);
+  const lastRow = rows[rows.length-1];
+  if(!rowHasContent(lastRow, cols)) return;
+  const blank = makeBlankSubtableRow(sectionId);
+  rows.push(blank);
+  const newIdx = rows.length - 1;
+  const tbody = document.querySelector(`#pp-formSections [data-subtable-body="${sectionId}"]`);
+  if(tbody){
+    const rowHtml = '<tr>' + cols.map(c=>`<td>${renderSubtableCell(sectionId, newIdx, c, blank[c.id], false)}</td>`).join('') +
+      `<td><button class="btn ghost danger small" onclick="deleteSubtableRow('${sectionId}',${newIdx})">×</button></td></tr>`;
+    tbody.insertAdjacentHTML('beforeend', rowHtml);
+  }else{
+    renderForm();
+  }
+}
+function recalcSubtableFormulas(sectionId, rowIdx){
+  const rowRec = currentSubtableData[sectionId][rowIdx];
+  const formulaCols = fieldConfig.filter(f=>f.sectionId===sectionId && f.type==='formula');
+  const scope = fieldConfig.filter(f=>f.sectionId===sectionId && f.type!=='formula');
+  formulaCols.forEach(col=>{
+    const computed = computeFormula(col, rowRec, scope);
+    const el = document.querySelector(`[data-subformula-display="${sectionId}|${rowIdx}|${col.id}"]`);
+    if(el) el.value = formatValue(col, computed);
+  });
+}
+function addSubtableRow(sectionId){
+  const blank = makeBlankSubtableRow(sectionId);
   if(!currentSubtableData[sectionId]) currentSubtableData[sectionId] = [];
   currentSubtableData[sectionId].push(blank);
   renderForm();
@@ -5299,8 +5343,9 @@ function renderFieldInput(f, rec, access){
   }
   const inputType = f.type==='number' ? 'number' : 'text';
   const noteHtml = f.id==='current_balance' ? '<span class="formula-note">自動帶入最新一期月次報告書的結算合計，也可以手動修改</span>' : '';
+  const negStyle = (f.id==='current_balance' && Number(val)<0) ? ' style="color:#c0392b;font-weight:700;"' : '';
   return `<div class="field"><label>${f.label}</label>
-    <input type="${inputType}" data-fid="${f.id}" value="${val}" ${(f.readonly||ro)?'readonly':''}>${noteHtml}</div>`;
+    <input type="${inputType}" data-fid="${f.id}" value="${val}" ${(f.readonly||ro)?'readonly':''}${negStyle}>${noteHtml}</div>`;
 }
 function recalcFormulas(){
   const tempRec = {};
@@ -5783,8 +5828,14 @@ function ccComputeFormula(field, rec, scopeFields){
   }catch(e){ return 0; }
 }
 function ccFormatValue(field, rawVal){
-  if(field.type==='formula' && field.displayFormat==='percent') return (rawVal*100).toFixed(2)+'%';
-  if(field.type==='number') return '¥'+Number(rawVal||0).toLocaleString('ja-JP');
+  if(field.type==='formula' && field.displayFormat==='percent'){
+    const pct = rawVal*100;
+    return wrapNegative(pct.toFixed(2)+'%', pct<0);
+  }
+  if(field.type==='number'){
+    const n = Number(rawVal||0);
+    return wrapNegative((n<0?'-':'')+'¥'+Math.abs(n).toLocaleString('ja-JP'), n<0);
+  }
   return rawVal ?? '';
 }
 
@@ -5865,7 +5916,7 @@ function ccRenderList(){
   const kw = (document.getElementById('cc-searchBox').value||'').trim();
 
   const filtered = ccRecords.filter(r=>{
-    if(kw && !(r.property_no+r.address+r.customer_name).includes(kw)) return false;
+    if(kw && !((r.customer_no||'')+(r.customer_name||'')+(r.address||'')+(r.phone||'')).includes(kw)) return false;
     for(const fieldId in ccFilters){
       const f = ccFieldConfig.find(x=>x.id===fieldId);
       if(!f) continue;
@@ -5999,7 +6050,7 @@ function ccRenderSubtableSection(sec, access){
   const rows = ccCurrentSubtableData[sec.id] || [];
   let html = `<table class="subtable">
     <thead><tr>${cols.map(c=>`<th>${c.label}</th>`).join('')}<th style="width:40px;"></th></tr></thead>
-    <tbody>`;
+    <tbody data-subtable-body="${sec.id}">`;
   if(!rows.length){
     html += `<tr><td colspan="${cols.length+1}" class="subtable-empty">目前還沒有資料${access.readOnly?'':'，按下面「＋ 新增一列」開始新增'}</td></tr>`;
   }
@@ -6591,8 +6642,14 @@ function mrComputeFormula(field, rec, scopeFields){
   }catch(e){ return 0; }
 }
 function mrFormatValue(field, rawVal){
-  if(field.type==='formula' && field.displayFormat==='percent') return (rawVal*100).toFixed(2)+'%';
-  if(field.type==='number') return '¥'+Number(rawVal||0).toLocaleString('ja-JP');
+  if(field.type==='formula' && field.displayFormat==='percent'){
+    const pct = rawVal*100;
+    return wrapNegative(pct.toFixed(2)+'%', pct<0);
+  }
+  if(field.type==='number'){
+    const n = Number(rawVal||0);
+    return wrapNegative((n<0?'-':'')+'¥'+Math.abs(n).toLocaleString('ja-JP'), n<0);
+  }
   return rawVal ?? '';
 }
 
@@ -6614,6 +6671,24 @@ function mrRenderFilterBar(){
   if(!filterFields.length){ bar.style.display='none'; bar.innerHTML=''; return; }
   bar.style.display = 'flex';
   bar.innerHTML = filterFields.map(f=>{
+    if(f.id==='year' || f.id==='month'){
+      const cur = mrFilters[f.id] || '';
+      let options;
+      if(f.id==='year'){
+        const years = new Set();
+        mrRecords.forEach(r=>{ if(r.year && Number(r.year)>=2025) years.add(Number(r.year)); });
+        options = Array.from(years).sort((a,b)=>b-a);
+      }else{
+        options = Array.from({length:12},(_,i)=>i+1);
+      }
+      return `<div class="field" style="min-width:120px;flex:0 0 auto;">
+        <label>${f.label}</label>
+        <select onchange="mrSetFilterSelect('${f.id}', this.value)">
+          <option value="">全部</option>
+          ${options.map(o=>`<option value="${o}" ${String(o)===String(cur)?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>`;
+    }
     if(f.type==='select' || f.type==='multiselect'){
       const cur = mrFilters[f.id] || '';
       return `<div class="field" style="min-width:140px;flex:0 0 auto;">
@@ -6673,13 +6748,15 @@ function mrRenderList(){
   const kw = (document.getElementById('mr-searchBox').value||'').trim();
 
   const filtered = mrRecords.filter(r=>{
-    if(kw && !((r.report_no||'')+r.property_no+r.address+r.customer_name).includes(kw)) return false;
+    if(kw && !((r.report_no||'')+r.property_no+r.address+r.customer_name+(r.customer_no||'')).includes(kw)) return false;
     for(const fieldId in mrFilters){
       const f = mrFieldConfig.find(x=>x.id===fieldId);
       if(!f) continue;
       const filterVal = mrFilters[fieldId];
       const val = f.type==='formula' ? mrComputeFormula(f, r) : r[fieldId];
-      if(f.type==='select'){
+      if(fieldId==='year' || fieldId==='month'){
+        if(String(val) !== String(filterVal)) return false;
+      }else if(f.type==='select'){
         if(val !== filterVal) return false;
       }else if(f.type==='multiselect'){
         if(!(Array.isArray(val) && val.includes(filterVal))) return false;
@@ -6760,20 +6837,24 @@ function mrTagHtml(val){
   const cls = map[val] || 'jizyu';
   return val ? `<span class="tag ${cls}">${val}</span>` : '';
 }
-/* 年份／月份用分色小標籤顯示，不是金額所以不套用貨幣格式；
-   顏色用固定調色盤照數值循環分配，同一個年/月永遠同一個顏色。 */
-const MR_YEAR_PALETTE = ['#dcefe3','#dbeaf7','#fbe9d7','#f6dede','#f5dde7','#f7f0c8','#e7f0ea'];
-const MR_MONTH_PALETTE = ['#fbe0e0','#fbe9d7','#faf3c0','#dcefe3','#c9ece3','#dbeaf7',
-  '#dde3f7','#e9dcf7','#f5dde7','#f7d7e3','#f2d9c9','#e3ddc9'];
+/* 年份／月份用分色小標籤顯示，不是金額所以不套用貨幣格式。
+   顏色改用 HSL 色相 + 打散演算法：相鄰的月份（例如7月跟8月）色相會差 150 度，
+   一眼就能分清楚，不會因為排在旁邊就顏色相近。 */
+function mrHueTag(value, hue, sat, light){
+  sat = sat==null ? 62 : sat;
+  light = light==null ? 86 : light;
+  return `<span class="tag" style="background:hsl(${hue},${sat}%,${light}%);color:#2c3a33;">${value}</span>`;
+}
 function mrYearTag(year){
   if(year===''||year==null) return '';
-  const idx = Math.abs(Number(year)) % MR_YEAR_PALETTE.length;
-  return `<span class="tag" style="background:${MR_YEAR_PALETTE[idx]};color:#33403a;">${year}</span>`;
+  const hue = (Number(year)*137) % 360; // 用黃金角讓不同年份的色相盡量分散
+  return mrHueTag(year, hue);
 }
 function mrMonthTag(month){
   if(month===''||month==null) return '';
-  const idx = ((Number(month)-1) % 12 + 12) % 12;
-  return `<span class="tag" style="background:${MR_MONTH_PALETTE[idx]};color:#33403a;">${month}</span>`;
+  const m = ((Number(month)-1) % 12 + 12) % 12; // 0~11
+  const hue = (m*150) % 360; // 150 度打散，1~12月排開後相鄰數字色相差距最大
+  return mrHueTag(month, hue);
 }
 document.getElementById('mr-searchBox').addEventListener('input', ()=>{ mrCurrentPage = 1; mrRenderList(); });
 
@@ -6800,6 +6881,9 @@ function mrRenderForm(){
     if(sec.type==='subtable'){
       if(!(sec.id in mrCurrentSubtableData)){
         mrCurrentSubtableData[sec.id] = JSON.parse(JSON.stringify(rec[sec.id] || []));
+        if(!mrCurrentSubtableData[sec.id].length && !access.readOnly){
+          mrCurrentSubtableData[sec.id].push(mrMakeBlankSubtableRow(sec.id));
+        }
       }
       html += mrRenderSubtableSection(sec, access);
       return;
@@ -6832,7 +6916,7 @@ function mrRenderSubtableSection(sec, access){
   const rows = mrCurrentSubtableData[sec.id] || [];
   let html = `<table class="subtable">
     <thead><tr>${cols.map(c=>`<th>${c.label}</th>`).join('')}<th style="width:40px;"></th></tr></thead>
-    <tbody>`;
+    <tbody data-subtable-body="${sec.id}">`;
   if(!rows.length){
     html += `<tr><td colspan="${cols.length+1}" class="subtable-empty">目前還沒有資料${access.readOnly?'':'，按下面「＋ 新增一列」開始新增'}</td></tr>`;
   }
@@ -6900,6 +6984,7 @@ function mrUpdateSubtableCell(sectionId, rowIdx, colId, val){
   mrCurrentSubtableData[sectionId][rowIdx][colId] = val;
   mrRecalcSubtableFormulas(sectionId, rowIdx);
   mrRecalcAutoFields();
+  mrCheckAutoGrow(sectionId);
 }
 function mrUpdateSubtableMultiCell(checkboxEl){
   const container = checkboxEl.closest('[data-sub-multi]');
@@ -6908,18 +6993,16 @@ function mrUpdateSubtableMultiCell(checkboxEl){
   const checked = Array.from(container.querySelectorAll('input[type=checkbox]:checked')).map(c=>c.value);
   mrCurrentSubtableData[sectionId][rowIdx][colId] = checked;
   mrRecalcAutoFields();
+  mrCheckAutoGrow(sectionId);
 }
-function mrRecalcSubtableFormulas(sectionId, rowIdx){
-  const rowRec = mrCurrentSubtableData[sectionId][rowIdx];
-  const formulaCols = mrFieldConfig.filter(f=>f.sectionId===sectionId && f.type==='formula');
-  const scope = mrFieldConfig.filter(f=>f.sectionId===sectionId && f.type!=='formula');
-  formulaCols.forEach(col=>{
-    const computed = mrComputeFormula(col, rowRec, scope);
-    const el = document.querySelector(`[data-subformula-display="${sectionId}|${rowIdx}|${col.id}"]`);
-    if(el) el.value = mrFormatValue(col, computed);
+function mrRowHasContent(row, cols){
+  return cols.some(c=>{
+    const v = row[c.id];
+    if(Array.isArray(v)) return v.length>0;
+    return v!=='' && v!=null;
   });
 }
-function mrAddSubtableRow(sectionId){
+function mrMakeBlankSubtableRow(sectionId){
   const cols = mrFieldConfig.filter(f=>f.sectionId===sectionId);
   const blank = {};
   cols.forEach(c=>{
@@ -6933,6 +7016,40 @@ function mrAddSubtableRow(sectionId){
       blank[c.id] = '';
     }
   });
+  return blank;
+}
+/* 最後一列只要填了任何內容，就自動多補一列空白的，不用再按「＋ 新增一列」。
+   直接補插入新的一列 DOM，不整個表單重畫，這樣不會打斷正在輸入中的欄位焦點。 */
+function mrCheckAutoGrow(sectionId){
+  const rows = mrCurrentSubtableData[sectionId];
+  if(!rows || !rows.length) return;
+  const cols = mrFieldConfig.filter(f=>f.sectionId===sectionId);
+  const lastRow = rows[rows.length-1];
+  if(!mrRowHasContent(lastRow, cols)) return;
+  const blank = mrMakeBlankSubtableRow(sectionId);
+  rows.push(blank);
+  const newIdx = rows.length - 1;
+  const tbody = document.querySelector(`#mr-formSections [data-subtable-body="${sectionId}"]`);
+  if(tbody){
+    const rowHtml = '<tr>' + cols.map(c=>`<td>${mrRenderSubtableCell(sectionId, newIdx, c, blank[c.id], false)}</td>`).join('') +
+      `<td><button class="btn ghost danger small" onclick="mrDeleteSubtableRow('${sectionId}',${newIdx})">×</button></td></tr>`;
+    tbody.insertAdjacentHTML('beforeend', rowHtml);
+  }else{
+    mrRenderForm();
+  }
+}
+function mrRecalcSubtableFormulas(sectionId, rowIdx){
+  const rowRec = mrCurrentSubtableData[sectionId][rowIdx];
+  const formulaCols = mrFieldConfig.filter(f=>f.sectionId===sectionId && f.type==='formula');
+  const scope = mrFieldConfig.filter(f=>f.sectionId===sectionId && f.type!=='formula');
+  formulaCols.forEach(col=>{
+    const computed = mrComputeFormula(col, rowRec, scope);
+    const el = document.querySelector(`[data-subformula-display="${sectionId}|${rowIdx}|${col.id}"]`);
+    if(el) el.value = mrFormatValue(col, computed);
+  });
+}
+function mrAddSubtableRow(sectionId){
+  const blank = mrMakeBlankSubtableRow(sectionId);
   if(!mrCurrentSubtableData[sectionId]) mrCurrentSubtableData[sectionId] = [];
   mrCurrentSubtableData[sectionId].push(blank);
   mrRenderForm();
@@ -6945,6 +7062,40 @@ function mrRenderFieldInput(f, rec, access){
   access = access || {readOnly:false, hideStaff:false};
   const val = rec[f.id] ?? '';
   const ro = access.readOnly;
+
+  // 報表年份／報表月份：改成下拉選單直接選，不用手動打字；
+  // 選單下方會即時顯示目前選到的顏色標籤，方便跟列表頁的顏色對照。
+  if(f.id === 'year'){
+    const now = new Date().getFullYear();
+    const years = new Set();
+    for(let y=2025; y<=now+2; y++) years.add(y);
+    mrRecords.forEach(r=>{ if(r.year && Number(r.year)>=2025) years.add(Number(r.year)); });
+    const yearList = Array.from(years).sort((a,b)=>a-b);
+    return `<div class="field">
+      <label>${f.label}</label>
+      <select data-fid="${f.id}" ${ro?'disabled':''} onchange="mrShowYearMonthPreview(this)">
+        <option value=""></option>
+        ${yearList.map(y=>{
+          const hue = (y*137)%360;
+          return `<option value="${y}" style="background:hsl(${hue},62%,86%);" ${String(y)===String(val)?'selected':''}>${y}</option>`;
+        }).join('')}
+      </select>
+      <div class="mr-ym-preview">${val ? mrYearTag(val) : ''}</div>
+    </div>`;
+  }
+  if(f.id === 'month'){
+    return `<div class="field">
+      <label>${f.label}</label>
+      <select data-fid="${f.id}" ${ro?'disabled':''} onchange="mrShowYearMonthPreview(this)">
+        <option value=""></option>
+        ${Array.from({length:12},(_,i)=>i+1).map(m=>{
+          const hue = ((m-1)%12)*150%360;
+          return `<option value="${m}" style="background:hsl(${hue},62%,86%);" ${String(m)===String(val)?'selected':''}>${m}</option>`;
+        }).join('')}
+      </select>
+      <div class="mr-ym-preview">${val ? mrMonthTag(val) : ''}</div>
+    </div>`;
+  }
 
   // 物件編號：跟「物件資料」模組連動的自動完成輸入框——
   // 可以打字從物件清單裡篩選（顯示「物件編號 物件地址」），也可以直接手動輸入物件編號，
@@ -7110,6 +7261,13 @@ function mrHidePropertySuggest(inputEl){
   const box = inputEl.parentElement.querySelector('.mr-cust-suggest');
   if(box) box.style.display = 'none';
 }
+function mrShowYearMonthPreview(selectEl){
+  const preview = selectEl.parentElement.querySelector('.mr-ym-preview');
+  if(!preview) return;
+  const val = selectEl.value;
+  if(!val){ preview.innerHTML = ''; return; }
+  preview.innerHTML = selectEl.dataset.fid==='year' ? mrYearTag(val) : mrMonthTag(val);
+}
 
 /* ---------------- 自動計算欄位：收支合計、上期餘額、上月報表、報表編號 ---------------- */
 function mrComputeTotals(rec){
@@ -7145,7 +7303,14 @@ function mrRecalcAutoFields(){
   const prev = mrFindPrevReport(propertyNo, year, month, mrEditingIndex);
   const reportNo = (propertyNo && year && month) ? `${propertyNo}-${year}-${String(month).padStart(2,'0')}` : '';
 
-  const setAuto = (fid, val)=>{ const el = container.querySelector(`[data-auto-field="${fid}"]`); if(el) el.value = val; };
+  const setAuto = (fid, val)=>{
+    const el = container.querySelector(`[data-auto-field="${fid}"]`);
+    if(!el) return;
+    el.value = val;
+    const isNeg = typeof val === 'number' && val < 0;
+    el.style.color = isNeg ? '#c0392b' : 'var(--mr-muted)';
+    el.style.fontWeight = isNeg ? '700' : 'normal';
+  };
   setAuto('report_no', reportNo);
   setAuto('prev_balance', prev ? (prev.settle_total||0) : 0);
   setAuto('prev_report', prev ? prev.report_no : '（沒有更早的報表，視為第一期）');
