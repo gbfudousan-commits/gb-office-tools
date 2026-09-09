@@ -7011,7 +7011,7 @@ function mrRecalcAutoFields(){
   const tempRec = {income_items: mrCurrentSubtableData.income_items || [], expense_items: mrCurrentSubtableData.expense_items || []};
   const totals = mrComputeTotals(tempRec);
   const prev = mrFindPrevReport(propertyNo, year, month, mrEditingIndex);
-  const reportNo = (propertyNo && year && month) ? `${propertyNo}-${year}/${month}` : '';
+  const reportNo = (propertyNo && year && month) ? `${propertyNo}-${year}-${String(month).padStart(2,'0')}` : '';
 
   const setAuto = (fid, val)=>{ const el = container.querySelector(`[data-auto-field="${fid}"]`); if(el) el.value = val; };
   setAuto('report_no', reportNo);
@@ -7052,7 +7052,7 @@ async function mrSaveForm(){
   rec.prev_balance = prev ? (prev.settle_total||0) : 0;
   rec.prev_report = prev ? prev.report_no : '';
 
-  const newDocId = `${rec.property_no}-${rec.year}/${rec.month}`;
+  const newDocId = `${rec.property_no}-${rec.year}-${String(rec.month).padStart(2,'0')}`;
   rec.report_no = newDocId;
 
   try{
