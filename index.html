@@ -288,7 +288,7 @@
     text-align:left;font-weight:600;color:var(--pp-muted);font-size:12px;
     padding:8px 10px;border-bottom:1px solid var(--pp-line);white-space:nowrap;
   }
-#panel-properties table.list-table td{padding:10px 10px;border-bottom:1px solid var(--pp-line);vertical-align:top;}
+#panel-properties table.list-table td{padding:10px 10px;border-bottom:1px solid var(--pp-line);vertical-align:top;white-space:nowrap;}
 #panel-properties table.list-table tr:hover td{background:#faf9f5;cursor:pointer;}
 #panel-properties .tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;}
 #panel-properties .tag.jizyu{background:#fbe9d7;color:#a9622f;}
@@ -467,7 +467,7 @@
     text-align:left;font-weight:600;color:var(--cc-muted);font-size:12px;
     padding:8px 10px;border-bottom:1px solid var(--cc-line);white-space:nowrap;
   }
-#panel-customers table.list-table td{padding:10px 10px;border-bottom:1px solid var(--cc-line);vertical-align:top;}
+#panel-customers table.list-table td{padding:10px 10px;border-bottom:1px solid var(--cc-line);vertical-align:top;white-space:nowrap;}
 #panel-customers table.list-table tr:hover td{background:#faf9f5;cursor:pointer;}
 #panel-customers .tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;}
 #panel-customers .tag.jizyu{background:#fbe9d7;color:#a9622f;}
@@ -638,7 +638,7 @@
     text-align:left;font-weight:600;color:var(--mr-muted);font-size:12px;
     padding:8px 10px;border-bottom:1px solid var(--mr-line);white-space:nowrap;
   }
-#panel-monthlyreports table.list-table td{padding:10px 10px;border-bottom:1px solid var(--mr-line);vertical-align:top;}
+#panel-monthlyreports table.list-table td{padding:10px 10px;border-bottom:1px solid var(--mr-line);vertical-align:top;white-space:nowrap;}
 #panel-monthlyreports table.list-table tr:hover td{background:#faf9f5;cursor:pointer;}
 #panel-monthlyreports .tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;}
 #panel-monthlyreports .tag.jizyu{background:#fbe9d7;color:#a9622f;}
@@ -817,7 +817,7 @@
     text-align:left;font-weight:600;color:var(--cc-muted);font-size:12px;
     padding:8px 10px;border-bottom:1px solid var(--cc-line);white-space:nowrap;
   }
-#panel-customers table.list-table td{padding:10px 10px;border-bottom:1px solid var(--cc-line);vertical-align:top;}
+#panel-customers table.list-table td{padding:10px 10px;border-bottom:1px solid var(--cc-line);vertical-align:top;white-space:nowrap;}
 #panel-customers table.list-table tr:hover td{background:#faf9f5;cursor:pointer;}
 #panel-customers .tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;}
 #panel-customers .tag.jizyu{background:#fbe9d7;color:#a9622f;}
@@ -952,7 +952,7 @@
   text-align:left;font-weight:600;color:var(--ca-muted);font-size:12px;
   padding:8px 10px;border-bottom:1px solid var(--ca-line);white-space:nowrap;
 }
-#panel-customer-accounts table.list-table td{padding:10px 10px;border-bottom:1px solid var(--ca-line);vertical-align:top;}
+#panel-customer-accounts table.list-table td{padding:10px 10px;border-bottom:1px solid var(--ca-line);vertical-align:top;white-space:nowrap;}
 #panel-customer-accounts table.list-table tr:hover td{background:#faf9f5;cursor:pointer;}
 #panel-customer-accounts .num{text-align:right;font-variant-numeric:tabular-nums;}
 #panel-customer-accounts .note-box{
@@ -960,6 +960,81 @@
   padding:12px 14px;font-size:12.5px;color:#2c5940;margin-bottom:16px;
 }
 #panel-customer-accounts .neg{color:#a4433a;font-weight:700;}
+
+/* ============ 金流帳（新功能，命名空間 #panel-finance 底下） ============ */
+#panel-finance{
+  --fn-bg:#f6f4ef; --fn-surface:#ffffff; --fn-ink:#24302a; --fn-muted:#6b7269;
+  --fn-line:#e4e0d6; --fn-accent:#2f6f4f; --fn-accent-soft:#e7f0ea;
+  --fn-danger:#a4433a; --fn-radius:6px;
+}
+#panel-finance *{box-sizing:border-box;}
+#panel-finance .shell{max-width:1100px;margin:0 auto;padding:28px 20px 80px;}
+#panel-finance header.top{margin-bottom:22px;}
+#panel-finance header.top h1{font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:.02em;}
+#panel-finance header.top p{margin:0;color:var(--fn-muted);font-size:13px;}
+#panel-finance nav.fn-tabs{display:flex;gap:2px;background:transparent;border-bottom:1px solid var(--fn-line);margin-bottom:22px;}
+#panel-finance nav.fn-tabs button{
+  appearance:none;border:none;background:transparent;font-size:14px;font-family:inherit;
+  color:var(--fn-muted);padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
+}
+#panel-finance nav.fn-tabs button.active{color:var(--fn-ink);border-bottom-color:var(--fn-accent);font-weight:600;}
+#panel-finance nav.fn-tabs button:hover{color:var(--fn-ink);}
+#panel-finance .fn-panel{display:none;}
+#panel-finance .fn-panel.active{display:block;}
+#panel-finance .card{background:var(--fn-surface);border:1px solid var(--fn-line);border-radius:var(--fn-radius);padding:18px 20px;}
+#panel-finance .card + .card{margin-top:16px;}
+#panel-finance .list-toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+#panel-finance .list-toolbar input[type=text]{
+  flex:1;min-width:180px;padding:8px 10px;border:1px solid var(--fn-line);border-radius:var(--fn-radius);
+  font-size:13px;font-family:inherit;
+}
+#panel-finance .btn{
+  appearance:none;border:1px solid var(--fn-line);background:var(--fn-surface);color:var(--fn-ink);
+  padding:8px 14px;border-radius:var(--fn-radius);font-size:13px;font-family:inherit;cursor:pointer;
+}
+#panel-finance .btn:hover{border-color:var(--fn-accent);color:var(--fn-accent);}
+#panel-finance .btn.primary{background:var(--fn-accent);border-color:var(--fn-accent);color:#fff;}
+#panel-finance .btn.primary:hover{opacity:.9;color:#fff;}
+#panel-finance .btn.danger{background:var(--fn-danger);border-color:var(--fn-danger);color:#fff;}
+#panel-finance .btn.danger:hover{opacity:.85;}
+#panel-finance .btn.small{padding:4px 10px;font-size:12px;}
+#panel-finance table.list-table{width:100%;border-collapse:collapse;font-size:13px;}
+#panel-finance table.list-table th{
+  text-align:left;font-weight:600;color:var(--fn-muted);font-size:12px;
+  padding:8px 10px;border-bottom:1px solid var(--fn-line);white-space:nowrap;
+}
+#panel-finance table.list-table td{padding:10px 10px;border-bottom:1px solid var(--fn-line);vertical-align:top;white-space:nowrap;}
+#panel-finance table.list-table tr:hover td{background:#faf9f5;cursor:pointer;}
+#panel-finance .num{text-align:right;font-variant-numeric:tabular-nums;}
+#panel-finance .neg{color:var(--fn-danger);font-weight:700;}
+#panel-finance .note-box{
+  background:var(--fn-accent-soft);border:1px solid #cfe3d6;border-radius:var(--fn-radius);
+  padding:12px 14px;font-size:12.5px;color:#2c5940;margin-bottom:16px;
+}
+#panel-finance .warn-box{
+  background:#f5ebdc;border:1px solid #e8d3ad;border-radius:var(--fn-radius);
+  padding:12px 14px;font-size:12.5px;color:#7a5420;margin-bottom:16px;
+}
+#panel-finance .tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;}
+#panel-finance .tag.ok{background:#dcefe3;color:#2f8a55;}
+#panel-finance .tag.warn{background:#f5ebdc;color:#a9722f;}
+#panel-finance .tag.manual{background:#dbeaf7;color:#2f6a9c;}
+#panel-finance .tag.na{background:#eef2ee;color:#6b7269;}
+#panel-finance .form-section-title{
+  font-size:13px;font-weight:700;color:#fff;background:var(--fn-accent);
+  padding:7px 12px;border-radius:4px;margin:20px 0 12px;
+}
+#panel-finance .form-section-title:first-child{margin-top:0;}
+#panel-finance .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 20px;margin-bottom:6px;}
+@media (max-width:640px){#panel-finance .form-grid{grid-template-columns:1fr;}}
+#panel-finance .field{display:flex;flex-direction:column;gap:4px;}
+#panel-finance .field label{font-size:12px;color:var(--fn-muted);font-weight:600;}
+#panel-finance .field input, #panel-finance .field select{
+  padding:8px 10px;border:1px solid var(--fn-line);border-radius:var(--fn-radius);
+  font-size:13px;font-family:inherit;background:#fff;color:var(--fn-ink);
+}
+#panel-finance .field .formula-note{font-size:11px;color:var(--fn-muted);}
+#panel-finance .form-actions{margin-top:22px;display:flex;gap:10px;}
 
 
 </style>
@@ -993,6 +1068,7 @@
       <a href="#" class="header-link" id="customersHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-customers').classList.add('active');ccRenderList();return false;">客戶資料 →</a>
       <a href="#" class="header-link" id="monthlyReportsHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-monthlyreports').classList.add('active');mrRenderList();return false;">月次報告書 →</a>
       <a href="#" class="header-link" id="customerAccountsHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-customer-accounts').classList.add('active');caBackToList();return false;">客戶帳戶 →</a>
+      <a href="#" class="header-link" id="cashFlowHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-finance').classList.add('active');fnRenderAccountList();fnRenderTxList();return false;">金流帳 →</a>
       <a href="#" class="header-link" onclick="siteLogout();return false;" style="font-size:13px;">登出</a>
     </div>
   </div>
@@ -2413,6 +2489,96 @@
       </table>
     </div>
   </div>
+</div>
+
+  </div>
+
+<div class="panel" id="panel-finance">
+<div class="shell">
+  <header class="top">
+    <h1>金流帳</h1>
+    <p>公司銀行帳戶跟交易明細，收入交易會自動比對「物件資料」的租金跟入居者姓名，比對成功會自動記帳，比對不上或金額跟平常不同會提醒您人工確認。只有管理員能看到這個功能。</p>
+  </header>
+
+  <nav class="fn-tabs">
+    <button class="fn-tab-btn active" data-tab="accounts">帳戶列表</button>
+    <button class="fn-tab-btn" data-tab="transactions">交易明細</button>
+  </nav>
+
+  <!-- ============ 帳戶列表 ============ -->
+  <section class="fn-panel active" id="fn-panel-accounts">
+    <div class="card">
+      <div class="list-toolbar">
+        <button class="btn primary" onclick="fnOpenAccountForm(null)">＋ 新增帳戶</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="list-table">
+          <thead><tr><th>帳戶類別</th><th>帳戶名稱</th><th>帳戶幣別</th><th>現有餘額</th><th></th></tr></thead>
+          <tbody id="fn-accountListBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" id="fn-accountFormCard" style="display:none;margin-top:16px;">
+      <div id="fn-accountFormSections"></div>
+      <div class="form-actions">
+        <button class="btn primary" onclick="fnSaveAccount()">儲存</button>
+        <button class="btn" onclick="fnCancelAccountForm()">取消</button>
+        <button class="btn danger" id="fnDeleteAccountBtn" onclick="fnDeleteAccount()" style="display:none;margin-left:auto;">刪除這個帳戶</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 交易明細 ============ -->
+  <section class="fn-panel" id="fn-panel-transactions">
+    <div class="card">
+      <div class="list-toolbar">
+        <input type="text" id="fn-txSearchBox" placeholder="輸入匯款人、主分類或物件編號搜尋">
+        <button class="btn primary" onclick="fnOpenTxForm(null)">＋ 新增交易</button>
+        <button class="btn" onclick="fnToggleCsvImport()">📄 匯入銀行 CSV</button>
+      </div>
+      <div id="fn-csvImportCard" style="display:none;margin-bottom:16px;padding:14px;background:var(--fn-bg);border:1px solid var(--fn-line);border-radius:var(--fn-radius);">
+        <div class="note-box" style="margin-bottom:12px;">在銀行網頁後台手動下載 CSV 對帳單，上傳到這裡會自動解析、跑租金比對、記進交易明細。這是還沒申請到銀行 API 之前的過渡方案。</div>
+        <div class="form-grid">
+          <div class="field"><label>銀行格式</label>
+            <select id="fn-csvBank">
+              <option value="sbi">住信SBIネット銀行</option>
+              <option value="gmo">GMOあおぞらネット銀行</option>
+            </select>
+          </div>
+          <div class="field"><label>要記在哪個帳戶名下</label>
+            <select id="fn-csvAccount"></select>
+          </div>
+          <div class="field" style="grid-column:1 / -1;"><label>選擇 CSV 檔案</label>
+            <input type="file" id="fn-csvFile" accept=".csv">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" onclick="fnUploadCsv()">開始匯入</button>
+          <button class="btn" onclick="fnToggleCsvImport()">取消</button>
+        </div>
+        <div id="fn-csvImportResult" style="margin-top:12px;"></div>
+      </div>
+      <div id="fn-txListCount" style="font-size:12px;color:var(--fn-muted);margin-bottom:8px;"></div>
+      <div style="overflow-x:auto;">
+        <table class="list-table">
+          <thead><tr><th>交易日期</th><th>交易類別</th><th>自帳戶</th><th>原幣金額</th><th>主分類</th><th>匯款人/收款人</th><th>比對狀態</th></tr></thead>
+          <tbody id="fn-txListBody"></tbody>
+        </table>
+      </div>
+      <div id="fn-txPagination" style="display:flex;gap:6px;justify-content:center;margin-top:16px;flex-wrap:wrap;"></div>
+    </div>
+
+    <div class="card" id="fn-txFormCard" style="display:none;margin-top:16px;">
+      <div id="fn-txMatchNote"></div>
+      <div id="fn-txFormSections"></div>
+      <div class="form-actions">
+        <button class="btn primary" onclick="fnSaveTx()">儲存</button>
+        <button class="btn" onclick="fnCancelTxForm()">取消</button>
+        <button class="btn danger" id="fnDeleteTxBtn" onclick="fnDeleteTx()" style="display:none;margin-left:auto;">刪除這筆交易</button>
+      </div>
+    </div>
+  </section>
 </div>
 
   </div>
@@ -3869,7 +4035,8 @@ function initFirebaseTracker(){
             manageStaff: data.manageStaff === true,
             manageProperties: data.manageProperties === true,
             manageCustomers: data.manageCustomers === true,
-            manageReports: data.manageReports === true
+            manageReports: data.manageReports === true,
+            manageFinance: data.manageFinance === true
           };
           gate.style.display = 'none';
           applyCurrentUserUI();
@@ -3882,6 +4049,8 @@ function initFirebaseTracker(){
         if(typeof ppUnsubProperties === 'function'){ ppUnsubProperties(); ppUnsubProperties = null; }
         if(typeof ccUnsubProperties === 'function'){ ccUnsubProperties(); ccUnsubProperties = null; }
         if(typeof mrUnsubProperties === 'function'){ mrUnsubProperties(); mrUnsubProperties = null; }
+        if(typeof fnUnsubAccounts === 'function'){ fnUnsubAccounts(); fnUnsubAccounts = null; }
+        if(typeof fnUnsubTransactions === 'function'){ fnUnsubTransactions(); fnUnsubTransactions = null; }
         if(typeof mrUnsubPropertyList === 'function'){ mrUnsubPropertyList(); mrUnsubPropertyList = null; }
         gate.style.display = 'flex';
       }
@@ -3919,6 +4088,7 @@ function applyCurrentUserUI(){
   if(typeof ccInit === 'function') ccInit();
   if(typeof mrInit === 'function') mrInit();
   if(typeof caInit === 'function') caInit();
+  if(typeof fnInit === 'function') fnInit();
 }
 
 function startCaseListener(){
@@ -5015,6 +5185,7 @@ function renderList(){
       if(f.type==='select') return `<td>${tagHtml(val)}</td>`;
       if(f.type==='multiselect') return `<td>${(Array.isArray(val)?val:[]).map(tagHtml).join(' ')}</td>`;
       if(f.type==='number' || f.type==='formula') return `<td class="num">${formatValue(f, val)}</td>`;
+      if(f.id==='address') return `<td style="white-space:normal;">${val ?? ''}</td>`;
       return `<td>${val ?? ''}</td>`;
     }).join('') + '</tr>';
   }).join('');
@@ -5957,6 +6128,7 @@ function ccRenderList(){
       if(f.type==='select') return `<td>${ccTagHtml(val)}</td>`;
       if(f.type==='multiselect') return `<td>${(Array.isArray(val)?val:[]).map(ccTagHtml).join(' ')}</td>`;
       if(f.type==='number' || f.type==='formula') return `<td class="num">${ccFormatValue(f, val)}</td>`;
+      if(f.id==='address') return `<td style="white-space:normal;">${val ?? ''}</td>`;
       return `<td>${val ?? ''}</td>`;
     }).join('') + '</tr>';
   }).join('');
@@ -6800,6 +6972,7 @@ function mrRenderList(){
       if(f.type==='select') return `<td>${mrTagHtml(val)}</td>`;
       if(f.type==='multiselect') return `<td>${(Array.isArray(val)?val:[]).map(mrTagHtml).join(' ')}</td>`;
       if(f.type==='number' || f.type==='formula') return `<td class="num">${mrFormatValue(f, val)}</td>`;
+      if(f.id==='address') return `<td style="white-space:normal;">${val ?? ''}</td>`;
       return `<td>${val ?? ''}</td>`;
     }).join('') + '</tr>';
   }).join('');
@@ -7777,6 +7950,412 @@ function caBackToList(){
   caRenderList();
 }
 document.getElementById('ca-searchBox').addEventListener('input', ()=>{ caCurrentPage = 1; caRenderList(); });
+
+
+/* =========================================================================
+   ⑮ 金流帳（Firebase Firestore・帳戶列表 + 交易明細，只有管理員能看到）
+   收入交易會自動比對「物件資料」的租金金額 + 入居者姓名/客戶姓名，
+   金額跟名字都對得上才算自動比對成功，比對不上就標記需要人工確認。
+   ========================================================================= */
+let fnAccounts = [];
+let fnTransactions = [];
+let fnEditingAccountIdx = null;
+let fnEditingTxIdx = null;
+let fnUnsubAccounts = null;
+let fnUnsubTransactions = null;
+let fnTxCurrentPage = 1;
+const FN_TX_PAGE_SIZE = 20;
+
+const FN_ACCOUNT_TYPES = ['現金','活期存款','定期存款','信用卡'];
+const FN_CURRENCIES = ['JPY','TWD','USD'];
+const FN_TX_TYPES = ['收入','支出'];
+const FN_CATEGORIES = ['房租收入','服務費/仲介費收入','通訊費','社會保險費(勞健保)','銀行匯款手續費','福利厚生費',
+  '旅費交通費','交際費','公會/證照費用','事務用品費','工事費用','廣告費','雜費'];
+
+function fnCanView(){
+  return !!(trackerCurrentUser && trackerCurrentUser.manageFinance);
+}
+function fnInit(){
+  const headerLink = document.getElementById('cashFlowHeaderLink');
+  if(headerLink) headerLink.style.display = fnCanView() ? '' : 'none';
+  if(!fnCanView()) return;
+
+  if(typeof fnUnsubAccounts === 'function') fnUnsubAccounts();
+  fnUnsubAccounts = trackerDB.collection('bank_accounts').onSnapshot(snapshot=>{
+    fnAccounts = snapshot.docs.map(d=>d.data());
+    fnRenderAccountList();
+  }, err=>{ console.error(err); alert('帳戶列表讀取失敗：'+err.message); });
+
+  if(typeof fnUnsubTransactions === 'function') fnUnsubTransactions();
+  fnUnsubTransactions = trackerDB.collection('transactions').onSnapshot(snapshot=>{
+    fnTransactions = snapshot.docs.map(d=>({...d.data(), _docId: d.id}));
+    fnRenderTxList();
+  }, err=>{ console.error(err); alert('交易明細讀取失敗：'+err.message); });
+}
+
+/* ---------------- 分頁切換（帳戶列表／交易明細） ---------------- */
+document.querySelectorAll('#panel-finance .fn-tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> fnSwitchTab(btn.dataset.tab));
+});
+function fnSwitchTab(name){
+  document.querySelectorAll('#panel-finance .fn-tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('#panel-finance .fn-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('fn-panel-'+name).classList.add('active');
+}
+
+function fnMoney(n){
+  n = Number(n)||0;
+  const text = (n<0?'-':'')+'¥'+Math.abs(n).toLocaleString('ja-JP');
+  return n<0 ? `<span class="neg">${text}</span>` : text;
+}
+
+/* =========================================================
+   帳戶列表
+   ========================================================= */
+function fnRenderAccountList(){
+  const body = document.getElementById('fn-accountListBody');
+  body.innerHTML = fnAccounts.map((a,idx)=>`
+    <tr onclick="fnOpenAccountForm(${idx})">
+      <td>${a.account_type||''}</td>
+      <td>${a.account_name||''}</td>
+      <td>${a.currency||''}</td>
+      <td class="num">${fnMoney(a.balance)}</td>
+      <td></td>
+    </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--fn-muted);">目前還沒有任何帳戶</td></tr>`;
+}
+function fnOpenAccountForm(idx){
+  fnEditingAccountIdx = idx;
+  const a = idx===null ? {} : fnAccounts[idx];
+  document.getElementById('fn-accountFormCard').style.display = '';
+  document.getElementById('fn-accountFormSections').innerHTML = `
+    <div class="form-grid">
+      <div class="field"><label>帳戶類別</label>
+        <select data-fid="account_type">
+          <option value=""></option>
+          ${FN_ACCOUNT_TYPES.map(t=>`<option value="${t}" ${t===a.account_type?'selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>帳戶名稱</label><input type="text" data-fid="account_name" value="${a.account_name||''}"></div>
+      <div class="field"><label>帳戶幣別</label>
+        <select data-fid="currency">
+          <option value=""></option>
+          ${FN_CURRENCIES.map(c=>`<option value="${c}" ${c===a.currency?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>現有餘額</label><input type="number" data-fid="balance" value="${a.balance??0}"></div>
+    </div>`;
+  const delBtn = document.getElementById('fnDeleteAccountBtn');
+  if(delBtn) delBtn.style.display = idx===null ? 'none' : '';
+}
+function fnCancelAccountForm(){
+  fnEditingAccountIdx = null;
+  document.getElementById('fn-accountFormCard').style.display = 'none';
+}
+async function fnSaveAccount(){
+  const rec = {};
+  document.querySelectorAll('#fn-accountFormSections [data-fid]').forEach(el=>{
+    rec[el.dataset.fid] = el.type==='number' ? Number(el.value)||0 : el.value;
+  });
+  if(!rec.account_name){ alert('請填寫帳戶名稱。'); return; }
+  try{
+    const oldName = fnEditingAccountIdx===null ? null : fnAccounts[fnEditingAccountIdx].account_name;
+    if(oldName && oldName !== rec.account_name){
+      await trackerDB.collection('bank_accounts').doc(String(rec.account_name)).set(rec);
+      await trackerDB.collection('bank_accounts').doc(String(oldName)).delete();
+    }else{
+      await trackerDB.collection('bank_accounts').doc(String(rec.account_name)).set(rec);
+    }
+    fnCancelAccountForm();
+  }catch(err){
+    console.error(err);
+    alert('儲存失敗：'+err.message);
+  }
+}
+async function fnDeleteAccount(){
+  if(fnEditingAccountIdx===null) return;
+  const a = fnAccounts[fnEditingAccountIdx];
+  if(!confirm('確定要刪除帳戶「'+a.account_name+'」嗎？這個動作沒辦法復原。')) return;
+  try{
+    await trackerDB.collection('bank_accounts').doc(String(a.account_name)).delete();
+    fnCancelAccountForm();
+  }catch(err){
+    console.error(err);
+    alert('刪除失敗：'+err.message);
+  }
+}
+
+/* =========================================================
+   交易明細
+   ========================================================= */
+function fnRenderTxList(){
+  const kw = (document.getElementById('fn-txSearchBox').value||'').trim();
+  const filtered = fnTransactions.filter(t=>{
+    if(!kw) return true;
+    return ((t.payer_name||'')+(t.category||'')+(t.matched_property_no||'')).includes(kw);
+  });
+  filtered.sort((a,b)=> (b.tx_date||'').localeCompare(a.tx_date||''));
+
+  const totalCount = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / FN_TX_PAGE_SIZE));
+  if(fnTxCurrentPage > totalPages) fnTxCurrentPage = totalPages;
+  if(fnTxCurrentPage < 1) fnTxCurrentPage = 1;
+  const startIdx = (fnTxCurrentPage-1) * FN_TX_PAGE_SIZE;
+  const pageItems = filtered.slice(startIdx, startIdx+FN_TX_PAGE_SIZE);
+
+  const countEl = document.getElementById('fn-txListCount');
+  countEl.textContent = totalCount===0 ? '共 0 筆' : `共 ${totalCount} 筆，第 ${fnTxCurrentPage} / ${totalPages} 頁（每頁 ${FN_TX_PAGE_SIZE} 筆）`;
+
+  const statusTag = (s)=>{
+    const map = {'自動比對成功':'ok','需人工確認':'warn','已人工確認':'manual','不適用':'na'};
+    const cls = map[s] || 'na';
+    return s ? `<span class="tag ${cls}">${s}</span>` : '';
+  };
+
+  const body = document.getElementById('fn-txListBody');
+  body.innerHTML = pageItems.map(t=>{
+    const realIdx = fnTransactions.indexOf(t);
+    return `<tr onclick="fnOpenTxForm(${realIdx})">
+      <td>${t.tx_date||''}</td>
+      <td>${t.tx_type||''}</td>
+      <td>${t.account_name||''}</td>
+      <td class="num">${fnMoney(t.amount)}</td>
+      <td>${t.category||''}</td>
+      <td>${t.payer_name||''}</td>
+      <td>${statusTag(t.match_status)}</td>
+    </tr>`;
+  }).join('');
+  fnRenderTxPagination(totalPages);
+}
+function fnRenderTxPagination(totalPages){
+  const el = document.getElementById('fn-txPagination');
+  if(totalPages<=1){ el.innerHTML=''; return; }
+  let html = `<button class="btn small" ${fnTxCurrentPage===1?'disabled':''} onclick="fnGoToTxPage(${fnTxCurrentPage-1})">‹ 上一頁</button>`;
+  for(let p=1;p<=totalPages;p++){
+    if(Math.abs(p-fnTxCurrentPage)<=2 || p===1 || p===totalPages){
+      html += `<button class="btn small ${p===fnTxCurrentPage?'primary':''}" onclick="fnGoToTxPage(${p})">${p}</button>`;
+    }else if(Math.abs(p-fnTxCurrentPage)===3){
+      html += `<span style="padding:0 4px;color:var(--fn-muted);">…</span>`;
+    }
+  }
+  html += `<button class="btn small" ${fnTxCurrentPage===totalPages?'disabled':''} onclick="fnGoToTxPage(${fnTxCurrentPage+1})">下一頁 ›</button>`;
+  el.innerHTML = html;
+}
+function fnGoToTxPage(p){ fnTxCurrentPage=p; fnRenderTxList(); }
+document.getElementById('fn-txSearchBox').addEventListener('input', ()=>{ fnTxCurrentPage=1; fnRenderTxList(); });
+
+/* ---- 自動比對租金：先找「片假名+金額」都一樣的歷史紀錄沿用備註；
+   找不到歷史紀錄，才退回用物件資料的租金+入居者姓名/客戶姓名比對 ---- */
+function fnNormalizeName(s){
+  return (s||'').replace(/[\s　]/g,'').trim();
+}
+function fnMatchRent(amount, payerName, excludeDocId){
+  const amt = Number(amount)||0;
+  const name = fnNormalizeName(payerName);
+  if(!amt || !name) return null;
+
+  // 策略一：歷史紀錄裡有沒有出現過一模一樣的「片假名+金額」、而且已經有備註
+  const historical = fnTransactions
+    .filter(t => t.tx_type==='收入' && Number(t.amount)===amt && fnNormalizeName(t.payer_name)===name
+      && t.note && t._docId!==excludeDocId)
+    .sort((a,b)=> (b.tx_date||'').localeCompare(a.tx_date||''));
+  if(historical.length){
+    return {mode:'historical', note: historical[0].note, category: historical[0].category || '房租收入', matchedDate: historical[0].tx_date};
+  }
+
+  // 策略二：退回用物件資料的租金金額 + 入居者姓名/客戶姓名比對
+  const propertyList = (typeof records !== 'undefined') ? records : [];
+  const matches = propertyList.filter(p=>{
+    if(Number(p.rent)!==amt) return false;
+    const tenant = fnNormalizeName(p.tenant_name);
+    const cust = fnNormalizeName(p.customer_name);
+    return (tenant && (tenant===name || tenant.includes(name) || name.includes(tenant))) ||
+           (cust && (cust===name || cust.includes(name) || name.includes(cust)));
+  });
+  if(matches.length===1){
+    return {mode:'property', property: matches[0]};
+  }
+  return null; // 比對到超過一筆也算不確定，一樣要人工確認
+}
+function fnRecalcMatchPreview(){
+  const container = document.getElementById('fn-txFormSections');
+  if(!container) return;
+  const getVal = (fid)=>{ const el = container.querySelector(`[data-fid="${fid}"]`); return el ? el.value : ''; };
+  const type = getVal('tx_type');
+  const amount = getVal('amount');
+  const payer = getVal('payer_name');
+  const noteEl = document.getElementById('fn-txMatchNote');
+  if(type !== '收入' || !amount || !payer){
+    noteEl.innerHTML = '';
+    return;
+  }
+  const excludeDocId = fnEditingTxIdx!==null ? fnTransactions[fnEditingTxIdx]._docId : null;
+  const matched = fnMatchRent(amount, payer, excludeDocId);
+  if(matched && matched.mode==='historical'){
+    noteEl.innerHTML = `<div class="note-box">✓ 根據 ${matched.matchedDate} 的歷史紀錄自動比對到，備註會沿用：「${matched.note}」，儲存後會自動記成「${matched.category}」。</div>`;
+  }else if(matched && matched.mode==='property'){
+    const p = matched.property;
+    noteEl.innerHTML = `<div class="note-box">✓ 根據物件資料自動比對到物件 <b>${p.property_no}</b>（${p.address||''}，客戶：${p.customer_name||p.tenant_name||''}），儲存後會自動記成「房租收入」。</div>`;
+  }else{
+    noteEl.innerHTML = `<div class="warn-box">⚠ 沒有比對到歷史紀錄，也沒有比對到金額跟名字都吻合的物件，請自己確認並填寫主分類/備註，儲存後這筆會標記「需人工確認」。</div>`;
+  }
+}
+function fnOpenTxForm(idx){
+  fnEditingTxIdx = idx;
+  const t = idx===null ? {} : fnTransactions[idx];
+  document.getElementById('fn-txFormCard').style.display = '';
+  document.getElementById('fn-txFormSections').innerHTML = `
+    <div class="form-grid">
+      <div class="field"><label>交易日期</label><input type="date" data-fid="tx_date" value="${t.tx_date||''}"></div>
+      <div class="field"><label>交易類別</label>
+        <select data-fid="tx_type" onchange="fnRecalcMatchPreview()">
+          <option value=""></option>
+          ${FN_TX_TYPES.map(x=>`<option value="${x}" ${x===t.tx_type?'selected':''}>${x}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>自帳戶</label>
+        <select data-fid="account_name">
+          <option value=""></option>
+          ${fnAccounts.map(a=>`<option value="${a.account_name}" ${a.account_name===t.account_name?'selected':''}>${a.account_name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>原幣金額</label><input type="number" data-fid="amount" value="${t.amount??''}" oninput="fnRecalcMatchPreview()"></div>
+      <div class="field"><label>主分類</label>
+        <select data-fid="category">
+          <option value=""></option>
+          ${FN_CATEGORIES.map(c=>`<option value="${c}" ${c===t.category?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>子分類</label><input type="text" data-fid="subcategory" value="${t.subcategory||''}"></div>
+      <div class="field"><label>匯款人/收款人</label><input type="text" data-fid="payer_name" value="${t.payer_name||''}" oninput="fnRecalcMatchPreview()"></div>
+      <div class="field"><label>描述</label><input type="text" data-fid="note" value="${t.note||''}"></div>
+    </div>
+    <div class="field" style="margin-top:12px;">
+      <label>比對狀態${idx!==null?'（可手動改成「已人工確認」）':''}</label>
+      <select data-fid="match_status">
+        <option value=""></option>
+        <option value="自動比對成功" ${t.match_status==='自動比對成功'?'selected':''}>自動比對成功</option>
+        <option value="需人工確認" ${t.match_status==='需人工確認'?'selected':''}>需人工確認</option>
+        <option value="已人工確認" ${t.match_status==='已人工確認'?'selected':''}>已人工確認</option>
+        <option value="不適用" ${t.match_status==='不適用'?'selected':''}>不適用</option>
+      </select>
+    </div>
+    <input type="hidden" data-fid="matched_property_no" value="${t.matched_property_no||''}">
+    <input type="hidden" data-fid="matched_customer_no" value="${t.matched_customer_no||''}">
+  `;
+  document.getElementById('fn-txMatchNote').innerHTML = '';
+  const delBtn = document.getElementById('fnDeleteTxBtn');
+  if(delBtn) delBtn.style.display = idx===null ? 'none' : '';
+  fnRecalcMatchPreview();
+}
+function fnCancelTxForm(){
+  fnEditingTxIdx = null;
+  document.getElementById('fn-txFormCard').style.display = 'none';
+}
+
+/* ---- 匯入銀行 CSV（過渡方案，用同一組後端網址／API金鑰） ---- */
+function fnToggleCsvImport(){
+  const card = document.getElementById('fn-csvImportCard');
+  const showing = card.style.display !== 'none';
+  card.style.display = showing ? 'none' : '';
+  if(!showing){
+    const accSel = document.getElementById('fn-csvAccount');
+    accSel.innerHTML = fnAccounts.map(a=>`<option value="${a.account_name}">${a.account_name}</option>`).join('') ||
+      '<option value="">（請先到「帳戶列表」新增一個帳戶）</option>';
+    document.getElementById('fn-csvImportResult').innerHTML = '';
+  }
+}
+function fnUploadCsv(){
+  const bank = document.getElementById('fn-csvBank').value;
+  const accountName = document.getElementById('fn-csvAccount').value;
+  const fileInput = document.getElementById('fn-csvFile');
+  const resultEl = document.getElementById('fn-csvImportResult');
+
+  if(!accountName){ alert('請先到「帳戶列表」新增至少一個帳戶。'); return; }
+  if(!fileInput.files || !fileInput.files[0]){ alert('請選擇 CSV 檔案。'); return; }
+  if(!FINANCE_TOOL_URL || FINANCE_TOOL_URL.includes('YOUR-APP-NAME')){
+    resultEl.innerHTML = '<div class="warn-box">尚未設定財報系統網址（FINANCE_TOOL_URL），請聯絡管理員設定。</div>';
+    return;
+  }
+  if(!TODO_API_SECRET || TODO_API_SECRET === 'YOUR_API_SECRET_HERE'){
+    resultEl.innerHTML = '<div class="warn-box">尚未設定 API 金鑰，請聯絡管理員設定。</div>';
+    return;
+  }
+
+  resultEl.innerHTML = '<div class="note-box">匯入中，請稍候…</div>';
+  const base = FINANCE_TOOL_URL.endsWith('/') ? FINANCE_TOOL_URL : FINANCE_TOOL_URL + '/';
+  const formData = new FormData();
+  formData.append('file', fileInput.files[0]);
+  formData.append('bank', bank);
+  formData.append('account_name', accountName);
+
+  fetch(base + 'api/finance/import_csv', {
+    method: 'POST',
+    headers: { 'X-API-Key': TODO_API_SECRET },
+    body: formData
+  }).then(r=>{
+    if(!r.ok) return r.json().then(d=>{ throw new Error(d.error || ('伺服器回應錯誤（'+r.status+'）')); });
+    return r.json();
+  }).then(data=>{
+    const s = data.summary;
+    resultEl.innerHTML = `<div class="note-box">
+      匯入完成，共 ${s.total} 筆：✓ 自動比對成功 ${s.auto_matched} 筆、⚠ 需人工確認 ${s.needs_review} 筆、不適用 ${s.not_applicable} 筆。
+    </div>`;
+    fileInput.value = '';
+  }).catch(err=>{
+    resultEl.innerHTML = `<div class="warn-box">匯入失敗：${err.message}</div>`;
+  });
+}
+
+async function fnSaveTx(){
+  const rec = {};
+  document.querySelectorAll('#fn-txFormSections [data-fid]').forEach(el=>{
+    rec[el.dataset.fid] = el.type==='number' ? Number(el.value)||0 : el.value;
+  });
+  if(!rec.tx_date){ alert('請填寫交易日期。'); return; }
+  if(!rec.tx_type){ alert('請選擇交易類別。'); return; }
+
+  // 收入交易：先比對歷史紀錄沿用備註，找不到才用物件資料比對，都比對不到就標記需人工確認
+  // （如果使用者自己已經手動選過主分類/比對狀態，尊重使用者的選擇，不覆蓋）
+  const excludeDocId = fnEditingTxIdx===null ? null : fnTransactions[fnEditingTxIdx]._docId;
+  if(rec.tx_type==='收入' && rec.amount && rec.payer_name){
+    const matched = fnMatchRent(rec.amount, rec.payer_name, excludeDocId);
+    if(matched && matched.mode==='historical'){
+      if(!rec.note) rec.note = matched.note;
+      if(!rec.category) rec.category = matched.category;
+      if(!rec.match_status) rec.match_status = '自動比對成功';
+    }else if(matched && matched.mode==='property'){
+      if(!rec.category) rec.category = '房租收入';
+      rec.matched_property_no = matched.property.property_no || '';
+      rec.matched_customer_no = matched.property.customer_no || '';
+      if(!rec.match_status) rec.match_status = '自動比對成功';
+    }else{
+      if(!rec.match_status) rec.match_status = '需人工確認';
+    }
+  }else if(!rec.match_status){
+    rec.match_status = '不適用';
+  }
+
+  const docId = fnEditingTxIdx===null ? ('tx_'+Date.now()) : (excludeDocId || ('tx_'+Date.now()));
+  try{
+    await trackerDB.collection('transactions').doc(docId).set(rec);
+    fnCancelTxForm();
+  }catch(err){
+    console.error(err);
+    alert('儲存失敗：'+err.message);
+  }
+}
+async function fnDeleteTx(){
+  if(fnEditingTxIdx===null) return;
+  const t = fnTransactions[fnEditingTxIdx];
+  if(!confirm('確定要刪除這筆交易嗎？這個動作沒辦法復原。')) return;
+  try{
+    await trackerDB.collection('transactions').doc(t._docId).delete();
+    fnCancelTxForm();
+  }catch(err){
+    console.error(err);
+    alert('刪除失敗：'+err.message);
+  }
+}
 
 
 </script>
