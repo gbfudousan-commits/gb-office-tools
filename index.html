@@ -1063,7 +1063,7 @@
       <span id="siteUserLabel" style="font-size:12px;opacity:.85;"></span>
       <a href="#" class="header-link" id="financeHeaderLink" style="display:none;" target="_blank" rel="noopener">公司財報 →</a>
       <a href="#" class="header-link" id="trackerHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-tracker').classList.add('active');return false;">進度追蹤 →</a>
-      <a href="#" class="header-link" id="todoHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-todo').classList.add('active');if(todoCache.length===0)loadTodosFromRagic();return false;">代辦事項 →</a>
+      <a href="#" class="header-link" id="todoHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-todo').classList.add('active');renderTodoList();return false;">代辦事項 →</a>
       <a href="#" class="header-link" id="propertiesHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-properties').classList.add('active');renderList();return false;">物件管理 →</a>
       <a href="#" class="header-link" id="customersHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-customers').classList.add('active');ccRenderList();return false;">客戶資料 →</a>
       <a href="#" class="header-link" id="monthlyReportsHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-monthlyreports').classList.add('active');mrRenderList();return false;">月次報告書 →</a>
@@ -2235,12 +2235,8 @@
     <div class="side-form" style="max-width:1100px;">
 
       <fieldset>
-        <legend>代辦事項（直接讀取 Ragic 即時資料）</legend>
-        <p style="font-size:12px;color:#555;">這裡的資料是即時從 Ragic 抓取的，不是另外手動輸入的一份。要修改內容，請直接到 Ragic 裡編輯，這裡按「重新整理」就會抓到最新狀態。</p>
-        <div class="toolbar no-print">
-          <button class="btn" onclick="loadTodosFromRagic()">🔄 重新整理（重新抓取 Ragic）</button>
-        </div>
-        <div id="todoStatus" style="font-size:12px;color:#888;margin-top:6px;"></div>
+        <legend>代辦事項（直接讀取「物件資料」裡每個物件的代辦事項子表格）</legend>
+        <p style="font-size:12px;color:#555;">這裡彙整了所有物件的代辦事項，即時跟著「物件資料」變動。要修改內容，直接到「物件管理」裡編輯該物件的代辦事項子表格，或直接點下面任一筆卡片跳過去編輯。</p>
       </fieldset>
 
       <fieldset>
@@ -2249,9 +2245,6 @@
           <div class="field"><label>篩選：物件編號／地址</label><input id="td_filter_bukken" oninput="renderTodoList()" placeholder="輸入編號或地址搜尋"></div>
           <div class="field"><label>篩選：狀態</label>
             <select id="td_filter_status" onchange="renderTodoList()"><option value="">全部</option><option>待辦中</option><option>已完成</option></select>
-          </div>
-          <div class="field" id="td_filter_staff_field"><label>篩選：擔當人員</label>
-            <select id="td_filter_staff" onchange="renderTodoList()"><option value="">全部</option></select>
           </div>
         </div>
         <div id="todoListContainer"></div>
@@ -2538,11 +2531,11 @@
         <button class="btn" onclick="fnToggleCsvImport()">📄 匯入銀行 CSV</button>
       </div>
       <div id="fn-csvImportCard" style="display:none;margin-bottom:16px;padding:14px;background:var(--fn-bg);border:1px solid var(--fn-line);border-radius:var(--fn-radius);">
-        <div class="note-box" style="margin-bottom:12px;">在銀行網頁後台手動下載 CSV 對帳單，上傳到這裡會自動解析、跑租金比對、記進交易明細。這是還沒申請到銀行 API 之前的過渡方案。</div>
+        <div class="note-box" style="margin-bottom:12px;">在銀行網頁後台手動下載 CSV 對帳單，上傳到這裡會自動解析、跑租金比對、記進交易明細。全部在瀏覽器裡處理，不會經過任何外部伺服器。</div>
         <div class="form-grid">
           <div class="field"><label>銀行格式</label>
             <select id="fn-csvBank">
-              <option value="sbi">住信SBIネット銀行</option>
+              <option value="sbi">ドコモSMTBネット銀行</option>
               <option value="gmo">GMOあおぞらネット銀行</option>
             </select>
           </div>
@@ -4891,85 +4884,54 @@ function generateCancel(){
 const TODO_API_SECRET = "YOUR_API_SECRET_HERE";
 /* ↑↑↑ ここまで ↑↑↑ */
 
-let todoCache = [];
-
-function loadTodosFromRagic(){
-  const statusEl = document.getElementById('todoStatus');
-  if(!FINANCE_TOOL_URL || FINANCE_TOOL_URL.includes('YOUR-APP-NAME')){
-    statusEl.textContent = '尚未設定財報系統網址（FINANCE_TOOL_URL），請聯絡管理員設定。';
-    return;
-  }
-  if(!TODO_API_SECRET || TODO_API_SECRET === 'YOUR_API_SECRET_HERE'){
-    statusEl.textContent = '尚未設定 API 金鑰（TODO_API_SECRET），請聯絡管理員設定。';
-    return;
-  }
-  statusEl.textContent = '讀取中…';
-  const base = FINANCE_TOOL_URL.endsWith('/') ? FINANCE_TOOL_URL : FINANCE_TOOL_URL + '/';
-  fetch(base + 'api/todos', {
-    headers: { 'X-API-Key': TODO_API_SECRET }
-  }).then(r=>{
-    if(!r.ok) throw new Error('伺服器回應錯誤（' + r.status + '）');
-    return r.json();
-  }).then(data=>{
-    if(data.error){ statusEl.textContent = '讀取失敗：' + data.error; return; }
-    todoCache = data.todos || [];
-    populateTodoStaffFilter();
-    renderTodoList();
-    statusEl.textContent = `已從 Ragic 讀取 ${todoCache.length} 筆代辦事項（${new Date().toLocaleTimeString('zh-TW')} 更新）`;
-  }).catch(err=>{
-    statusEl.textContent = '讀取失敗：' + err.message + '（請確認財報系統是否正常運作、網路是否正常）';
-  });
-}
-
-function populateTodoStaffFilter(){
-  const select = document.getElementById('td_filter_staff');
-  if(!select) return;
-  const prevVal = select.value;
-  const staffNames = [...new Set(todoCache.map(t=>t.staff).filter(s=>s))].sort();
-  select.innerHTML = '<option value="">全部</option>' + staffNames.map(n=>`<option>${n}</option>`).join('');
-  if(staffNames.includes(prevVal)) select.value = prevVal;
-
-  const staffFilterField = document.getElementById('td_filter_staff_field');
-  if(trackerCurrentUser && !trackerCurrentUser.viewAllCases){
-    if(staffFilterField) staffFilterField.style.display = 'none';
-  } else {
-    if(staffFilterField) staffFilterField.style.display = '';
-  }
-}
-
+/* 代辦事項：直接彙整「物件資料」每個物件的代辦事項子表格（sec_todo），
+   即時跟著 records 變動，不用另外抓取或快取。 */
 function todoStatus(t){
-  if(t.complete_date) return '已完成';
-  if(t.status_flag) return '待辦中';
-  return '待辦中';
+  return t.status === '完成' ? '已完成' : '待辦中'; // 〇／未完成都視為「待辦中」
 }
-
 function renderTodoList(){
   const container = document.getElementById('todoListContainer');
   if(!container) return;
   const filterBukken = ($('td_filter_bukken')||'').trim().toLowerCase();
   const filterStatus = $('td_filter_status');
-  const filterStaff = $('td_filter_staff');
 
-  let list = todoCache.filter(t=>{
+  const propertyList = (typeof records !== 'undefined') ? records : [];
+  let allTodos = [];
+  propertyList.forEach((p, idx)=>{
+    (p.sec_todo || []).forEach(row=>{
+      if(!row.todo_content && !row.todo_status) return; // 跳過完全空白的列
+      allTodos.push({
+        property_no: p.property_no,
+        property_address: p.address,
+        customer_name: p.customer_name,
+        staff: p.staff_in_charge,
+        content: row.todo_content,
+        status: row.todo_status,
+        complete_date: row.todo_date,
+        _propIdx: idx,
+      });
+    });
+  });
+
+  let list = allTodos.filter(t=>{
     if(trackerCurrentUser && !trackerCurrentUser.viewAllCases && t.staff !== trackerCurrentUser.name) return false;
     if(filterBukken){
       const hay = ((t.property_no||'') + ' ' + (t.property_address||'')).toLowerCase();
       if(!hay.includes(filterBukken)) return false;
     }
     if(filterStatus && todoStatus(t) !== filterStatus) return false;
-    if(filterStaff && t.staff !== filterStaff) return false;
     return true;
   });
 
   if(list.length === 0){
-    container.innerHTML = '<p style="color:#888;">目前沒有符合條件的代辦事項（或尚未按上方「重新整理」讀取資料）。</p>';
+    container.innerHTML = '<p style="color:#888;">目前沒有符合條件的代辦事項。</p>';
     return;
   }
 
   container.innerHTML = list.map(t=>{
     const status = todoStatus(t);
     return `
-      <div class="case-card">
+      <div class="case-card" style="cursor:pointer;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-properties').classList.add('active');switchTab('form');openForm(${t._propIdx});">
         <div class="ctop">
           <div>
             <span class="cname">${t.property_no?'【'+t.property_no+'】':''}${t.property_address || '(未填地址)'}</span>
@@ -5920,6 +5882,8 @@ function ppInit(){
   ppUnsubProperties = trackerDB.collection('properties').onSnapshot(snapshot=>{
     records = snapshot.docs.map(d=>d.data());
     renderList();
+    const todoPanel = document.getElementById('panel-todo');
+    if(todoPanel && todoPanel.classList.contains('active') && typeof renderTodoList === 'function') renderTodoList();
   }, err=>{
     console.error(err);
     alert('物件資料讀取失敗，請確認 Firestore 規則或網路連線：' + err.message);
@@ -8252,7 +8216,8 @@ function fnCancelTxForm(){
   document.getElementById('fn-txFormCard').style.display = 'none';
 }
 
-/* ---- 匯入銀行 CSV（過渡方案，用同一組後端網址／API金鑰） ---- */
+/* ---- 匯入銀行 CSV（純前端處理：讀檔→解碼→解析→比對→直接寫進 Firestore，
+   不透過後端、不需要 API 金鑰，做法跟系統其他功能一致） ---- */
 function fnToggleCsvImport(){
   const card = document.getElementById('fn-csvImportCard');
   const showing = card.style.display !== 'none';
@@ -8264,7 +8229,78 @@ function fnToggleCsvImport(){
     document.getElementById('fn-csvImportResult').innerHTML = '';
   }
 }
-function fnUploadCsv(){
+
+/* 簡單的 CSV 逐行解析，支援雙引號包住的欄位（銀行匯出的格式都是這樣） */
+function fnParseCsvLine(line){
+  const cells = [];
+  let cur = '';
+  let inQuotes = false;
+  for(let i=0; i<line.length; i++){
+    const ch = line[i];
+    if(inQuotes){
+      if(ch === '"'){
+        if(line[i+1] === '"'){ cur += '"'; i++; }
+        else inQuotes = false;
+      }else{
+        cur += ch;
+      }
+    }else{
+      if(ch === '"') inQuotes = true;
+      else if(ch === ','){ cells.push(cur); cur=''; }
+      else cur += ch;
+    }
+  }
+  cells.push(cur);
+  return cells;
+}
+function fnCleanPayerName(text){
+  if(!text) return '';
+  let t = String(text).trim();
+  const prefixes = ['振込＊','振込  ','振込 ','振込　','口座振替　','口座振替 ','ATM 利用手数料 ','ATM '];
+  for(const p of prefixes){
+    if(t.startsWith(p)){ t = t.slice(p.length); break; }
+  }
+  return t.trim().replace(/　/g, ' ');
+}
+function fnCleanAmount(s){
+  if(!s) return 0;
+  return Number(String(s).replace(/,/g, '').trim()) || 0;
+}
+/* 依銀行格式，把 CSV 的每一列轉成 {tx_date, tx_type, amount, payer_name, account_name, note} */
+function fnParseBankCsvRows(bank, rows, accountName){
+  const results = [];
+  for(const r of rows){
+    if(r.length < 5) continue;
+    let dateRaw, desc, inAmt, outAmt;
+    if(bank === 'sbi'){
+      // 住信SBI（ドコモSMTB）：日付,摘要,入金金額,出金金額,残高,メモ；日期 YYYYMMDD，金額沒有千分位逗號
+      [dateRaw, desc, inAmt, outAmt] = r;
+    }else if(bank === 'gmo'){
+      // GMOあおぞらネット銀行：日付,内容,出金金額(円),入金金額(円),残高(円),メモ；日期 YYYY/MM/DD，金額有千分位逗號
+      let out2, in2;
+      [dateRaw, desc, out2, in2] = r;
+      outAmt = out2; inAmt = in2;
+    }else{
+      continue;
+    }
+    dateRaw = (dateRaw||'').trim();
+    let dateFmt;
+    if(bank === 'sbi' && dateRaw.length === 8){
+      dateFmt = `${dateRaw.slice(0,4)}-${dateRaw.slice(4,6)}-${dateRaw.slice(6,8)}`;
+    }else{
+      dateFmt = dateRaw.replace(/\//g, '-');
+    }
+    const inNum = fnCleanAmount(inAmt);
+    const outNum = fnCleanAmount(outAmt);
+    if(inNum){
+      results.push({tx_date:dateFmt, tx_type:'收入', amount:inNum, payer_name:fnCleanPayerName(desc), account_name:accountName, note:desc||''});
+    }else if(outNum){
+      results.push({tx_date:dateFmt, tx_type:'支出', amount:outNum, payer_name:fnCleanPayerName(desc), account_name:accountName, note:desc||''});
+    }
+  }
+  return results;
+}
+async function fnUploadCsv(){
   const bank = document.getElementById('fn-csvBank').value;
   const accountName = document.getElementById('fn-csvAccount').value;
   const fileInput = document.getElementById('fn-csvFile');
@@ -8272,38 +8308,52 @@ function fnUploadCsv(){
 
   if(!accountName){ alert('請先到「帳戶列表」新增至少一個帳戶。'); return; }
   if(!fileInput.files || !fileInput.files[0]){ alert('請選擇 CSV 檔案。'); return; }
-  if(!FINANCE_TOOL_URL || FINANCE_TOOL_URL.includes('YOUR-APP-NAME')){
-    resultEl.innerHTML = '<div class="warn-box">尚未設定財報系統網址（FINANCE_TOOL_URL），請聯絡管理員設定。</div>';
-    return;
-  }
-  if(!TODO_API_SECRET || TODO_API_SECRET === 'YOUR_API_SECRET_HERE'){
-    resultEl.innerHTML = '<div class="warn-box">尚未設定 API 金鑰，請聯絡管理員設定。</div>';
-    return;
-  }
 
   resultEl.innerHTML = '<div class="note-box">匯入中，請稍候…</div>';
-  const base = FINANCE_TOOL_URL.endsWith('/') ? FINANCE_TOOL_URL : FINANCE_TOOL_URL + '/';
-  const formData = new FormData();
-  formData.append('file', fileInput.files[0]);
-  formData.append('bank', bank);
-  formData.append('account_name', accountName);
+  try{
+    const buf = await fileInput.files[0].arrayBuffer();
+    const text = new TextDecoder('shift-jis').decode(buf);
+    const lines = text.split(/\r\n|\r|\n/).filter(l=>l.trim().length>0);
+    const rows = lines.slice(1).map(fnParseCsvLine); // 跳過標題列
+    const parsed = fnParseBankCsvRows(bank, rows, accountName);
 
-  fetch(base + 'api/finance/import_csv', {
-    method: 'POST',
-    headers: { 'X-API-Key': TODO_API_SECRET },
-    body: formData
-  }).then(r=>{
-    if(!r.ok) return r.json().then(d=>{ throw new Error(d.error || ('伺服器回應錯誤（'+r.status+'）')); });
-    return r.json();
-  }).then(data=>{
-    const s = data.summary;
+    let autoMatched = 0, needsReview = 0, notApplicable = 0;
+    for(const tx of parsed){
+      if(tx.tx_type==='收入' && tx.amount && tx.payer_name){
+        const matched = fnMatchRent(tx.amount, tx.payer_name, null);
+        if(matched && matched.mode==='historical'){
+          tx.note = tx.note || matched.note;
+          tx.category = matched.category;
+          tx.match_status = '自動比對成功';
+          autoMatched++;
+        }else if(matched && matched.mode==='property'){
+          tx.category = '房租收入';
+          tx.matched_property_no = matched.property.property_no || '';
+          tx.matched_customer_no = matched.property.customer_no || '';
+          tx.match_status = '自動比對成功';
+          autoMatched++;
+        }else{
+          tx.match_status = '需人工確認';
+          needsReview++;
+        }
+      }else{
+        tx.match_status = '不適用';
+        notApplicable++;
+      }
+      const docId = 'tx_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+      await trackerDB.collection('transactions').doc(docId).set(tx);
+      // 每存一筆，馬上加進本地陣列，這樣同一份 CSV 裡後面的列也能比對到前面剛匯入的歷史紀錄
+      fnTransactions.push({...tx, _docId: docId});
+    }
+
     resultEl.innerHTML = `<div class="note-box">
-      匯入完成，共 ${s.total} 筆：✓ 自動比對成功 ${s.auto_matched} 筆、⚠ 需人工確認 ${s.needs_review} 筆、不適用 ${s.not_applicable} 筆。
+      匯入完成，共 ${parsed.length} 筆：✓ 自動比對成功 ${autoMatched} 筆、⚠ 需人工確認 ${needsReview} 筆、不適用 ${notApplicable} 筆。
     </div>`;
     fileInput.value = '';
-  }).catch(err=>{
+  }catch(err){
+    console.error(err);
     resultEl.innerHTML = `<div class="warn-box">匯入失敗：${err.message}</div>`;
-  });
+  }
 }
 
 async function fnSaveTx(){
