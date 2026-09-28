@@ -8887,7 +8887,7 @@ function glFieldRowHtml(e, isBlank){
       <td class="num gl-plain">${isBlank?'':glMoney(e._gmo)}</td>
       <td class="num gl-plain">${isBlank?'':glMoney(e._sbi)}</td>
       <td class="num gl-plain">${isBlank?'':glMoney(e._deposit)}</td>
-      <td class="gl-plain">${isBlank?'':`<button class="gl-row-del" title="刪除這筆" onclick="glDeleteEntryInline('${docId}')">✕</button>`}</td>
+      <td class="gl-plain">${isBlank?'':`<button class="gl-row-del" title="刪除這筆" onmousedown="glArmRowDelete(this)" onclick="glDeleteEntryInline('${docId}', this)">✕</button>`}</td>
     </tr>`;
 }
 let glFocusBlankAfterRender = false;
@@ -8926,7 +8926,7 @@ function glRowHasContent(rec){
     rec.gmo_out||rec.sbi_out||rec.deposit_out||rec.cash_out||(rec.payee&&rec.payee.trim())||(rec.memo&&rec.memo.trim()));
 }
 async function glHandleRowChange(tr){
-  if(tr.dataset.saving === '1') return;
+  if(tr.dataset.saving === '1' || tr.dataset.deleting === '1') return;
   const docId = tr.dataset.docid;
   const rec = {};
   tr.querySelectorAll('[data-fid]').forEach(el=>{
@@ -8965,6 +8965,7 @@ async function glHandleRowChange(tr){
 document.getElementById('gl-cfListBody').addEventListener('focusout', (ev)=>{
   const tr = ev.target.closest('tr.gl-cf-row');
   if(!tr) return;
+  if(tr.dataset.deleting === '1') return;
   if(ev.relatedTarget && tr.contains(ev.relatedTarget)) return;
   glHandleRowChange(tr);
 });
@@ -9004,12 +9005,28 @@ async function glClearAllExtra(){
     box.innerHTML = `<div class="note-box">已刪除 ${ids.length} 筆額外收入資料，可以重新匯入了。</div>`;
   }catch(err){ console.error(err); box.innerHTML = `<div class="warn-box">刪除失敗：${err.message}</div>`; }
 }
-async function glDeleteEntryInline(docId){
+function glArmRowDelete(btnEl){
+  // 在「按下滑鼠」(mousedown) 這一瞬間就標記這一列「正在刪除中」，
+  // 這一定會比接下來瀏覽器把焦點從正在編輯的欄位移開（focusout）還要早發生。
+  // 如果沒有這一步，先前正在編輯但還沒離開的欄位，可能會在點擊刪除鈕的同時
+  // 被瀏覽器判定為「離開這一列」而觸發自動存檔，跟接下來的刪除動作互搶時間，
+  // 導致這一筆資料被刪除後又被寫回來，看起來就像「刪不掉」。
+  const tr = btnEl && btnEl.closest('tr.gl-cf-row');
+  if(tr) tr.dataset.deleting = '1';
+}
+async function glDeleteEntryInline(docId, btnEl){
   if(!docId) return;
-  if(!confirm('確定要刪除這筆紀錄嗎？這個動作沒辦法復原。')) return;
+  const tr = (btnEl && btnEl.closest('tr.gl-cf-row')) || document.querySelector(`#gl-cfListBody tr.gl-cf-row[data-docid="${docId}"]`);
+  if(tr) tr.dataset.deleting = '1';
+  const ok = confirm('確定要刪除這筆紀錄嗎？這個動作沒辦法復原。');
+  if(!ok){ if(tr) delete tr.dataset.deleting; return; }
   try{
     await trackerDB.collection('ledger_entries').doc(docId).delete();
-  }catch(err){ console.error(err); alert('刪除失敗：'+err.message); }
+  }catch(err){
+    console.error(err);
+    alert('刪除失敗：'+err.message);
+    if(tr) delete tr.dataset.deleting;
+  }
 }
 function glFocusBlankRow(){
   const inp = document.querySelector('#gl-cfListBody tr.gl-blank-row input');
