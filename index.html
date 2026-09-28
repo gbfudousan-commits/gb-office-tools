@@ -1142,7 +1142,10 @@
         <div class="field"><label>取引態様</label>
           <select id="f_torihiki"><option>一般</option><option>専任</option><option>専属専任</option><option>売主</option><option>代理</option></select>
         </div>
-        <div class="field"><label>報酬形態</label><select id="f_houshu_keitai"><option>分かれ</option><option>正規手数料</option><option>3％(税込)</option></select></div>
+        <div class="field"><label>報酬形態</label>
+          <select id="f_houshu_keitai" onchange="toggleHoushuCustom()"><option>分かれ</option><option>正規手数料</option><option>3％(税込)</option><option value="__custom__">自行輸入...</option></select>
+          <input id="f_houshu_keitai_custom" type="text" placeholder="例：50万" style="display:none;margin-top:4px;">
+        </div>
       </div>
       <label>交通（駅・沿線・徒歩分数、複数行可）</label>
       <div id="f_traffic_list"></div>
@@ -1419,8 +1422,9 @@
       </fieldset>
     </div>
 
-    <div class="toolbar">
+    <div class="toolbar no-print">
       <button class="btn" onclick="generateAll()">▶ 資料を生成する（②③タブへ反映）</button>
+      <button class="btn secondary" onclick="quickSaveToHistory()">💾 儲存這筆資料（存到歷史記錄）</button>
     </div>
   </div>
   </div><!-- /.wrap -->
@@ -2845,6 +2849,19 @@ function renderThumbs(){
 
 /* ---------- helpers ---------- */
 const $=id=>document.getElementById(id).value;
+function toggleHoushuCustom(){
+  const sel=document.getElementById('f_houshu_keitai');
+  const custom=document.getElementById('f_houshu_keitai_custom');
+  if(!sel||!custom) return;
+  if(sel.value==='__custom__'){ custom.style.display='block'; custom.focus(); }
+  else { custom.style.display='none'; custom.value=''; }
+}
+function houshuKeitaiValue(){
+  const sel=document.getElementById('f_houshu_keitai');
+  const custom=document.getElementById('f_houshu_keitai_custom');
+  if(sel && sel.value==='__custom__') return custom?custom.value:'';
+  return sel?sel.value:'';
+}
 function collectLines(containerId){
   return [...document.querySelectorAll('#'+containerId+' input')].map(i=>i.value).filter(v=>v.trim()!=='');
 }
@@ -2975,7 +2992,7 @@ function generateAll(){
       <div class="af-right">
         <div class="af-row"><b>免許番号</b><span>${$('o_menkyo')}</span></div>
         <div class="af-row"><b>取引態様</b><span>${$('f_torihiki')}</span></div>
-        <div class="af-row"><b>報酬形態</b><span>${$('f_houshu_keitai')}</span></div>
+        <div class="af-row"><b>報酬形態</b><span>${houshuKeitaiValue()}</span></div>
         <div class="af-row"><b>情報公開日</b><span>${todayJP}</span></div>
         <div class="af-row"><b>担当者</b><span>${$('o_tantou')}</span></div>
         <div class="af-row"><b>物件番号</b><span>${$('o_bukken_bango')}</span></div>
@@ -3822,11 +3839,13 @@ function getAllFormValues(){
       data[el.id] = el.value;
     }
   });
+  data.__dynLists = collectDynLists();
   return data;
 }
 
 function setAllFormValues(data){
   Object.keys(data).forEach(id=>{
+    if(id === '__dynLists') return;
     const el = document.getElementById(id);
     if(!el) return;
     const v = data[id];
@@ -3837,8 +3856,69 @@ function setAllFormValues(data){
       el.value = v;
     }
   });
+  restoreDynLists(data.__dynLists);
   if(document.getElementById('txn_mode')) toggleMode();
   if(document.getElementById('k_same_owner')) toggleOwner();
+}
+
+/* ---------- 交通・周辺施設・その他の「＋追加」で増える行（id を持たない）の保存／復元 ----------
+   これらは input に id が付いていないため、上の getAllFormValues() だけでは保存できない。
+   コンテナ id ごとに「空の行を1つ追加する関数」を登録しておき、保存時は各行の値を順番に読み取り、
+   復元時はその関数で必要な数だけ行を作ってから値を書き戻す。 */
+const DYN_LIST_ADDERS = {
+  f_traffic_list: ()=>addLine('f_traffic_list','例：JRおおさか東線「JR淡路」駅 徒歩3分'),
+  r_traffic_list: ()=>addLine('r_traffic_list','例：Osaka Metro千日前線「桜川」駅 徒歩1分'),
+  r_shokihi_list: ()=>addLine('r_shokihi_list','例：鍵交換代：22,000円'),
+  r_sonota_list: ()=>addLine('r_sonota_list','例：解約予告：1ヶ月前'),
+  ic_note_list: ()=>addLine('ic_note_list','例：保証会社年間更新料10000円'),
+  ld_tokuyaku_list: ()=>addLine('ld_tokuyaku_list','例：ルームクリーニング代は退去時に借主負担とする'),
+  f_nearby_list: ()=>addNearby(),
+  r_life_list: ()=>addLifeRow(),
+  st_fee_list: ()=>addKVRow('st_fee_list','項目（例：印紙代）','金額（円）'),
+  s2_list1: ()=>addKVRow('s2_list1','残代金','金額（円）'),
+  s2_list2: ()=>addKVRow('s2_list2','仲介手数料','金額（円）'),
+  s2_list3: ()=>addKVRow('s2_list3','表題登記費用','金額（円）'),
+  s2_list4: ()=>addKVRow('s2_list4','登記費用','金額（円）'),
+  s2_list5: ()=>addKVRow('s2_list5','項目（例：融資手数料）','金額（円）'),
+  s2_list6: ()=>addKVRow('s2_list6','項目（例：保険会社支払金額）','金額（円）'),
+  s2_list7: ()=>addKVRow('s2_list7','項目（例：印紙代）','金額（円）'),
+  ic_extra_list: ()=>addKVRow('ic_extra_list','項目','金額（円）'),
+  ld_occupant_list: ()=>addKVRow('ld_occupant_list','氏名（例：白 安理）','年齢・続柄（例：45歳・配偶者）')
+};
+
+function collectDynLists(){
+  const out = {};
+  Object.keys(DYN_LIST_ADDERS).forEach(cid=>{
+    const container = document.getElementById(cid);
+    if(!container) return;
+    out[cid] = [...container.querySelectorAll('.dyn-row')].map(row =>
+      [...row.querySelectorAll('input, select, textarea')].map(inp => inp.value)
+    );
+  });
+  return out;
+}
+
+function restoreDynLists(dynLists){
+  if(!dynLists) return;
+  Object.keys(dynLists).forEach(cid=>{
+    const container = document.getElementById(cid);
+    const adder = DYN_LIST_ADDERS[cid];
+    if(!container || !adder) return;
+    container.innerHTML = '';
+    dynLists[cid].forEach(rowValues=>{
+      adder();
+      const rows = container.querySelectorAll('.dyn-row');
+      const lastRow = rows[rows.length - 1];
+      if(!lastRow) return;
+      const inputs = lastRow.querySelectorAll('input, select, textarea');
+      rowValues.forEach((v, i)=>{ if(inputs[i]) inputs[i].value = v; });
+    });
+  });
+}
+
+/* 「売却」「賃貸」の①資料入力タブから直接押せる保存ボタン用（共通タブへ移動しなくてよい） */
+function quickSaveToHistory(){
+  saveToHistory();
 }
 
 function guessRecordLabel(){
