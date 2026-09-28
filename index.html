@@ -2795,10 +2795,11 @@
     </div>
 
     <div class="card" style="margin-top:16px;">
-      <div class="form-section-title">清空金流帳本（危險操作）</div>
-      <div class="warn-box">如果匯入的資料算錯了（例如餘額對不起來），可以用這個功能把「金流帳本」裡目前所有的資料整批刪除，再重新匯入一次。這個動作沒辦法復原，「額外收入」跟「期初餘額」不會被刪除。</div>
+      <div class="form-section-title">清空重新匯入（危險操作）</div>
+      <div class="warn-box">匯入只會「新增」，不會判斷重複。如果同一份 Excel 匯入超過一次，金流帳本或額外收入的數字就會變成兩倍、三倍。如果要重新匯入同一份檔案，請先把下面兩個都清空，再匯入「一次」就好，不要分開清、分開匯入，不然還是會重複。這個動作沒辦法復原，「期初餘額」不會被清空。</div>
       <div class="form-actions" style="margin-top:10px;">
         <button class="btn danger" onclick="glClearAllEntries()">🗑 清空金流帳本全部資料</button>
+        <button class="btn danger" onclick="glClearAllExtra()">🗑 清空額外收入全部資料</button>
       </div>
       <div id="gl-clearResult" style="margin-top:10px;"></div>
     </div>
@@ -8983,6 +8984,24 @@ async function glClearAllEntries(){
       await batch.commit();
     }
     box.innerHTML = `<div class="note-box">已刪除 ${ids.length} 筆金流帳本資料，可以重新匯入了。</div>`;
+  }catch(err){ console.error(err); box.innerHTML = `<div class="warn-box">刪除失敗：${err.message}</div>`; }
+}
+async function glClearAllExtra(){
+  const step1 = confirm(`確定要刪除「額外收入」目前全部 ${glExtraItems.length} 筆資料嗎？\n這個動作沒辦法復原！\n（金流帳本、期初餘額不會被刪除）`);
+  if(!step1) return;
+  const typed = prompt('請輸入「清空」兩個字以確認：');
+  if(typed !== '清空'){ alert('輸入不正確，已取消。'); return; }
+  const box = document.getElementById('gl-clearResult');
+  box.innerHTML = '刪除中，請稍候…';
+  try{
+    const ids = glExtraItems.map(e=>e._docId);
+    for(let i=0;i<ids.length;i+=400){
+      const chunk = ids.slice(i, i+400);
+      const batch = trackerDB.batch();
+      chunk.forEach(id=> batch.delete(trackerDB.collection('ledger_extra_income').doc(id)));
+      await batch.commit();
+    }
+    box.innerHTML = `<div class="note-box">已刪除 ${ids.length} 筆額外收入資料，可以重新匯入了。</div>`;
   }catch(err){ console.error(err); box.innerHTML = `<div class="warn-box">刪除失敗：${err.message}</div>`; }
 }
 async function glDeleteEntryInline(docId){
