@@ -1114,6 +1114,24 @@
 #panel-ledger .gl-balance-tile{flex:1;min-width:140px;background:var(--gl-accent-soft);border:1px solid #cddce8;border-radius:var(--gl-radius);padding:10px 14px;}
 #panel-ledger .gl-balance-tile .lbl{font-size:11px;color:var(--gl-muted);}
 #panel-ledger .gl-balance-tile .val{font-size:17px;font-weight:700;color:var(--gl-ink);font-variant-numeric:tabular-nums;}
+#panel-ledger table.list-table th.num{text-align:right;}
+#gl-cfListBody td{padding:0 !important;}
+#gl-cfListBody td.gl-plain{padding:7px 8px !important;}
+#panel-ledger table.list-table td input{
+  width:100%;min-width:66px;box-sizing:border-box;border:1px solid transparent;background:transparent;
+  padding:6px 8px;font-size:12px;font-family:inherit;color:var(--gl-ink);border-radius:3px;
+}
+#panel-ledger table.list-table td input[type=number]{text-align:right;min-width:80px;-moz-appearance:textfield;}
+#panel-ledger table.list-table td input[type=number]::-webkit-outer-spin-button,
+#panel-ledger table.list-table td input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+#panel-ledger table.list-table td input[type=date]{min-width:118px;}
+#panel-ledger table.list-table td input[type=text]{min-width:100px;}
+#panel-ledger table.list-table td input[data-money="1"]{text-align:right;min-width:80px;font-variant-numeric:tabular-nums;}
+#panel-ledger table.list-table td input:focus{border-color:var(--gl-accent);background:#fff;outline:none;}
+#panel-ledger tr.gl-blank-row td{background:#fbfbf8;}
+#panel-ledger tr.gl-blank-row td input::placeholder{color:#c6c3ba;}
+#panel-ledger .gl-row-del{background:none;border:none;color:var(--gl-muted);cursor:pointer;font-size:13px;padding:2px 6px;}
+#panel-ledger .gl-row-del:hover{color:var(--gl-danger);}
 
 
 </style>
@@ -2677,33 +2695,24 @@
   <!-- ============ 金流帳本 ============ -->
   <section class="gl-panel active" id="gl-panel-cashflow">
     <div class="card">
-      <div class="note-box">記錄公司每一筆資金異動：現金／GMO銀行／SBI銀行／預り金（代收代付）四個帳戶的進出，還有這筆是不是算公司真正的「收益」或「費用」。金額欄位留空表示這筆沒有異動。</div>
+      <div class="note-box">記錄公司每一筆資金異動：現金／GMO銀行／SBI銀行／預り金（代收代付）四個帳戶的進出，還有這筆是不是算公司真正的「收益」或「費用」。金額欄位留空表示這筆沒有異動。跟 Excel 一樣可以直接在最下面那一列輸入，打完按 Tab／點別的地方離開這一列就會自動存檔，並且自動多出下一個空白列，可以一直往下打。</div>
       <div id="gl-balanceBar" class="gl-balance-bar"></div>
       <div class="list-toolbar">
         <select id="gl-cfYear"></select>
         <select id="gl-cfMonth"></select>
-        <button class="btn primary" onclick="glOpenEntryForm(null)">＋ 新增一筆</button>
+        <button class="btn primary" onclick="glFocusBlankRow()">＋ 跳到最下面新增</button>
         <button class="btn" onclick="glOpenOpeningBalanceForm()">⚙ 設定期初餘額</button>
       </div>
       <div id="gl-cfListCount" style="font-size:12px;color:var(--gl-muted);margin-bottom:8px;"></div>
       <div style="overflow-x:auto;max-height:560px;overflow-y:auto;">
         <table class="list-table">
           <thead><tr>
-            <th>日期</th><th>收益</th><th>費用</th><th>現金入</th><th>GMO入</th><th>SBI入</th><th>預り金入</th>
-            <th>GMO出</th><th>SBI出</th><th>預り金出</th><th>現金出</th><th>支付先</th><th>摘要</th>
-            <th>利益</th><th>現金餘額</th><th>GMO餘額</th><th>SBI餘額</th><th>預り金餘額</th>
+            <th>日期</th><th class="num">收益</th><th class="num">費用</th><th class="num">現金入</th><th class="num">GMO入</th><th class="num">SBI入</th><th class="num">預り金入</th>
+            <th class="num">GMO出</th><th class="num">SBI出</th><th class="num">預り金出</th><th class="num">現金出</th><th>支付先</th><th>摘要</th>
+            <th class="num">利益</th><th class="num">現金餘額</th><th class="num">GMO餘額</th><th class="num">SBI餘額</th><th class="num">預り金餘額</th><th></th>
           </tr></thead>
           <tbody id="gl-cfListBody"></tbody>
         </table>
-      </div>
-    </div>
-
-    <div class="card" id="gl-entryFormCard" style="display:none;margin-top:16px;">
-      <div id="gl-entryFormSections"></div>
-      <div class="form-actions">
-        <button class="btn primary" onclick="glSaveEntry()">儲存</button>
-        <button class="btn" onclick="glCancelEntryForm()">取消</button>
-        <button class="btn danger" id="glDeleteEntryBtn" onclick="glDeleteEntry()" style="display:none;margin-left:auto;">刪除這筆</button>
       </div>
     </div>
 
@@ -2783,6 +2792,15 @@
         <button class="btn primary" id="gl-importBtn" onclick="glStartImport()" style="display:none;">開始匯入</button>
       </div>
       <div id="gl-importResult" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="form-section-title">清空金流帳本（危險操作）</div>
+      <div class="warn-box">如果匯入的資料算錯了（例如餘額對不起來），可以用這個功能把「金流帳本」裡目前所有的資料整批刪除，再重新匯入一次。這個動作沒辦法復原，「額外收入」跟「期初餘額」不會被刪除。</div>
+      <div class="form-actions" style="margin-top:10px;">
+        <button class="btn danger" onclick="glClearAllEntries()">🗑 清空金流帳本全部資料</button>
+      </div>
+      <div id="gl-clearResult" style="margin-top:10px;"></div>
     </div>
   </section>
 </div>
@@ -8758,6 +8776,45 @@ function glMoney(n){
 function glMoneyPlain(n){ n = (n===null||n===undefined||n==='') ? 0 : Number(n); return n===0 ? '' : glMoney(n); }
 function glFiscalYear(y,m){ return m>=3 ? y : y-1; }
 
+/* 金額輸入框：顯示千分位逗號（例如 10,000），編輯／儲存時自動轉回純數字 */
+function glMoneyInputFmt(v){
+  if(v===null||v===undefined||v==='') return '';
+  const n = Number(v);
+  if(isNaN(n)) return '';
+  return n.toLocaleString('en-US', {maximumFractionDigits:2});
+}
+function glMoneyInputParse(s){
+  if(s===null||s===undefined) return null;
+  const raw = String(s).replace(/,/g,'').trim();
+  if(raw==='') return null;
+  const n = Number(raw);
+  return isNaN(n) ? null : n;
+}
+document.addEventListener('focusin', (ev)=>{
+  const el = ev.target;
+  if(el.matches && el.matches('#panel-ledger input[data-money="1"]')){
+    const n = glMoneyInputParse(el.value);
+    el.value = (n===null) ? '' : String(n);
+  }
+});
+document.addEventListener('focusout', (ev)=>{
+  const el = ev.target;
+  if(el.matches && el.matches('#panel-ledger input[data-money="1"]')){
+    el.value = glMoneyInputFmt(glMoneyInputParse(el.value));
+  }
+});
+document.addEventListener('input', (ev)=>{
+  const el = ev.target;
+  if(el.matches && el.matches('#panel-ledger input[data-money="1"]')){
+    let v = el.value;
+    const neg = v.trim().startsWith('-');
+    v = v.replace(/[^0-9.]/g,'');
+    const parts = v.split('.');
+    if(parts.length>2) v = parts[0]+'.'+parts.slice(1).join('');
+    el.value = (neg?'-':'') + v;
+  }
+});
+
 function glRenderAll(){
   if(!glCanView()) return;
   glRenderCashflow();
@@ -8804,6 +8861,35 @@ function glPopulateCfFilters(){
     monthSel.dataset.filled = '1';
   }
 }
+function glFieldRowHtml(e, isBlank){
+  const docId = e._docId || '';
+  const val = (v)=> (v===null||v===undefined) ? '' : glMoneyInputFmt(v);
+  const esc = (s)=> String(s==null?'':s).replace(/"/g,'&quot;');
+  const moneyInput = (fid, v)=> `<input type="text" inputmode="decimal" data-fid="${fid}" data-money="1" value="${val(v)}">`;
+  return `
+    <tr class="gl-cf-row${isBlank?' gl-blank-row':''}" data-docid="${docId}">
+      <td><input type="date" data-fid="date" value="${e.date||''}"></td>
+      <td class="num">${moneyInput('income', e.income)}</td>
+      <td class="num">${moneyInput('expense', e.expense)}</td>
+      <td class="num">${moneyInput('cash_in', e.cash_in)}</td>
+      <td class="num">${moneyInput('gmo_in', e.gmo_in)}</td>
+      <td class="num">${moneyInput('sbi_in', e.sbi_in)}</td>
+      <td class="num">${moneyInput('deposit_in', e.deposit_in)}</td>
+      <td class="num">${moneyInput('gmo_out', e.gmo_out)}</td>
+      <td class="num">${moneyInput('sbi_out', e.sbi_out)}</td>
+      <td class="num">${moneyInput('deposit_out', e.deposit_out)}</td>
+      <td class="num">${moneyInput('cash_out', e.cash_out)}</td>
+      <td><input type="text" data-fid="payee" value="${esc(e.payee)}"></td>
+      <td><input type="text" data-fid="memo" value="${esc(e.memo)}"></td>
+      <td class="num gl-plain">${isBlank?'':glMoney(e._profit)}</td>
+      <td class="num gl-plain">${isBlank?'':glMoney(e._cash)}</td>
+      <td class="num gl-plain">${isBlank?'':glMoney(e._gmo)}</td>
+      <td class="num gl-plain">${isBlank?'':glMoney(e._sbi)}</td>
+      <td class="num gl-plain">${isBlank?'':glMoney(e._deposit)}</td>
+      <td class="gl-plain">${isBlank?'':`<button class="gl-row-del" title="刪除這筆" onclick="glDeleteEntryInline('${docId}')">✕</button>`}</td>
+    </tr>`;
+}
+let glFocusBlankAfterRender = false;
 function glRenderCashflow(){
   glPopulateCfFilters();
   const running = glComputeRunning();
@@ -8813,27 +8899,14 @@ function glRenderCashflow(){
 
   document.getElementById('gl-cfListCount').textContent = `共 ${filtered.length} 筆`;
   const body = document.getElementById('gl-cfListBody');
-  body.innerHTML = filtered.map(e=>`
-    <tr onclick="glOpenEntryForm('${e._docId}')">
-      <td>${e.date||''}</td>
-      <td class="num">${glMoneyPlain(e.income)}</td>
-      <td class="num">${glMoneyPlain(e.expense)}</td>
-      <td class="num">${glMoneyPlain(e.cash_in)}</td>
-      <td class="num">${glMoneyPlain(e.gmo_in)}</td>
-      <td class="num">${glMoneyPlain(e.sbi_in)}</td>
-      <td class="num">${glMoneyPlain(e.deposit_in)}</td>
-      <td class="num">${glMoneyPlain(e.gmo_out)}</td>
-      <td class="num">${glMoneyPlain(e.sbi_out)}</td>
-      <td class="num">${glMoneyPlain(e.deposit_out)}</td>
-      <td class="num">${glMoneyPlain(e.cash_out)}</td>
-      <td>${e.payee||''}</td>
-      <td>${e.memo||''}</td>
-      <td class="num">${glMoney(e._profit)}</td>
-      <td class="num">${glMoney(e._cash)}</td>
-      <td class="num">${glMoney(e._gmo)}</td>
-      <td class="num">${glMoney(e._sbi)}</td>
-      <td class="num">${glMoney(e._deposit)}</td>
-    </tr>`).join('') || `<tr><td colspan="18" style="text-align:center;color:var(--gl-muted);">這個月還沒有資料</td></tr>`;
+  const blankDate = filtered.length ? filtered[filtered.length-1].date : (m ? `${y}-${String(m).padStart(2,'0')}-01` : '');
+  body.innerHTML = filtered.map(e=>glFieldRowHtml(e,false)).join('') + glFieldRowHtml({date:blankDate}, true);
+
+  if(glFocusBlankAfterRender){
+    glFocusBlankAfterRender = false;
+    const inp = body.querySelector('tr.gl-blank-row input');
+    if(inp) setTimeout(()=>inp.focus(), 0);
+  }
 
   const last = running[running.length-1];
   const bal = last || {_cash:glOpening.cash,_gmo:glOpening.gmo,_sbi:glOpening.sbi,_deposit:glOpening.deposit,_profit:0};
@@ -8847,90 +8920,97 @@ function glRenderCashflow(){
 document.getElementById('gl-cfYear').addEventListener('change', glRenderCashflow);
 document.getElementById('gl-cfMonth').addEventListener('change', glRenderCashflow);
 
-function glOpenEntryForm(docId){
-  glEditingEntryId = docId;
-  const e = docId ? (glEntries.find(x=>x._docId===docId)||{}) : {};
-  document.getElementById('gl-entryFormCard').style.display = '';
-  document.getElementById('gl-openingFormCard').style.display = 'none';
-  const today = new Date().toISOString().slice(0,10);
-  document.getElementById('gl-entryFormSections').innerHTML = `
-    <div class="form-section-title">日期／損益</div>
-    <div class="form-grid">
-      <div class="field"><label>日期</label><input type="date" data-fid="date" value="${e.date||today}"></div>
-      <div class="field"><label>收益（算公司收入）</label><input type="number" data-fid="income" value="${e.income??''}"></div>
-      <div class="field"><label>費用（算公司支出）</label><input type="number" data-fid="expense" value="${e.expense??''}"></div>
-    </div>
-    <div class="form-section-title">資金異動 - 入金</div>
-    <div class="form-grid">
-      <div class="field"><label>現金入金</label><input type="number" data-fid="cash_in" value="${e.cash_in??''}"></div>
-      <div class="field"><label>GMO口座入金</label><input type="number" data-fid="gmo_in" value="${e.gmo_in??''}"></div>
-      <div class="field"><label>SBI口座入金</label><input type="number" data-fid="sbi_in" value="${e.sbi_in??''}"></div>
-      <div class="field"><label>預り金（代收）</label><input type="number" data-fid="deposit_in" value="${e.deposit_in??''}"></div>
-    </div>
-    <div class="form-section-title">資金異動 - 出金</div>
-    <div class="form-grid">
-      <div class="field"><label>現金支付</label><input type="number" data-fid="cash_out" value="${e.cash_out??''}"></div>
-      <div class="field"><label>GMO口座支付</label><input type="number" data-fid="gmo_out" value="${e.gmo_out??''}"></div>
-      <div class="field"><label>SBI口座支付</label><input type="number" data-fid="sbi_out" value="${e.sbi_out??''}"></div>
-      <div class="field"><label>預り金（代付）</label><input type="number" data-fid="deposit_out" value="${e.deposit_out??''}"></div>
-    </div>
-    <div class="form-section-title">其他</div>
-    <div class="form-grid">
-      <div class="field"><label>支付先</label><input type="text" data-fid="payee" value="${e.payee||''}"></div>
-      <div class="field" style="grid-column:span 2;"><label>摘要／備註</label><input type="text" data-fid="memo" value="${e.memo||''}"></div>
-    </div>`;
-  document.getElementById('glDeleteEntryBtn').style.display = docId ? '' : 'none';
+function glRowHasContent(rec){
+  return !!(rec.income||rec.expense||rec.cash_in||rec.gmo_in||rec.sbi_in||rec.deposit_in||
+    rec.gmo_out||rec.sbi_out||rec.deposit_out||rec.cash_out||(rec.payee&&rec.payee.trim())||(rec.memo&&rec.memo.trim()));
 }
-function glCancelEntryForm(){
-  glEditingEntryId = null;
-  document.getElementById('gl-entryFormCard').style.display = 'none';
-}
-async function glSaveEntry(){
+async function glHandleRowChange(tr){
+  if(tr.dataset.saving === '1') return;
+  const docId = tr.dataset.docid;
   const rec = {};
-  document.querySelectorAll('#gl-entryFormSections [data-fid]').forEach(el=>{
-    if(el.type==='number'){ rec[el.dataset.fid] = el.value===''? null : Number(el.value); }
+  tr.querySelectorAll('[data-fid]').forEach(el=>{
+    if(el.dataset.money==='1') rec[el.dataset.fid] = glMoneyInputParse(el.value);
     else rec[el.dataset.fid] = el.value;
   });
-  if(!rec.date){ alert('請填寫日期。'); return; }
+  const isBlank = !docId;
+  if(isBlank && !glRowHasContent(rec)) return;
+  if(!rec.date){
+    if(isBlank) return;
+    alert('日期不能留空，已還原這筆的內容。');
+    glRenderCashflow();
+    return;
+  }
   const d = new Date(rec.date+'T00:00:00');
   rec.year = d.getFullYear();
   rec.month = d.getMonth()+1;
+  tr.dataset.saving = '1';
+  if(isBlank) glFocusBlankAfterRender = true;
   try{
-    if(glEditingEntryId){
-      const old = glEntries.find(x=>x._docId===glEditingEntryId);
+    if(docId){
+      const old = glEntries.find(x=>x._docId===docId);
       rec.seq = (old && old.seq) || Date.now();
-      await trackerDB.collection('ledger_entries').doc(glEditingEntryId).set(rec);
+      await trackerDB.collection('ledger_entries').doc(docId).set(rec);
     }else{
       rec.seq = Date.now();
       await trackerDB.collection('ledger_entries').add(rec);
     }
-    glCancelEntryForm();
-  }catch(err){ console.error(err); alert('儲存失敗：'+err.message); }
+  }catch(err){
+    console.error(err);
+    alert('儲存失敗：'+err.message);
+    tr.dataset.saving = '0';
+    glFocusBlankAfterRender = false;
+  }
 }
-async function glDeleteEntry(){
-  if(!glEditingEntryId) return;
+document.getElementById('gl-cfListBody').addEventListener('focusout', (ev)=>{
+  const tr = ev.target.closest('tr.gl-cf-row');
+  if(!tr) return;
+  if(ev.relatedTarget && tr.contains(ev.relatedTarget)) return;
+  glHandleRowChange(tr);
+});
+async function glClearAllEntries(){
+  const step1 = confirm(`確定要刪除「金流帳本」目前全部 ${glEntries.length} 筆資料嗎？\n這個動作沒辦法復原！\n（額外收入、期初餘額不會被刪除）`);
+  if(!step1) return;
+  const typed = prompt('請輸入「清空」兩個字以確認：');
+  if(typed !== '清空'){ alert('輸入不正確，已取消。'); return; }
+  const box = document.getElementById('gl-clearResult');
+  box.innerHTML = '刪除中，請稍候…';
+  try{
+    const ids = glEntries.map(e=>e._docId);
+    for(let i=0;i<ids.length;i+=400){
+      const chunk = ids.slice(i, i+400);
+      const batch = trackerDB.batch();
+      chunk.forEach(id=> batch.delete(trackerDB.collection('ledger_entries').doc(id)));
+      await batch.commit();
+    }
+    box.innerHTML = `<div class="note-box">已刪除 ${ids.length} 筆金流帳本資料，可以重新匯入了。</div>`;
+  }catch(err){ console.error(err); box.innerHTML = `<div class="warn-box">刪除失敗：${err.message}</div>`; }
+}
+async function glDeleteEntryInline(docId){
+  if(!docId) return;
   if(!confirm('確定要刪除這筆紀錄嗎？這個動作沒辦法復原。')) return;
   try{
-    await trackerDB.collection('ledger_entries').doc(glEditingEntryId).delete();
-    glCancelEntryForm();
+    await trackerDB.collection('ledger_entries').doc(docId).delete();
   }catch(err){ console.error(err); alert('刪除失敗：'+err.message); }
+}
+function glFocusBlankRow(){
+  const inp = document.querySelector('#gl-cfListBody tr.gl-blank-row input');
+  if(inp){ inp.scrollIntoView({block:'center'}); inp.focus(); }
 }
 
 function glOpenOpeningBalanceForm(){
-  document.getElementById('gl-entryFormCard').style.display = 'none';
   const box = document.getElementById('gl-openingFormCard');
   box.style.display = (box.style.display==='none' || !box.style.display) ? '' : 'none';
   document.getElementById('gl-openingFormSections').innerHTML = `
     <div class="form-grid">
-      <div class="field"><label>現金期初餘額</label><input type="number" data-fid="cash" value="${glOpening.cash||0}"></div>
-      <div class="field"><label>GMO期初餘額</label><input type="number" data-fid="gmo" value="${glOpening.gmo||0}"></div>
-      <div class="field"><label>SBI期初餘額</label><input type="number" data-fid="sbi" value="${glOpening.sbi||0}"></div>
-      <div class="field"><label>預り金期初餘額</label><input type="number" data-fid="deposit" value="${glOpening.deposit||0}"></div>
+      <div class="field"><label>現金期初餘額</label><input type="text" inputmode="decimal" data-fid="cash" data-money="1" value="${glMoneyInputFmt(glOpening.cash||0)}"></div>
+      <div class="field"><label>GMO期初餘額</label><input type="text" inputmode="decimal" data-fid="gmo" data-money="1" value="${glMoneyInputFmt(glOpening.gmo||0)}"></div>
+      <div class="field"><label>SBI期初餘額</label><input type="text" inputmode="decimal" data-fid="sbi" data-money="1" value="${glMoneyInputFmt(glOpening.sbi||0)}"></div>
+      <div class="field"><label>預り金期初餘額</label><input type="text" inputmode="decimal" data-fid="deposit" data-money="1" value="${glMoneyInputFmt(glOpening.deposit||0)}"></div>
     </div>`;
 }
 async function glSaveOpeningBalances(){
   const rec = {};
-  document.querySelectorAll('#gl-openingFormSections [data-fid]').forEach(el=>{ rec[el.dataset.fid] = Number(el.value)||0; });
+  document.querySelectorAll('#gl-openingFormSections [data-fid]').forEach(el=>{ rec[el.dataset.fid] = glMoneyInputParse(el.value)||0; });
   try{
     await trackerDB.collection('settings').doc('ledger_opening_balances').set(rec);
     glOpening = rec;
@@ -8968,7 +9048,9 @@ function glRenderExtra(){
   const filtered = glExtraItems.filter(e => e.year===y && (!m || e.month===Number(m)) && (!cat || e.category===cat));
   filtered.sort((a,b)=> (b.month||0)-(a.month||0) || (b.date||'').localeCompare(a.date||''));
 
-  document.getElementById('gl-exListCount').textContent = `共 ${filtered.length} 筆`;
+  const filteredTotal = filtered.reduce((s,e)=> s + (Number(e.amount)||0), 0);
+  document.getElementById('gl-exListCount').innerHTML =
+    `共 ${filtered.length} 筆　｜　${m ? y+'年'+m+'月' : y+'年全年'}${cat?'（'+cat+'）':''}　總計：<b>${glMoney(filteredTotal)}</b>`;
   const body = document.getElementById('gl-exListBody');
   body.innerHTML = filtered.map(e=>`
     <tr onclick="glOpenExtraForm('${e._docId}')">
@@ -8980,7 +9062,7 @@ function glRenderExtra(){
     </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--gl-muted);">沒有符合條件的資料</td></tr>`;
 
   const byCat = {};
-  glExtraItems.filter(e=>e.year===y).forEach(e=>{ byCat[e.category] = (byCat[e.category]||0) + (Number(e.amount)||0); });
+  glExtraItems.filter(e=>e.year===y && (!m || e.month===Number(m))).forEach(e=>{ byCat[e.category] = (byCat[e.category]||0) + (Number(e.amount)||0); });
   document.getElementById('gl-exSummary').innerHTML = GL_CATEGORIES.map(c=>
     `<span class="tag ${byCat[c]?'ok':'na'}" style="margin-right:6px;">${c}：${glMoney(byCat[c]||0)}</span>`).join('');
 }
@@ -9003,7 +9085,7 @@ function glOpenExtraForm(docId){
       </div>
       <div class="field"><label>項目／備註（例如客戶姓名或地址）</label><input type="text" data-fid="label" value="${e.label||''}"></div>
       <div class="field"><label>日期（選填，例如保險到期日）</label><input type="date" data-fid="date" value="${e.date||''}"></div>
-      <div class="field"><label>金額</label><input type="number" data-fid="amount" value="${e.amount??''}"></div>
+      <div class="field"><label>金額</label><input type="text" inputmode="decimal" data-fid="amount" data-money="1" value="${glMoneyInputFmt(e.amount)}"></div>
     </div>`;
   document.getElementById('glDeleteExtraBtn').style.display = docId ? '' : 'none';
 }
@@ -9015,7 +9097,7 @@ async function glSaveExtra(){
   const rec = {};
   document.querySelectorAll('#gl-extraFormSections [data-fid]').forEach(el=>{
     if(el.dataset.fid==='year' || el.dataset.fid==='month') rec[el.dataset.fid] = Number(el.value)||0;
-    else if(el.dataset.fid==='amount') rec[el.dataset.fid] = el.value===''?0:Number(el.value);
+    else if(el.dataset.fid==='amount') rec[el.dataset.fid] = glMoneyInputParse(el.value)||0;
     else rec[el.dataset.fid] = el.value;
   });
   if(!rec.year || !rec.month || !rec.category || !rec.amount){ alert('請至少填寫年份、月份、類別跟金額。'); return; }
@@ -9284,8 +9366,23 @@ async function glStartImport(){
       ws.eachRow((row, rn)=>{ if(!headerRow && glCellText(row.getCell(1)).trim()==='日付') headerRow=rn; });
       if(!headerRow){ errors.push(`分頁「${name}」找不到「日付」標題列，已略過。`); return; }
       let lastDate = null;
+      let started = false;
+      const isRowFullyBlank = (row)=>{
+        for(let c=1;c<=13;c++){
+          const v = row.getCell(c).value;
+          if(v!==null && v!==undefined && v!=='') return false;
+        }
+        return true;
+      };
       for(let r=headerRow+1; r<=ws.rowCount; r++){
         const row = ws.getRow(r);
+        if(isRowFullyBlank(row)){
+          // 表格下面常常會有「月計」檢查用的加總欄位或備註，一旦遇到空白列就代表
+          // 真正的逐筆記帳資料已經結束，下面不是交易紀錄，不能再繼續匯入，否則
+          // 會把加總／備註誤判成一筆超大金額的交易，讓餘額算錯。
+          if(started) break;
+          else continue;
+        }
         const aCell = row.getCell(1);
         let dateVal = null;
         if(glIsDateCell(aCell)) dateVal = aCell.value;
@@ -9296,6 +9393,7 @@ async function glStartImport(){
               gmoOut=get(9), sbiOut=get(10), depositOut=get(11), cashOut=get(12);
         const hasContent = [income,expense,cashIn,gmoIn,sbiIn,depositIn,gmoOut,sbiOut,depositOut,cashOut].some(v=>typeof v==='number' && v!==0);
         if(!hasContent || !lastDate) continue;
+        started = true;
         batchOps.push({col:'ledger_entries', rec:{
           date: lastDate.toISOString().slice(0,10), year: lastDate.getFullYear(), month: lastDate.getMonth()+1, seq: Date.now()+cfCount,
           income, expense, cash_in: cashIn, gmo_in: gmoIn, sbi_in: sbiIn, deposit_in: depositIn,
