@@ -1036,6 +1036,85 @@
 #panel-finance .field .formula-note{font-size:11px;color:var(--fn-muted);}
 #panel-finance .form-actions{margin-top:22px;display:flex;gap:10px;}
 
+/* ============ 總帳（新功能，命名空間 #panel-ledger 底下） ============ */
+#panel-ledger{
+  --gl-bg:#f5f3ef; --gl-surface:#ffffff; --gl-ink:#232830; --gl-muted:#6b7079;
+  --gl-line:#e2e1da; --gl-accent:#2f5578; --gl-accent-soft:#e5edf4;
+  --gl-danger:#a4433a; --gl-radius:6px;
+}
+#panel-ledger *{box-sizing:border-box;}
+#panel-ledger .shell{max-width:1200px;margin:0 auto;padding:28px 20px 80px;}
+#panel-ledger header.top{margin-bottom:22px;}
+#panel-ledger header.top h1{font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:.02em;}
+#panel-ledger header.top p{margin:0;color:var(--gl-muted);font-size:13px;}
+#panel-ledger nav.gl-tabs{display:flex;gap:2px;background:transparent;border-bottom:1px solid var(--gl-line);margin-bottom:22px;flex-wrap:wrap;}
+#panel-ledger nav.gl-tabs button{
+  appearance:none;border:none;background:transparent;font-size:14px;font-family:inherit;
+  color:var(--gl-muted);padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
+}
+#panel-ledger nav.gl-tabs button.active{color:var(--gl-ink);border-bottom-color:var(--gl-accent);font-weight:600;}
+#panel-ledger nav.gl-tabs button:hover{color:var(--gl-ink);}
+#panel-ledger .gl-panel{display:none;}
+#panel-ledger .gl-panel.active{display:block;}
+#panel-ledger .card{background:var(--gl-surface);border:1px solid var(--gl-line);border-radius:var(--gl-radius);padding:18px 20px;}
+#panel-ledger .card + .card{margin-top:16px;}
+#panel-ledger .list-toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+#panel-ledger .list-toolbar input[type=text], #panel-ledger .list-toolbar select{
+  padding:8px 10px;border:1px solid var(--gl-line);border-radius:var(--gl-radius);
+  font-size:13px;font-family:inherit;background:#fff;color:var(--gl-ink);
+}
+#panel-ledger .btn{
+  appearance:none;border:1px solid var(--gl-line);background:var(--gl-surface);color:var(--gl-ink);
+  padding:8px 14px;border-radius:var(--gl-radius);font-size:13px;font-family:inherit;cursor:pointer;
+}
+#panel-ledger .btn:hover{border-color:var(--gl-accent);color:var(--gl-accent);}
+#panel-ledger .btn.primary{background:var(--gl-accent);border-color:var(--gl-accent);color:#fff;}
+#panel-ledger .btn.primary:hover{opacity:.9;color:#fff;}
+#panel-ledger .btn.danger{background:var(--gl-danger);border-color:var(--gl-danger);color:#fff;}
+#panel-ledger .btn.danger:hover{opacity:.85;}
+#panel-ledger .btn.small{padding:4px 10px;font-size:12px;}
+#panel-ledger table.list-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+#panel-ledger table.list-table th{
+  text-align:left;font-weight:600;color:var(--gl-muted);font-size:11.5px;
+  padding:7px 8px;border-bottom:1px solid var(--gl-line);white-space:nowrap;position:sticky;top:0;background:var(--gl-surface);
+}
+#panel-ledger table.list-table td{padding:7px 8px;border-bottom:1px solid var(--gl-line);vertical-align:top;white-space:nowrap;}
+#panel-ledger table.list-table tr:hover td{background:#faf9f6;cursor:pointer;}
+#panel-ledger .num{text-align:right;font-variant-numeric:tabular-nums;}
+#panel-ledger .neg{color:var(--gl-danger);font-weight:700;}
+#panel-ledger .note-box{
+  background:var(--gl-accent-soft);border:1px solid #cddce8;border-radius:var(--gl-radius);
+  padding:12px 14px;font-size:12.5px;color:#25405a;margin-bottom:16px;
+}
+#panel-ledger .warn-box{
+  background:#f5ebdc;border:1px solid #e8d3ad;border-radius:var(--gl-radius);
+  padding:12px 14px;font-size:12.5px;color:#7a5420;margin-bottom:16px;
+}
+#panel-ledger .form-section-title{
+  font-size:13px;font-weight:700;color:#fff;background:var(--gl-accent);
+  padding:7px 12px;border-radius:4px;margin:20px 0 12px;
+}
+#panel-ledger .form-section-title:first-child{margin-top:0;}
+#panel-ledger .form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 20px;margin-bottom:6px;}
+@media (max-width:760px){#panel-ledger .form-grid{grid-template-columns:1fr 1fr;}}
+@media (max-width:520px){#panel-ledger .form-grid{grid-template-columns:1fr;}}
+#panel-ledger .field{display:flex;flex-direction:column;gap:4px;}
+#panel-ledger .field label{font-size:12px;color:var(--gl-muted);font-weight:600;}
+#panel-ledger .field input, #panel-ledger .field select{
+  padding:8px 10px;border:1px solid var(--gl-line);border-radius:var(--gl-radius);
+  font-size:13px;font-family:inherit;background:#fff;color:var(--gl-ink);
+}
+#panel-ledger .form-actions{margin-top:22px;display:flex;gap:10px;flex-wrap:wrap;}
+#panel-ledger .gl-flow-table{width:100%;border-collapse:collapse;font-size:12px;}
+#panel-ledger .gl-flow-table th, #panel-ledger .gl-flow-table td{border:1px solid var(--gl-line);padding:5px 6px;text-align:right;white-space:nowrap;}
+#panel-ledger .gl-flow-table th{background:var(--gl-accent-soft);}
+#panel-ledger .gl-flow-table td:first-child, #panel-ledger .gl-flow-table th:first-child{text-align:left;}
+#panel-ledger .gl-flow-table tr.gl-total td{font-weight:700;background:#faf9f6;}
+#panel-ledger .gl-balance-bar{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
+#panel-ledger .gl-balance-tile{flex:1;min-width:140px;background:var(--gl-accent-soft);border:1px solid #cddce8;border-radius:var(--gl-radius);padding:10px 14px;}
+#panel-ledger .gl-balance-tile .lbl{font-size:11px;color:var(--gl-muted);}
+#panel-ledger .gl-balance-tile .val{font-size:17px;font-weight:700;color:var(--gl-ink);font-variant-numeric:tabular-nums;}
+
 
 </style>
 <style id="dynamicPageStyle"></style>
@@ -1069,6 +1148,7 @@
       <a href="#" class="header-link" id="monthlyReportsHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-monthlyreports').classList.add('active');mrRenderList();return false;">月次報告書 →</a>
       <a href="#" class="header-link" id="customerAccountsHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-customer-accounts').classList.add('active');caBackToList();return false;">客戶帳戶 →</a>
       <a href="#" class="header-link" id="cashFlowHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-finance').classList.add('active');fnRenderAccountList();fnRenderTxList();return false;">金流帳 →</a>
+      <a href="#" class="header-link" id="ledgerHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-ledger').classList.add('active');glRenderAll();return false;">總帳 →</a>
       <a href="#" class="header-link" onclick="siteLogout();return false;" style="font-size:13px;">登出</a>
     </div>
   </div>
@@ -2579,6 +2659,134 @@
 </div>
 
   </div>
+
+<div class="panel" id="panel-ledger">
+<div class="shell">
+  <header class="top">
+    <h1>總帳</h1>
+    <p>公司的金流帳本、額外收入記錄跟年度總表，取代原本的 Excel 記帳方式。只有管理員能看到這個功能。</p>
+  </header>
+
+  <nav class="gl-tabs">
+    <button class="gl-tab-btn active" data-tab="cashflow">金流帳本</button>
+    <button class="gl-tab-btn" data-tab="extra">額外收入</button>
+    <button class="gl-tab-btn" data-tab="summary">年度總表</button>
+    <button class="gl-tab-btn" data-tab="excel">Excel 匯入／匯出</button>
+  </nav>
+
+  <!-- ============ 金流帳本 ============ -->
+  <section class="gl-panel active" id="gl-panel-cashflow">
+    <div class="card">
+      <div class="note-box">記錄公司每一筆資金異動：現金／GMO銀行／SBI銀行／預り金（代收代付）四個帳戶的進出，還有這筆是不是算公司真正的「收益」或「費用」。金額欄位留空表示這筆沒有異動。</div>
+      <div id="gl-balanceBar" class="gl-balance-bar"></div>
+      <div class="list-toolbar">
+        <select id="gl-cfYear"></select>
+        <select id="gl-cfMonth"></select>
+        <button class="btn primary" onclick="glOpenEntryForm(null)">＋ 新增一筆</button>
+        <button class="btn" onclick="glOpenOpeningBalanceForm()">⚙ 設定期初餘額</button>
+      </div>
+      <div id="gl-cfListCount" style="font-size:12px;color:var(--gl-muted);margin-bottom:8px;"></div>
+      <div style="overflow-x:auto;max-height:560px;overflow-y:auto;">
+        <table class="list-table">
+          <thead><tr>
+            <th>日期</th><th>收益</th><th>費用</th><th>現金入</th><th>GMO入</th><th>SBI入</th><th>預り金入</th>
+            <th>GMO出</th><th>SBI出</th><th>預り金出</th><th>現金出</th><th>支付先</th><th>摘要</th>
+            <th>利益</th><th>現金餘額</th><th>GMO餘額</th><th>SBI餘額</th><th>預り金餘額</th>
+          </tr></thead>
+          <tbody id="gl-cfListBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" id="gl-entryFormCard" style="display:none;margin-top:16px;">
+      <div id="gl-entryFormSections"></div>
+      <div class="form-actions">
+        <button class="btn primary" onclick="glSaveEntry()">儲存</button>
+        <button class="btn" onclick="glCancelEntryForm()">取消</button>
+        <button class="btn danger" id="glDeleteEntryBtn" onclick="glDeleteEntry()" style="display:none;margin-left:auto;">刪除這筆</button>
+      </div>
+    </div>
+
+    <div class="card" id="gl-openingFormCard" style="display:none;margin-top:16px;">
+      <div class="note-box">這是系統開始記帳「之前」的餘額（例如把 Excel 舊資料匯入之前，帳上原本有多少錢），只需要設定一次，之後所有餘額都會從這個基準點開始累加。</div>
+      <div id="gl-openingFormSections"></div>
+      <div class="form-actions">
+        <button class="btn primary" onclick="glSaveOpeningBalances()">儲存</button>
+        <button class="btn" onclick="document.getElementById('gl-openingFormCard').style.display='none';">取消</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 額外收入 ============ -->
+  <section class="gl-panel" id="gl-panel-extra">
+    <div class="card">
+      <div class="note-box">記錄空調、保險、裝修、出勤費、民泊、代管、水電瓦斯開通等額外收入／費用項目，依年月分類彙總。</div>
+      <div class="list-toolbar">
+        <select id="gl-exYear"></select>
+        <select id="gl-exMonth"></select>
+        <select id="gl-exCategory"><option value="">全部類別</option></select>
+        <button class="btn primary" onclick="glOpenExtraForm(null)">＋ 新增一筆</button>
+      </div>
+      <div id="gl-exSummary" style="margin-bottom:12px;"></div>
+      <div id="gl-exListCount" style="font-size:12px;color:var(--gl-muted);margin-bottom:8px;"></div>
+      <div style="overflow-x:auto;">
+        <table class="list-table">
+          <thead><tr><th>年月</th><th>類別</th><th>項目／備註</th><th>日期</th><th>金額</th></tr></thead>
+          <tbody id="gl-exListBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" id="gl-extraFormCard" style="display:none;margin-top:16px;">
+      <div id="gl-extraFormSections"></div>
+      <div class="form-actions">
+        <button class="btn primary" onclick="glSaveExtra()">儲存</button>
+        <button class="btn" onclick="glCancelExtraForm()">取消</button>
+        <button class="btn danger" id="glDeleteExtraBtn" onclick="glDeleteExtra()" style="display:none;margin-left:auto;">刪除這筆</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 年度總表 ============ -->
+  <section class="gl-panel" id="gl-panel-summary">
+    <div class="card">
+      <div class="note-box">依日本會計年度（每年3月～隔年2月）自動彙總「金流帳本」的收益／費用／利益，不需要手動輸入。</div>
+      <div id="gl-summaryContainer" style="overflow-x:auto;"></div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <div class="form-section-title">額外收入 各類別年度合計</div>
+      <div id="gl-extraSummaryContainer" style="overflow-x:auto;"></div>
+    </div>
+  </section>
+
+  <!-- ============ Excel 匯入／匯出 ============ -->
+  <section class="gl-panel" id="gl-panel-excel">
+    <div class="card">
+      <div class="form-section-title">匯出成 Excel</div>
+      <p style="font-size:12.5px;color:var(--gl-muted);">把系統裡目前所有的金流帳本、額外收入資料匯出成一份 Excel 檔案，每個月一個分頁，格式盡量比照原本習慣的表格。</p>
+      <div class="form-actions" style="margin-top:10px;">
+        <button class="btn primary" onclick="glExportExcel()">⬇ 匯出 Excel</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="form-section-title">從 Excel 匯入</div>
+      <div class="warn-box">匯入只會「新增」資料，不會自動去除重複，也不會覆蓋原本的資料。如果同一份檔案匯入兩次，會出現兩倍的紀錄，請小心確認過再匯入。</div>
+      <p style="font-size:12.5px;color:var(--gl-muted);">支援原本記帳習慣的 Excel 格式：分頁名稱像「2026-8月」的會當成金流帳本匯入；分頁名稱像「總表2026」的會當成額外收入匯入；分頁名稱只有「總表」的會略過（年度總表由系統自動計算）。</p>
+      <div class="form-grid" style="margin-top:10px;">
+        <div class="field" style="grid-column:1 / -1;"><label>選擇 Excel 檔案（.xlsx）</label>
+          <input type="file" id="gl-importFile" accept=".xlsx">
+        </div>
+      </div>
+      <div id="gl-importPreview"></div>
+      <div class="form-actions">
+        <button class="btn primary" id="gl-importBtn" onclick="glStartImport()" style="display:none;">開始匯入</button>
+      </div>
+      <div id="gl-importResult" style="margin-top:12px;"></div>
+    </div>
+  </section>
+</div>
+</div>
 
   </div><!-- /.preview-wrap -->
 
@@ -4124,6 +4332,8 @@ function initFirebaseTracker(){
         if(typeof mrUnsubProperties === 'function'){ mrUnsubProperties(); mrUnsubProperties = null; }
         if(typeof fnUnsubAccounts === 'function'){ fnUnsubAccounts(); fnUnsubAccounts = null; }
         if(typeof fnUnsubTransactions === 'function'){ fnUnsubTransactions(); fnUnsubTransactions = null; }
+        if(typeof glUnsubEntries === 'function'){ glUnsubEntries(); glUnsubEntries = null; }
+        if(typeof glUnsubExtra === 'function'){ glUnsubExtra(); glUnsubExtra = null; }
         if(typeof mrUnsubPropertyList === 'function'){ mrUnsubPropertyList(); mrUnsubPropertyList = null; }
         gate.style.display = 'flex';
       }
@@ -4160,6 +4370,7 @@ function applyCurrentUserUI(){
   if(typeof ppInit === 'function') ppInit();
   if(typeof ccInit === 'function') ccInit();
   if(typeof mrInit === 'function') mrInit();
+  if(typeof glInit === 'function') glInit();
   if(typeof caInit === 'function') caInit();
   if(typeof fnInit === 'function') fnInit();
 }
@@ -8487,6 +8698,675 @@ async function fnDeleteTx(){
   }
 }
 
+/* =========================================================================
+   ⑯ 總帳（Firebase Firestore・金流帳本 + 額外收入 + 年度總表，只有管理員能看到）
+   取代原本 Excel 記帳：現金／GMO／SBI／預り金 四個帳戶的資金異動，
+   加上空調/保險/裝修/出勤/民泊/代管/水電瓦斯等額外收入，年度總表由系統自動彙總計算。
+   ========================================================================= */
+const GL_CATEGORIES = ['空調','保險','裝修','出勤','民泊','代管','開通水電瓦斯費用','其他'];
+
+let glEntries = [];
+let glExtraItems = [];
+let glUnsubEntries = null;
+let glUnsubExtra = null;
+let glOpening = {cash:0, gmo:0, sbi:0, deposit:0};
+let glEditingEntryId = null;
+let glEditingExtraId = null;
+let glImportWorkbook = null;
+
+function glCanView(){
+  return !!(trackerCurrentUser && trackerCurrentUser.manageFinance);
+}
+function glInit(){
+  const headerLink = document.getElementById('ledgerHeaderLink');
+  if(headerLink) headerLink.style.display = glCanView() ? '' : 'none';
+  if(!glCanView()) return;
+
+  if(typeof glUnsubEntries === 'function') glUnsubEntries();
+  glUnsubEntries = trackerDB.collection('ledger_entries').onSnapshot(snapshot=>{
+    glEntries = snapshot.docs.map(d=>({...d.data(), _docId:d.id}));
+    glRenderAll();
+  }, err=>{ console.error(err); alert('金流帳本讀取失敗：'+err.message); });
+
+  if(typeof glUnsubExtra === 'function') glUnsubExtra();
+  glUnsubExtra = trackerDB.collection('ledger_extra_income').onSnapshot(snapshot=>{
+    glExtraItems = snapshot.docs.map(d=>({...d.data(), _docId:d.id}));
+    glRenderAll();
+  }, err=>{ console.error(err); alert('額外收入讀取失敗：'+err.message); });
+
+  trackerDB.collection('settings').doc('ledger_opening_balances').get().then(doc=>{
+    if(doc.exists) glOpening = Object.assign({cash:0,gmo:0,sbi:0,deposit:0}, doc.data());
+    glRenderAll();
+  }).catch(()=>{});
+}
+
+document.querySelectorAll('#panel-ledger .gl-tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> glSwitchTab(btn.dataset.tab));
+});
+function glSwitchTab(name){
+  document.querySelectorAll('#panel-ledger .gl-tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('#panel-ledger .gl-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('gl-panel-'+name).classList.add('active');
+  if(name==='summary') glRenderSummary();
+}
+
+function glMoney(n){
+  n = Number(n)||0;
+  const text = (n<0?'-':'')+'¥'+Math.abs(n).toLocaleString('ja-JP');
+  return n<0 ? `<span class="neg">${text}</span>` : text;
+}
+function glMoneyPlain(n){ n = (n===null||n===undefined||n==='') ? 0 : Number(n); return n===0 ? '' : glMoney(n); }
+function glFiscalYear(y,m){ return m>=3 ? y : y-1; }
+
+function glRenderAll(){
+  if(!glCanView()) return;
+  glRenderCashflow();
+  glRenderExtra();
+  const summaryPanel = document.getElementById('gl-panel-summary');
+  if(summaryPanel && summaryPanel.classList.contains('active')) glRenderSummary();
+}
+
+/* =========================================================
+   金流帳本
+   ========================================================= */
+function glSortedEntries(){
+  return [...glEntries].sort((a,b)=>{
+    const d = (a.date||'').localeCompare(b.date||'');
+    if(d!==0) return d;
+    return (a.seq||0) - (b.seq||0);
+  });
+}
+function glComputeRunning(){
+  const sorted = glSortedEntries();
+  let cash=Number(glOpening.cash)||0, gmo=Number(glOpening.gmo)||0, sbi=Number(glOpening.sbi)||0, deposit=Number(glOpening.deposit)||0, profit=0;
+  return sorted.map(e=>{
+    cash += (Number(e.cash_in)||0) - (Number(e.cash_out)||0);
+    gmo  += (Number(e.gmo_in)||0)  - (Number(e.gmo_out)||0);
+    sbi  += (Number(e.sbi_in)||0)  - (Number(e.sbi_out)||0);
+    deposit += (Number(e.deposit_in)||0) - (Number(e.deposit_out)||0);
+    profit += (Number(e.income)||0) - (Number(e.expense)||0);
+    return {...e, _cash:cash, _gmo:gmo, _sbi:sbi, _deposit:deposit, _profit:profit};
+  });
+}
+function glPopulateCfFilters(){
+  const yearSel = document.getElementById('gl-cfYear');
+  const monthSel = document.getElementById('gl-cfMonth');
+  const years = [...new Set(glEntries.map(e=>e.year).filter(Boolean))].sort((a,b)=>b-a);
+  const curYear = new Date().getFullYear();
+  if(!years.includes(curYear)) years.unshift(curYear);
+  const prevYear = yearSel.value;
+  yearSel.innerHTML = years.map(y=>`<option value="${y}">${y}年</option>`).join('');
+  yearSel.value = (prevYear && years.includes(Number(prevYear))) ? prevYear : String(years[0]);
+
+  if(!monthSel.dataset.filled){
+    monthSel.innerHTML = `<option value="">全部月份</option>` + [1,2,3,4,5,6,7,8,9,10,11,12].map(m=>`<option value="${m}">${m}月</option>`).join('');
+    monthSel.value = String(new Date().getMonth()+1);
+    monthSel.dataset.filled = '1';
+  }
+}
+function glRenderCashflow(){
+  glPopulateCfFilters();
+  const running = glComputeRunning();
+  const y = Number(document.getElementById('gl-cfYear').value);
+  const m = document.getElementById('gl-cfMonth').value;
+  const filtered = running.filter(e => e.year===y && (!m || e.month===Number(m)));
+
+  document.getElementById('gl-cfListCount').textContent = `共 ${filtered.length} 筆`;
+  const body = document.getElementById('gl-cfListBody');
+  body.innerHTML = filtered.map(e=>`
+    <tr onclick="glOpenEntryForm('${e._docId}')">
+      <td>${e.date||''}</td>
+      <td class="num">${glMoneyPlain(e.income)}</td>
+      <td class="num">${glMoneyPlain(e.expense)}</td>
+      <td class="num">${glMoneyPlain(e.cash_in)}</td>
+      <td class="num">${glMoneyPlain(e.gmo_in)}</td>
+      <td class="num">${glMoneyPlain(e.sbi_in)}</td>
+      <td class="num">${glMoneyPlain(e.deposit_in)}</td>
+      <td class="num">${glMoneyPlain(e.gmo_out)}</td>
+      <td class="num">${glMoneyPlain(e.sbi_out)}</td>
+      <td class="num">${glMoneyPlain(e.deposit_out)}</td>
+      <td class="num">${glMoneyPlain(e.cash_out)}</td>
+      <td>${e.payee||''}</td>
+      <td>${e.memo||''}</td>
+      <td class="num">${glMoney(e._profit)}</td>
+      <td class="num">${glMoney(e._cash)}</td>
+      <td class="num">${glMoney(e._gmo)}</td>
+      <td class="num">${glMoney(e._sbi)}</td>
+      <td class="num">${glMoney(e._deposit)}</td>
+    </tr>`).join('') || `<tr><td colspan="18" style="text-align:center;color:var(--gl-muted);">這個月還沒有資料</td></tr>`;
+
+  const last = running[running.length-1];
+  const bal = last || {_cash:glOpening.cash,_gmo:glOpening.gmo,_sbi:glOpening.sbi,_deposit:glOpening.deposit,_profit:0};
+  document.getElementById('gl-balanceBar').innerHTML = `
+    <div class="gl-balance-tile"><div class="lbl">現金餘額</div><div class="val">${glMoney(bal._cash)}</div></div>
+    <div class="gl-balance-tile"><div class="lbl">GMO餘額</div><div class="val">${glMoney(bal._gmo)}</div></div>
+    <div class="gl-balance-tile"><div class="lbl">SBI餘額</div><div class="val">${glMoney(bal._sbi)}</div></div>
+    <div class="gl-balance-tile"><div class="lbl">預り金餘額</div><div class="val">${glMoney(bal._deposit)}</div></div>
+    <div class="gl-balance-tile"><div class="lbl">累計利益</div><div class="val">${glMoney(bal._profit)}</div></div>`;
+}
+document.getElementById('gl-cfYear').addEventListener('change', glRenderCashflow);
+document.getElementById('gl-cfMonth').addEventListener('change', glRenderCashflow);
+
+function glOpenEntryForm(docId){
+  glEditingEntryId = docId;
+  const e = docId ? (glEntries.find(x=>x._docId===docId)||{}) : {};
+  document.getElementById('gl-entryFormCard').style.display = '';
+  document.getElementById('gl-openingFormCard').style.display = 'none';
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('gl-entryFormSections').innerHTML = `
+    <div class="form-section-title">日期／損益</div>
+    <div class="form-grid">
+      <div class="field"><label>日期</label><input type="date" data-fid="date" value="${e.date||today}"></div>
+      <div class="field"><label>收益（算公司收入）</label><input type="number" data-fid="income" value="${e.income??''}"></div>
+      <div class="field"><label>費用（算公司支出）</label><input type="number" data-fid="expense" value="${e.expense??''}"></div>
+    </div>
+    <div class="form-section-title">資金異動 - 入金</div>
+    <div class="form-grid">
+      <div class="field"><label>現金入金</label><input type="number" data-fid="cash_in" value="${e.cash_in??''}"></div>
+      <div class="field"><label>GMO口座入金</label><input type="number" data-fid="gmo_in" value="${e.gmo_in??''}"></div>
+      <div class="field"><label>SBI口座入金</label><input type="number" data-fid="sbi_in" value="${e.sbi_in??''}"></div>
+      <div class="field"><label>預り金（代收）</label><input type="number" data-fid="deposit_in" value="${e.deposit_in??''}"></div>
+    </div>
+    <div class="form-section-title">資金異動 - 出金</div>
+    <div class="form-grid">
+      <div class="field"><label>現金支付</label><input type="number" data-fid="cash_out" value="${e.cash_out??''}"></div>
+      <div class="field"><label>GMO口座支付</label><input type="number" data-fid="gmo_out" value="${e.gmo_out??''}"></div>
+      <div class="field"><label>SBI口座支付</label><input type="number" data-fid="sbi_out" value="${e.sbi_out??''}"></div>
+      <div class="field"><label>預り金（代付）</label><input type="number" data-fid="deposit_out" value="${e.deposit_out??''}"></div>
+    </div>
+    <div class="form-section-title">其他</div>
+    <div class="form-grid">
+      <div class="field"><label>支付先</label><input type="text" data-fid="payee" value="${e.payee||''}"></div>
+      <div class="field" style="grid-column:span 2;"><label>摘要／備註</label><input type="text" data-fid="memo" value="${e.memo||''}"></div>
+    </div>`;
+  document.getElementById('glDeleteEntryBtn').style.display = docId ? '' : 'none';
+}
+function glCancelEntryForm(){
+  glEditingEntryId = null;
+  document.getElementById('gl-entryFormCard').style.display = 'none';
+}
+async function glSaveEntry(){
+  const rec = {};
+  document.querySelectorAll('#gl-entryFormSections [data-fid]').forEach(el=>{
+    if(el.type==='number'){ rec[el.dataset.fid] = el.value===''? null : Number(el.value); }
+    else rec[el.dataset.fid] = el.value;
+  });
+  if(!rec.date){ alert('請填寫日期。'); return; }
+  const d = new Date(rec.date+'T00:00:00');
+  rec.year = d.getFullYear();
+  rec.month = d.getMonth()+1;
+  try{
+    if(glEditingEntryId){
+      const old = glEntries.find(x=>x._docId===glEditingEntryId);
+      rec.seq = (old && old.seq) || Date.now();
+      await trackerDB.collection('ledger_entries').doc(glEditingEntryId).set(rec);
+    }else{
+      rec.seq = Date.now();
+      await trackerDB.collection('ledger_entries').add(rec);
+    }
+    glCancelEntryForm();
+  }catch(err){ console.error(err); alert('儲存失敗：'+err.message); }
+}
+async function glDeleteEntry(){
+  if(!glEditingEntryId) return;
+  if(!confirm('確定要刪除這筆紀錄嗎？這個動作沒辦法復原。')) return;
+  try{
+    await trackerDB.collection('ledger_entries').doc(glEditingEntryId).delete();
+    glCancelEntryForm();
+  }catch(err){ console.error(err); alert('刪除失敗：'+err.message); }
+}
+
+function glOpenOpeningBalanceForm(){
+  document.getElementById('gl-entryFormCard').style.display = 'none';
+  const box = document.getElementById('gl-openingFormCard');
+  box.style.display = (box.style.display==='none' || !box.style.display) ? '' : 'none';
+  document.getElementById('gl-openingFormSections').innerHTML = `
+    <div class="form-grid">
+      <div class="field"><label>現金期初餘額</label><input type="number" data-fid="cash" value="${glOpening.cash||0}"></div>
+      <div class="field"><label>GMO期初餘額</label><input type="number" data-fid="gmo" value="${glOpening.gmo||0}"></div>
+      <div class="field"><label>SBI期初餘額</label><input type="number" data-fid="sbi" value="${glOpening.sbi||0}"></div>
+      <div class="field"><label>預り金期初餘額</label><input type="number" data-fid="deposit" value="${glOpening.deposit||0}"></div>
+    </div>`;
+}
+async function glSaveOpeningBalances(){
+  const rec = {};
+  document.querySelectorAll('#gl-openingFormSections [data-fid]').forEach(el=>{ rec[el.dataset.fid] = Number(el.value)||0; });
+  try{
+    await trackerDB.collection('settings').doc('ledger_opening_balances').set(rec);
+    glOpening = rec;
+    document.getElementById('gl-openingFormCard').style.display='none';
+    glRenderCashflow();
+  }catch(err){ console.error(err); alert('儲存失敗：'+err.message); }
+}
+
+/* =========================================================
+   額外收入
+   ========================================================= */
+function glPopulateExFilters(){
+  const yearSel = document.getElementById('gl-exYear');
+  const catSel = document.getElementById('gl-exCategory');
+  const years = [...new Set(glExtraItems.map(e=>e.year).filter(Boolean))].sort((a,b)=>b-a);
+  const curYear = new Date().getFullYear();
+  if(!years.includes(curYear)) years.unshift(curYear);
+  const prevYear = yearSel.value;
+  yearSel.innerHTML = years.map(y=>`<option value="${y}">${y}年</option>`).join('');
+  yearSel.value = (prevYear && years.includes(Number(prevYear))) ? prevYear : String(years[0]);
+
+  if(!document.getElementById('gl-exMonth').dataset.filled){
+    document.getElementById('gl-exMonth').innerHTML = `<option value="">全部月份</option>` + [1,2,3,4,5,6,7,8,9,10,11,12].map(m=>`<option value="${m}">${m}月</option>`).join('');
+    document.getElementById('gl-exMonth').dataset.filled = '1';
+  }
+  if(catSel.options.length<=1){
+    catSel.innerHTML = `<option value="">全部類別</option>` + GL_CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('');
+  }
+}
+function glRenderExtra(){
+  glPopulateExFilters();
+  const y = Number(document.getElementById('gl-exYear').value);
+  const m = document.getElementById('gl-exMonth').value;
+  const cat = document.getElementById('gl-exCategory').value;
+  const filtered = glExtraItems.filter(e => e.year===y && (!m || e.month===Number(m)) && (!cat || e.category===cat));
+  filtered.sort((a,b)=> (b.month||0)-(a.month||0) || (b.date||'').localeCompare(a.date||''));
+
+  document.getElementById('gl-exListCount').textContent = `共 ${filtered.length} 筆`;
+  const body = document.getElementById('gl-exListBody');
+  body.innerHTML = filtered.map(e=>`
+    <tr onclick="glOpenExtraForm('${e._docId}')">
+      <td>${e.year}/${e.month}</td>
+      <td>${e.category||''}</td>
+      <td>${e.label||''}</td>
+      <td>${e.date||''}</td>
+      <td class="num">${glMoney(e.amount)}</td>
+    </tr>`).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--gl-muted);">沒有符合條件的資料</td></tr>`;
+
+  const byCat = {};
+  glExtraItems.filter(e=>e.year===y).forEach(e=>{ byCat[e.category] = (byCat[e.category]||0) + (Number(e.amount)||0); });
+  document.getElementById('gl-exSummary').innerHTML = GL_CATEGORIES.map(c=>
+    `<span class="tag ${byCat[c]?'ok':'na'}" style="margin-right:6px;">${c}：${glMoney(byCat[c]||0)}</span>`).join('');
+}
+document.getElementById('gl-exYear').addEventListener('change', glRenderExtra);
+document.getElementById('gl-exMonth').addEventListener('change', glRenderExtra);
+document.getElementById('gl-exCategory').addEventListener('change', glRenderExtra);
+
+function glOpenExtraForm(docId){
+  glEditingExtraId = docId;
+  const e = docId ? (glExtraItems.find(x=>x._docId===docId)||{}) : {};
+  const defYear = e.year || Number(document.getElementById('gl-exYear').value) || new Date().getFullYear();
+  const defMonth = e.month || Number(document.getElementById('gl-exMonth').value) || (new Date().getMonth()+1);
+  document.getElementById('gl-extraFormCard').style.display = '';
+  document.getElementById('gl-extraFormSections').innerHTML = `
+    <div class="form-grid">
+      <div class="field"><label>年份</label><input type="number" data-fid="year" value="${defYear}"></div>
+      <div class="field"><label>月份</label><input type="number" data-fid="month" min="1" max="12" value="${defMonth}"></div>
+      <div class="field"><label>類別</label>
+        <select data-fid="category">${GL_CATEGORIES.map(c=>`<option value="${c}" ${c===e.category?'selected':''}>${c}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>項目／備註（例如客戶姓名或地址）</label><input type="text" data-fid="label" value="${e.label||''}"></div>
+      <div class="field"><label>日期（選填，例如保險到期日）</label><input type="date" data-fid="date" value="${e.date||''}"></div>
+      <div class="field"><label>金額</label><input type="number" data-fid="amount" value="${e.amount??''}"></div>
+    </div>`;
+  document.getElementById('glDeleteExtraBtn').style.display = docId ? '' : 'none';
+}
+function glCancelExtraForm(){
+  glEditingExtraId = null;
+  document.getElementById('gl-extraFormCard').style.display = 'none';
+}
+async function glSaveExtra(){
+  const rec = {};
+  document.querySelectorAll('#gl-extraFormSections [data-fid]').forEach(el=>{
+    if(el.dataset.fid==='year' || el.dataset.fid==='month') rec[el.dataset.fid] = Number(el.value)||0;
+    else if(el.dataset.fid==='amount') rec[el.dataset.fid] = el.value===''?0:Number(el.value);
+    else rec[el.dataset.fid] = el.value;
+  });
+  if(!rec.year || !rec.month || !rec.category || !rec.amount){ alert('請至少填寫年份、月份、類別跟金額。'); return; }
+  try{
+    if(glEditingExtraId){
+      await trackerDB.collection('ledger_extra_income').doc(glEditingExtraId).set(rec);
+    }else{
+      await trackerDB.collection('ledger_extra_income').add(rec);
+    }
+    glCancelExtraForm();
+  }catch(err){ console.error(err); alert('儲存失敗：'+err.message); }
+}
+async function glDeleteExtra(){
+  if(!glEditingExtraId) return;
+  if(!confirm('確定要刪除這筆紀錄嗎？這個動作沒辦法復原。')) return;
+  try{
+    await trackerDB.collection('ledger_extra_income').doc(glEditingExtraId).delete();
+    glCancelExtraForm();
+  }catch(err){ console.error(err); alert('刪除失敗：'+err.message); }
+}
+
+/* =========================================================
+   年度總表（自動計算，不需要手動輸入）
+   ========================================================= */
+function glRenderSummary(){
+  const monthlyAgg = {};
+  glEntries.forEach(e=>{
+    if(!e.year || !e.month) return;
+    const fy = glFiscalYear(e.year, e.month);
+    monthlyAgg[fy] = monthlyAgg[fy] || {};
+    monthlyAgg[fy][e.month] = monthlyAgg[fy][e.month] || {income:0, expense:0};
+    monthlyAgg[fy][e.month].income += Number(e.income)||0;
+    monthlyAgg[fy][e.month].expense += Number(e.expense)||0;
+  });
+  const fys = Object.keys(monthlyAgg).map(Number).sort((a,b)=>a-b);
+  const container = document.getElementById('gl-summaryContainer');
+  if(!fys.length){ container.innerHTML = '<p style="color:var(--gl-muted);font-size:13px;">目前還沒有資料。</p>'; }
+  else{
+    const monthOrder = [3,4,5,6,7,8,9,10,11,12,1,2];
+    let html = '<table class="gl-flow-table"><thead><tr><th>月份</th>';
+    fys.forEach(fy=> html += `<th colspan="3">${fy}/3 - ${fy+1}/2</th>`);
+    html += '</tr><tr><th></th>';
+    fys.forEach(()=> html += '<th>收益</th><th>費用</th><th>利益</th>');
+    html += '</tr></thead><tbody>';
+    const totals = {}; fys.forEach(fy=> totals[fy]={income:0,expense:0});
+    monthOrder.forEach(m=>{
+      html += `<tr><td>${m}月</td>`;
+      fys.forEach(fy=>{
+        const rec = (monthlyAgg[fy]||{})[m] || {income:0,expense:0};
+        totals[fy].income += rec.income; totals[fy].expense += rec.expense;
+        const profit = rec.income - rec.expense;
+        html += `<td class="num">${rec.income?glMoney(rec.income):''}</td><td class="num">${rec.expense?glMoney(rec.expense):''}</td><td class="num">${(rec.income||rec.expense)?glMoney(profit):''}</td>`;
+      });
+      html += '</tr>';
+    });
+    html += '<tr class="gl-total"><td>合計</td>';
+    fys.forEach(fy=>{
+      const t = totals[fy];
+      html += `<td class="num">${glMoney(t.income)}</td><td class="num">${glMoney(t.expense)}</td><td class="num">${glMoney(t.income-t.expense)}</td>`;
+    });
+    html += '</tr></tbody></table>';
+    container.innerHTML = html;
+  }
+
+  const exByYear = {};
+  glExtraItems.forEach(e=>{
+    exByYear[e.year] = exByYear[e.year] || {};
+    exByYear[e.year][e.category] = (exByYear[e.year][e.category]||0) + (Number(e.amount)||0);
+  });
+  const exYears = Object.keys(exByYear).map(Number).sort((a,b)=>a-b);
+  const exContainer = document.getElementById('gl-extraSummaryContainer');
+  if(!exYears.length){ exContainer.innerHTML = '<p style="color:var(--gl-muted);font-size:13px;">目前還沒有資料。</p>'; return; }
+  let h2 = '<table class="gl-flow-table"><thead><tr><th>年份</th>' + GL_CATEGORIES.map(c=>`<th>${c}</th>`).join('') + '<th>合計</th></tr></thead><tbody>';
+  exYears.forEach(y=>{
+    let rowTotal = 0;
+    h2 += `<tr><td>${y}</td>` + GL_CATEGORIES.map(c=>{
+      const v = (exByYear[y]||{})[c]||0; rowTotal += v;
+      return `<td class="num">${v?glMoney(v):''}</td>`;
+    }).join('') + `<td class="num">${glMoney(rowTotal)}</td></tr>`;
+  });
+  h2 += '</tbody></table>';
+  exContainer.innerHTML = h2;
+}
+
+/* =========================================================
+   Excel 匯出
+   ========================================================= */
+async function glExportExcel(){
+  const wb = new ExcelJS.Workbook();
+  const running = glComputeRunning();
+
+  const byYM = {};
+  running.forEach(e=>{
+    if(!e.year||!e.month) return;
+    const key = e.year+'-'+e.month;
+    (byYM[key] = byYM[key] || []).push(e);
+  });
+  const ymKeys = Object.keys(byYM).sort((a,b)=>{
+    const [ay,am]=a.split('-').map(Number), [by,bm]=b.split('-').map(Number);
+    return ay-by || am-bm;
+  });
+  const headerLabels = ['日付','','収益','費用','現金入金額','GMO口座入金額','SBI口座入金額','預かり金','GMO口座支払','SBI口座支払','預かり金支払','小口/現金支払','利益','GMO口座の残高','SBI口座の残高','預かり金の残高','現金の残高','支払先','摘要(メモ)'];
+  ymKeys.forEach(key=>{
+    const [y,m] = key.split('-').map(Number);
+    const rows = byYM[key];
+    const sheet = wb.addWorksheet(`${y}-${m}月`);
+    sheet.addRow(headerLabels);
+    rows.forEach(e=>{
+      sheet.addRow([e.date,'',e.income||'',e.expense||'',e.cash_in||'',e.gmo_in||'',e.sbi_in||'',e.deposit_in||'',
+        e.gmo_out||'',e.sbi_out||'',e.deposit_out||'',e.cash_out||'',e._profit,e._gmo,e._sbi,e._deposit,e._cash,
+        e.payee||'',e.memo||'']);
+    });
+    sheet.getRow(1).font = {bold:true};
+    sheet.columns.forEach(col=>{ col.width = 13; });
+  });
+
+  const monthlyAgg = {};
+  running.forEach(e=>{
+    if(!e.year||!e.month) return;
+    const fy = glFiscalYear(e.year,e.month);
+    monthlyAgg[fy]=monthlyAgg[fy]||{};
+    monthlyAgg[fy][e.month]=monthlyAgg[fy][e.month]||{income:0,expense:0};
+    monthlyAgg[fy][e.month].income += Number(e.income)||0;
+    monthlyAgg[fy][e.month].expense += Number(e.expense)||0;
+  });
+  const fys = Object.keys(monthlyAgg).map(Number).sort((a,b)=>a-b);
+  if(fys.length){
+    const sumSheet = wb.addWorksheet('總表');
+    const monthOrder = [3,4,5,6,7,8,9,10,11,12,1,2];
+    const headerRow1 = [''], headerRow2 = ['月份'];
+    fys.forEach(fy=>{ headerRow1.push(`${fy}/3-${fy+1}/2`,'',''); headerRow2.push('收益','費用','利益'); });
+    sumSheet.addRow(headerRow1);
+    sumSheet.addRow(headerRow2);
+    const totals = {}; fys.forEach(fy=>totals[fy]={income:0,expense:0});
+    monthOrder.forEach(m=>{
+      const row = [m+'月'];
+      fys.forEach(fy=>{
+        const rec=(monthlyAgg[fy]||{})[m]||{income:0,expense:0};
+        totals[fy].income+=rec.income; totals[fy].expense+=rec.expense;
+        row.push(rec.income||'', rec.expense||'', (rec.income-rec.expense)||'');
+      });
+      sumSheet.addRow(row);
+    });
+    const totalRow = ['合計'];
+    fys.forEach(fy=>{ const t=totals[fy]; totalRow.push(t.income,t.expense,t.income-t.expense); });
+    sumSheet.addRow(totalRow);
+    sumSheet.getRow(2).font={bold:true};
+  }
+
+  const exByYear = {};
+  glExtraItems.forEach(e=>{ (exByYear[e.year]=exByYear[e.year]||[]).push(e); });
+  Object.keys(exByYear).sort().forEach(y=>{
+    const sheet = wb.addWorksheet(`總表${y}`);
+    const catCols = {};
+    GL_CATEGORIES.forEach((c,i)=>{ catCols[c] = i*2+1; });
+    for(let m=1;m<=12;m++){
+      const items = exByYear[y].filter(e=>e.month===m);
+      if(!items.length) continue;
+      sheet.addRow([`${y}年${m}月`]);
+      const catHeaderRow = [];
+      GL_CATEGORIES.forEach(c=>{ catHeaderRow[catCols[c]-1]=c; });
+      sheet.addRow(catHeaderRow);
+      const byCat = {};
+      items.forEach(e=>{ (byCat[e.category]=byCat[e.category]||[]).push(e); });
+      const maxRows = Math.max(0, ...GL_CATEGORIES.map(c=>(byCat[c]||[]).length));
+      for(let r=0;r<maxRows;r++){
+        const row = [];
+        GL_CATEGORIES.forEach(c=>{
+          const it = (byCat[c]||[])[r];
+          if(it){ row[catCols[c]-1] = it.date || it.label || ''; row[catCols[c]] = it.amount||0; }
+        });
+        sheet.addRow(row);
+      }
+      const totalRow = ['合計'];
+      GL_CATEGORIES.forEach(c=>{
+        const sum = (byCat[c]||[]).reduce((s,it)=>s+(Number(it.amount)||0),0);
+        totalRow[catCols[c]] = sum || '';
+      });
+      sheet.addRow(totalRow);
+      sheet.addRow([]);
+    }
+  });
+
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `總帳匯出-${new Date().toISOString().slice(0,10)}.xlsx`;
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+}
+
+/* =========================================================
+   Excel 匯入
+   ========================================================= */
+document.getElementById('gl-importFile').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const btn = document.getElementById('gl-importBtn');
+  const preview = document.getElementById('gl-importPreview');
+  document.getElementById('gl-importResult').innerHTML = '';
+  preview.innerHTML = '讀取中…';
+  btn.style.display = 'none';
+  try{
+    const buf = await file.arrayBuffer();
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buf);
+    glImportWorkbook = wb;
+
+    const cfSheets = wb.worksheets.map(w=>w.name).filter(n=>/^\d{4}-\d{1,2}月\s*$/.test(n));
+    const ambiguous = wb.worksheets.map(w=>w.name).filter(n=>/^\d{1,2}月\s*$/.test(n));
+    const exSheets = wb.worksheets.map(w=>w.name).filter(n=>/^總表\d{4}$/.test(n));
+    const skipped = wb.worksheets.map(w=>w.name).filter(n=>!cfSheets.includes(n) && !ambiguous.includes(n) && !exSheets.includes(n));
+
+    let html = `<div class="note-box">辨識到：金流帳本分頁 ${cfSheets.length} 個、額外收入分頁 ${exSheets.length} 個${ambiguous.length? '、無法判斷年份的分頁 '+ambiguous.length+' 個':''}${skipped.length? '、略過 '+skipped.length+' 個（例如「總表」年度總表分頁，系統會自動計算不需要匯入）':''}。</div>`;
+    if(ambiguous.length){
+      html += `<div class="warn-box">以下分頁名稱只有月份、沒有年份，請手動指定年份才能匯入，不填的話會略過該分頁：</div>`;
+      html += `<div class="form-grid">` + ambiguous.map(n=>`
+        <div class="field"><label>「${n}」是幾年？</label><input type="number" placeholder="例如 2024" data-ambig-sheet="${n}"></div>`).join('') + `</div>`;
+    }
+    preview.innerHTML = html;
+    btn.style.display = '';
+  }catch(err){
+    console.error(err);
+    preview.innerHTML = `<div class="warn-box">檔案讀取失敗：${err.message}</div>`;
+  }
+});
+
+function glCellText(cell){
+  if(!cell) return '';
+  const v = cell.value;
+  if(v===null||v===undefined) return '';
+  if(typeof v==='object' && v.text) return v.text;
+  if(typeof v==='object' && v.richText) return v.richText.map(t=>t.text).join('');
+  if(typeof v==='object' && v.result!==undefined) return String(v.result);
+  return String(v);
+}
+function glIsDateCell(cell){ return cell && cell.value instanceof Date; }
+function glIsNumericCell(cell){ return cell && typeof cell.value === 'number'; }
+
+async function glStartImport(){
+  if(!glImportWorkbook){ alert('請先選擇檔案。'); return; }
+  const wb = glImportWorkbook;
+  const resultBox = document.getElementById('gl-importResult');
+  const btn = document.getElementById('gl-importBtn');
+  resultBox.innerHTML = '匯入中，請稍候…';
+  btn.disabled = true;
+
+  const yearMap = {};
+  document.querySelectorAll('[data-ambig-sheet]').forEach(inp=>{
+    if(inp.value) yearMap[inp.dataset.ambigSheet] = Number(inp.value);
+  });
+
+  let cfCount=0, exCount=0;
+  const errors = [];
+  const batchOps = [];
+  const CATS_NO_OTHER = GL_CATEGORIES.filter(c=>c!=='其他');
+
+  wb.worksheets.forEach(ws=>{
+    const name = ws.name;
+    const mCf = name.match(/^(\d{4})-(\d{1,2})月\s*$/);
+    const mAmbig = name.match(/^(\d{1,2})月\s*$/);
+    const mEx = name.match(/^總表(\d{4})$/);
+
+    if(mCf || (mAmbig && yearMap[name])){
+      let headerRow = null;
+      ws.eachRow((row, rn)=>{ if(!headerRow && glCellText(row.getCell(1)).trim()==='日付') headerRow=rn; });
+      if(!headerRow){ errors.push(`分頁「${name}」找不到「日付」標題列，已略過。`); return; }
+      let lastDate = null;
+      for(let r=headerRow+1; r<=ws.rowCount; r++){
+        const row = ws.getRow(r);
+        const aCell = row.getCell(1);
+        let dateVal = null;
+        if(glIsDateCell(aCell)) dateVal = aCell.value;
+        else if(typeof aCell.value === 'number') dateVal = new Date(Date.UTC(1899,11,30) + aCell.value*86400000);
+        if(dateVal) lastDate = dateVal;
+        const get = (c)=>{ const v = row.getCell(c).value; return typeof v==='number' ? v : null; };
+        const income=get(3), expense=get(4), cashIn=get(5), gmoIn=get(6), sbiIn=get(7), depositIn=get(8),
+              gmoOut=get(9), sbiOut=get(10), depositOut=get(11), cashOut=get(12);
+        const hasContent = [income,expense,cashIn,gmoIn,sbiIn,depositIn,gmoOut,sbiOut,depositOut,cashOut].some(v=>typeof v==='number' && v!==0);
+        if(!hasContent || !lastDate) continue;
+        batchOps.push({col:'ledger_entries', rec:{
+          date: lastDate.toISOString().slice(0,10), year: lastDate.getFullYear(), month: lastDate.getMonth()+1, seq: Date.now()+cfCount,
+          income, expense, cash_in: cashIn, gmo_in: gmoIn, sbi_in: sbiIn, deposit_in: depositIn,
+          gmo_out: gmoOut, sbi_out: sbiOut, deposit_out: depositOut, cash_out: cashOut,
+          payee: glCellText(row.getCell(18)), memo: glCellText(row.getCell(19))
+        }});
+        cfCount++;
+      }
+    } else if(mEx){
+      const blockStarts = [];
+      ws.eachRow((row, rn)=>{
+        const t = glCellText(row.getCell(1)).trim();
+        const bm = t.match(/^(\d{4})年(\d{1,2})月$/);
+        if(bm) blockStarts.push({row: rn, year:+bm[1], month:+bm[2]});
+      });
+      blockStarts.forEach((b, bi)=>{
+        const headerRowNum = b.row+1;
+        const hRow = ws.getRow(headerRowNum);
+        const headerCols = [];
+        for(let c=1;c<=20;c++){
+          const t = glCellText(hRow.getCell(c)).trim();
+          if(CATS_NO_OTHER.includes(t)) headerCols.push({col:c, name:t});
+        }
+        const endRow = blockStarts[bi+1] ? blockStarts[bi+1].row : ws.rowCount+1;
+        for(let r=headerRowNum+1; r<endRow; r++){
+          const row = ws.getRow(r);
+          const a1 = glCellText(row.getCell(1)).trim();
+          if(a1==='合計' || a1==='總合計') break;
+          for(let c=1;c<=19;c++){
+            const labelCell = row.getCell(c);
+            const amtCell = row.getCell(c+1);
+            const labelTxt = glCellText(labelCell).trim();
+            const labelIsDate = glIsDateCell(labelCell);
+            const labelIsNumeric = glIsNumericCell(labelCell);
+            const amtIsNum = glIsNumericCell(amtCell);
+            if(!labelIsNumeric && (labelTxt || labelIsDate) && amtIsNum && amtCell.value !== 0){
+              let best = null;
+              headerCols.forEach(h=>{ if(h.col<=c+1 && (!best||h.col>best.col)) best=h; });
+              if(best){
+                batchOps.push({col:'ledger_extra_income', rec:{
+                  year: b.year, month: b.month, category: best.name,
+                  label: labelIsDate ? labelCell.value.toISOString().slice(0,10) : labelTxt,
+                  date: labelIsDate ? labelCell.value.toISOString().slice(0,10) : '',
+                  amount: amtCell.value
+                }});
+                exCount++;
+              }
+            }
+          }
+        }
+      });
+    }
+  });
+
+  try{
+    for(let i=0;i<batchOps.length;i+=400){
+      const chunk = batchOps.slice(i, i+400);
+      const batch = trackerDB.batch();
+      chunk.forEach(op=>{ batch.set(trackerDB.collection(op.col).doc(), op.rec); });
+      await batch.commit();
+    }
+    resultBox.innerHTML = `<div class="note-box">匯入完成！金流帳本新增 ${cfCount} 筆，額外收入新增 ${exCount} 筆。${errors.length? '<br>'+errors.join('<br>') : ''}</div>`;
+    glImportWorkbook = null;
+    document.getElementById('gl-importFile').value = '';
+    btn.style.display = 'none';
+  }catch(err){
+    console.error(err);
+    resultBox.innerHTML = `<div class="warn-box">匯入時發生錯誤：${err.message}（可能已經匯入一部分資料，請到「金流帳本」跟「額外收入」檢查）</div>`;
+  }
+  btn.disabled = false;
+}
 
 </script>
 </body>
