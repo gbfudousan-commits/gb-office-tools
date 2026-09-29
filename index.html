@@ -41,6 +41,7 @@
   .sub-nav .tab-btn{flex:1 1 auto;min-width:140px;}
   .wrap{max-width:1100px;margin:0 auto;padding:20px;}
   .preview-wrap{max-width:1300px;margin:0 auto;padding:20px;overflow-x:auto;}
+  .preview-wrap:has(#panel-ledger.active){max-width:1900px;}
   .side-form{max-width:900px;margin:0 auto 20px;}
   .panel{display:none;}
   .panel.active{display:block;}
@@ -969,7 +970,7 @@
   --gl-danger:#a4433a; --gl-radius:6px;
 }
 #panel-ledger *{box-sizing:border-box;}
-#panel-ledger .shell{max-width:1200px;margin:0 auto;padding:28px 20px 80px;}
+#panel-ledger .shell{max-width:1900px;margin:0 auto;padding:28px 20px 80px;}
 #panel-ledger header.top{margin-bottom:22px;}
 #panel-ledger header.top h1{font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:.02em;}
 #panel-ledger header.top p{margin:0;color:var(--gl-muted);font-size:13px;}
@@ -1002,9 +1003,9 @@
 #panel-ledger table.list-table{width:100%;border-collapse:collapse;font-size:12.5px;}
 #panel-ledger table.list-table th{
   text-align:left;font-weight:600;color:var(--gl-muted);font-size:11.5px;
-  padding:7px 8px;border-bottom:1px solid var(--gl-line);white-space:nowrap;position:sticky;top:0;background:var(--gl-surface);
+  padding:6px 6px;border-bottom:1px solid var(--gl-line);white-space:nowrap;position:sticky;top:0;background:var(--gl-surface);
 }
-#panel-ledger table.list-table td{padding:7px 8px;border-bottom:1px solid var(--gl-line);vertical-align:top;white-space:nowrap;}
+#panel-ledger table.list-table td{padding:6px 6px;border-bottom:1px solid var(--gl-line);vertical-align:top;white-space:nowrap;}
 #panel-ledger table.list-table tr:hover td{background:#faf9f6;cursor:pointer;}
 #panel-ledger .num{text-align:right;font-variant-numeric:tabular-nums;}
 #panel-ledger .neg{color:var(--gl-danger);font-weight:700;}
@@ -1042,19 +1043,22 @@
 #panel-ledger .gl-balance-tile .val{font-size:17px;font-weight:700;color:var(--gl-ink);font-variant-numeric:tabular-nums;}
 #panel-ledger table.list-table th.num{text-align:right;}
 #gl-cfListBody td{padding:0 !important;}
-#gl-cfListBody td.gl-plain{padding:7px 8px !important;}
+#gl-cfListBody td.gl-plain{padding:6px 6px !important;}
 #panel-ledger table.list-table td input{
-  width:100%;min-width:66px;box-sizing:border-box;border:1px solid transparent;background:transparent;
-  padding:6px 8px;font-size:12px;font-family:inherit;color:var(--gl-ink);border-radius:3px;
+  width:100%;min-width:56px;box-sizing:border-box;border:1px solid transparent;background:transparent;
+  padding:5px 6px;font-size:11.5px;font-family:inherit;color:var(--gl-ink);border-radius:3px;
 }
-#panel-ledger table.list-table td input[type=number]{text-align:right;min-width:80px;-moz-appearance:textfield;}
+#panel-ledger table.list-table td input[type=number]{text-align:right;min-width:64px;-moz-appearance:textfield;}
 #panel-ledger table.list-table td input[type=number]::-webkit-outer-spin-button,
 #panel-ledger table.list-table td input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
-#panel-ledger table.list-table td input[type=date]{min-width:118px;}
-#panel-ledger table.list-table td input[type=text]{min-width:100px;}
-#panel-ledger table.list-table td input[data-money="1"]{text-align:right;min-width:80px;font-variant-numeric:tabular-nums;}
+#panel-ledger table.list-table td input[type=date]{min-width:98px;}
+#panel-ledger table.list-table td input[type=text]{min-width:64px;}
+#gl-cfListBody td input[data-fid="memo"]{min-width:100px;}
+#panel-ledger table.list-table td input[data-money="1"]{text-align:right;min-width:64px;font-variant-numeric:tabular-nums;}
 #panel-ledger table.list-table td input:focus{border-color:var(--gl-accent);background:#fff;outline:none;}
 #panel-ledger tr.gl-blank-row td{background:#fbfbf8;}
+#panel-ledger td.gl-check-bad{color:#fff !important;background:var(--gl-danger) !important;font-weight:700;border-radius:3px;}
+#panel-ledger td.gl-check-bad .neg{color:#fff !important;}
 #panel-ledger tr.gl-blank-row td input::placeholder{color:#c6c3ba;}
 #panel-ledger .gl-row-del{background:none;border:none;color:var(--gl-muted);cursor:pointer;font-size:13px;padding:2px 6px;}
 #panel-ledger .gl-row-del:hover{color:var(--gl-danger);}
@@ -2572,7 +2576,7 @@
   <!-- ============ 金流帳本 ============ -->
   <section class="gl-panel active" id="gl-panel-cashflow">
     <div class="card">
-      <div class="note-box">記錄公司每一筆資金異動：現金／GMO銀行／SBI銀行／預り金（代收代付）四個帳戶的進出，還有這筆是不是算公司真正的「收益」或「費用」。金額欄位留空表示這筆沒有異動。跟 Excel 一樣可以直接在最下面那一列輸入，打完按 Tab／點別的地方離開這一列就會自動存檔，並且自動多出下一個空白列，可以一直往下打。</div>
+      <div class="note-box">記錄公司每一筆資金異動：現金／GMO銀行／SBI銀行／預り金（代收代付）四個帳戶的進出，還有這筆是不是算公司真正的「收益」或「費用」。金額欄位留空表示這筆沒有異動。跟 Excel 一樣可以直接在最下面那一列輸入，打完按 Tab／點別的地方離開這一列就會自動存檔，並且自動多出下一個空白列，可以一直往下打。最右邊的「檢查值」欄位＝利益＋預り金餘額－GMO餘額－SBI餘額－現金餘額，這個數字在帳打對的情況下每一列都應該一樣，跟你原本Excel最後那欄-20000是同一個檢查邏輯；如果某一列的檢查值突然跟其他列不一樣，那一列會自動變成紅底，代表那一列可能打錯或漏打了。</div>
       <div id="gl-balanceBar" class="gl-balance-bar"></div>
       <div class="list-toolbar">
         <select id="gl-cfYear"></select>
@@ -2586,7 +2590,7 @@
           <thead><tr>
             <th>日期</th><th class="num">收益</th><th class="num">費用</th><th class="num">現金入</th><th class="num">GMO入</th><th class="num">SBI入</th><th class="num">預り金入</th>
             <th class="num">GMO出</th><th class="num">SBI出</th><th class="num">預り金出</th><th class="num">現金出</th><th>支付先</th><th>摘要</th>
-            <th class="num">利益</th><th class="num">現金餘額</th><th class="num">GMO餘額</th><th class="num">SBI餘額</th><th class="num">預り金餘額</th><th></th>
+            <th class="num">利益</th><th class="num">現金餘額</th><th class="num">GMO餘額</th><th class="num">SBI餘額</th><th class="num">預り金餘額</th><th class="num">檢查值</th><th></th>
           </tr></thead>
           <tbody id="gl-cfListBody"></tbody>
         </table>
@@ -8322,9 +8326,26 @@ function glComputeRunning(){
     sbi  += (Number(e.sbi_in)||0)  - (Number(e.sbi_out)||0);
     deposit += (Number(e.deposit_in)||0) - (Number(e.deposit_out)||0);
     profit += (Number(e.income)||0) - (Number(e.expense)||0);
-    return {...e, _cash:cash, _gmo:gmo, _sbi:sbi, _deposit:deposit, _profit:profit};
+    /* 檢查值：跟 Excel 舊帳一樣的驗算邏輯（利益＋預り金餘額－GMO餘額－SBI餘額－現金餘額），
+       只要每一筆都打對，這個數字從頭到尾都應該一樣；哪一列突然不一樣，那一列就有問題。 */
+    const check = profit + deposit - gmo - sbi - cash;
+    return {...e, _cash:cash, _gmo:gmo, _sbi:sbi, _deposit:deposit, _profit:profit, _check:check};
   });
 }
+function glCheckBaselineOf(running){
+  if(!running.length) return null;
+  const counts = {};
+  running.forEach(e=>{
+    const k = Math.round(e._check*100)/100;
+    counts[k] = (counts[k]||0) + 1;
+  });
+  let best = null, bestCount = -1;
+  Object.keys(counts).forEach(k=>{
+    if(counts[k] > bestCount){ bestCount = counts[k]; best = Number(k); }
+  });
+  return best;
+}
+let glCheckBaseline = null;
 function glPopulateCfFilters(){
   const yearSel = document.getElementById('gl-cfYear');
   const monthSel = document.getElementById('gl-cfMonth');
@@ -8366,6 +8387,7 @@ function glFieldRowHtml(e, isBlank){
       <td class="num gl-plain">${isBlank?'':glMoney(e._gmo)}</td>
       <td class="num gl-plain">${isBlank?'':glMoney(e._sbi)}</td>
       <td class="num gl-plain">${isBlank?'':glMoney(e._deposit)}</td>
+      <td class="num gl-plain${(!isBlank && glCheckBaseline!==null && Math.abs(e._check-glCheckBaseline)>0.5) ? ' gl-check-bad':''}">${isBlank?'':glMoney(e._check)}</td>
       <td class="gl-plain">${isBlank?'':`<button class="gl-row-del" title="刪除這筆" onmousedown="glArmRowDelete(this)" onclick="glDeleteEntryInline('${docId}', this)">✕</button>`}</td>
     </tr>`;
 }
@@ -8373,6 +8395,7 @@ let glFocusBlankAfterRender = false;
 function glRenderCashflow(){
   glPopulateCfFilters();
   const running = glComputeRunning();
+  glCheckBaseline = glCheckBaselineOf(running);
   const y = Number(document.getElementById('gl-cfYear').value);
   const m = document.getElementById('gl-cfMonth').value;
   const filtered = running.filter(e => e.year===y && (!m || e.month===Number(m)));
