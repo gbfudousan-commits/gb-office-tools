@@ -37,6 +37,7 @@
   .header-brand-mark{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.16);color:#fff;font-weight:800;font-size:14px;letter-spacing:.02em;flex:0 0 auto;}
   .header-user-label{font-size:12.5px;opacity:.85;white-space:nowrap;}
   .header-link{color:#fff;font-size:13.5px;font-weight:600;text-decoration:none;white-space:nowrap;flex:0 0 auto;padding:6px 10px;border-radius:6px;transition:background .15s;}
+  button.header-link{border:none;background:transparent;cursor:pointer;font-family:inherit;}
   .header-link:hover{background:rgba(255,255,255,.14);}
   .header-link-logout{opacity:.85;}
   .notif-wrap{position:relative;flex:0 0 auto;}
@@ -1255,33 +1256,34 @@
       <span class="header-brand-mark">GB</span>
       <div class="header-brand-text">
         <h1>GB商事合同会社　社内システム</h1>
-        <p>物件・客戶・月次報告書・帳務　統合管理平台</p>
+        <p data-i18n="brand_subtitle">物件・客戶・月次報告書・帳務　統合管理平台</p>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:16px;">
+      <button type="button" class="header-link" id="langToggleBtn" onclick="gbToggleLang();return false;" title="切換顯示語言 / 表示言語を切り替え">🌐 <span id="langToggleLabel">日本語</span></button>
       <span id="siteUserLabel" class="header-user-label"></span>
-      <a href="#" class="header-link" id="financeHeaderLink" style="display:none;" target="_blank" rel="noopener">公司財報 ↗</a>
+      <a href="#" class="header-link" id="financeHeaderLink" style="display:none;" target="_blank" rel="noopener"><span data-i18n="nav_finance">公司財報</span> ↗</a>
       <div class="notif-wrap" id="notifWrap" style="display:none;">
         <button class="notif-bell" id="notifBellBtn" onclick="notifToggleDropdown();return false;" title="通知">🔔<span class="notif-badge" id="notifBadge" style="display:none;">0</span></button>
         <div class="notif-dropdown" id="notifDropdown" style="display:none;">
-          <div class="notif-dropdown-head"><span>通知</span><button type="button" onclick="notifMarkAllRead();return false;">全部標為已讀</button></div>
+          <div class="notif-dropdown-head"><span data-i18n="notif_title">通知</span><button type="button" onclick="notifMarkAllRead();return false;" data-i18n="notif_mark_all">全部標為已讀</button></div>
           <div class="notif-dropdown-list" id="notifList"></div>
         </div>
       </div>
-      <a href="#" class="header-link header-link-logout" onclick="siteLogout();return false;">登出</a>
+      <a href="#" class="header-link header-link-logout" onclick="siteLogout();return false;" data-i18n="nav_logout">登出</a>
     </div>
   </div>
 </header>
 
 <nav class="main-nav">
-  <button class="main-nav-btn" data-module="docgen" onclick="gbActivateDocgen();return false;"><span class="main-nav-icon">📄</span>文件產生</button>
-  <button class="main-nav-btn" data-module="properties" id="propertiesHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-properties').classList.add('active');renderList();return false;"><span class="main-nav-icon">🏠</span>物件管理</button>
-  <button class="main-nav-btn" data-module="customers" id="customersHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-customers').classList.add('active');ccRenderList();return false;"><span class="main-nav-icon">👤</span>客戶資料</button>
-  <button class="main-nav-btn" data-module="monthlyreports" id="monthlyReportsHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-monthlyreports').classList.add('active');mrRenderList();return false;"><span class="main-nav-icon">📊</span>月次報告書</button>
-  <button class="main-nav-btn" data-module="customer-accounts" id="customerAccountsHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-customer-accounts').classList.add('active');caBackToList();return false;"><span class="main-nav-icon">💳</span>客戶帳戶</button>
-  <button class="main-nav-btn" data-module="ledger" id="ledgerHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-ledger').classList.add('active');glRenderAll();return false;"><span class="main-nav-icon">📒</span>總帳</button>
-  <button class="main-nav-btn" data-module="tracker" id="trackerHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-tracker').classList.add('active');return false;"><span class="main-nav-icon">📈</span>進度追蹤</button>
-  <button class="main-nav-btn" data-module="todo" id="todoHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-todo').classList.add('active');const tds=document.getElementById('td_filter_status');if(tds)tds.value='待辦中';renderTodoList();return false;"><span class="main-nav-icon">✅</span>代辦事項</button>
+  <button class="main-nav-btn" data-module="docgen" onclick="gbActivateDocgen();return false;"><span class="main-nav-icon">📄</span><span data-i18n="nav_docgen">文件產生</span></button>
+  <button class="main-nav-btn" data-module="properties" id="propertiesHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-properties').classList.add('active');renderList();return false;"><span class="main-nav-icon">🏠</span><span data-i18n="nav_properties">物件管理</span></button>
+  <button class="main-nav-btn" data-module="customers" id="customersHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-customers').classList.add('active');ccRenderList();return false;"><span class="main-nav-icon">👤</span><span data-i18n="nav_customers">客戶資料</span></button>
+  <button class="main-nav-btn" data-module="monthlyreports" id="monthlyReportsHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-monthlyreports').classList.add('active');mrRenderList();return false;"><span class="main-nav-icon">📊</span><span data-i18n="nav_monthlyreports">月次報告書</span></button>
+  <button class="main-nav-btn" data-module="customer-accounts" id="customerAccountsHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-customer-accounts').classList.add('active');caBackToList();return false;"><span class="main-nav-icon">💳</span><span data-i18n="nav_customeraccounts">客戶帳戶</span></button>
+  <button class="main-nav-btn" data-module="ledger" id="ledgerHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-ledger').classList.add('active');glRenderAll();return false;"><span class="main-nav-icon">📒</span><span data-i18n="nav_ledger">總帳</span></button>
+  <button class="main-nav-btn" data-module="tracker" id="trackerHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-tracker').classList.add('active');return false;"><span class="main-nav-icon">📈</span><span data-i18n="nav_tracker">進度追蹤</span></button>
+  <button class="main-nav-btn" data-module="todo" id="todoHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-todo').classList.add('active');const tds=document.getElementById('td_filter_status');if(tds)tds.value='待辦中';renderTodoList();return false;"><span class="main-nav-icon">✅</span><span data-i18n="nav_todo">代辦事項</span></button>
 </nav>
 
 <nav class="category-nav">
@@ -1298,8 +1300,8 @@
 </nav>
 
 <nav class="sub-nav" id="subNav-buy" style="display:none;">
-  <button class="tab-btn" data-tab="schedule">簽約日程表</button>
-  <button class="tab-btn" data-tab="mgmt">代管合約書</button>
+  <button class="tab-btn" data-tab="schedule" data-i18n="tab_schedule">簽約日程表</button>
+  <button class="tab-btn" data-tab="mgmt" data-i18n="tab_mgmt">代管合約書</button>
 </nav>
 
 <nav class="sub-nav" id="subNav-rental" style="display:none;">
@@ -1314,8 +1316,8 @@
   <button class="tab-btn" data-tab="settle">決済清算書</button>
   <button class="tab-btn" data-tab="settle2">決済のご案内</button>
   <button class="tab-btn" data-tab="payment">支払約定書</button>
-  <button class="tab-btn" data-tab="history">歷史記錄・存檔</button>
-  <button class="tab-btn" data-tab="excelimport">Excel匯入（重説・契約書）</button>
+  <button class="tab-btn" data-tab="history" data-i18n="tab_history">歷史記錄・存檔</button>
+  <button class="tab-btn" data-tab="excelimport" data-i18n="tab_excelimport">Excel匯入（重説・契約書）</button>
 </nav>
 
 <div class="wrap">
@@ -1493,6 +1495,8 @@
         <div class="field"><label>氏名</label><input id="k_name"></div>
         <div class="field wide"><label>住所</label><input id="k_address"></div>
       </div>
+      <div id="k_extra_list"></div>
+      <button class="btn small secondary" type="button" onclick="addKVRow('k_extra_list','氏名','住所')">+ 委託者を追加（共有者がいる場合）</button>
       <div class="row">
         <div class="field">
           <label><input type="checkbox" id="k_same_owner" checked onchange="toggleOwner()"> 所有者・登記名義人は上記と同一</label>
@@ -1634,7 +1638,7 @@
 
     <div class="toolbar no-print">
       <button class="btn" onclick="openFlyerLayoutModal()">▶ 資料を生成する（②③タブへ反映）</button>
-      <button class="btn secondary" onclick="quickSaveToHistory()">💾 儲存這筆資料（存到歷史記錄）</button>
+      <button class="btn secondary" onclick="quickSaveToHistory()">💾 <span data-i18n="btn_quicksave">儲存這筆資料（存到歷史記錄）</span></button>
     </div>
   </div>
   </div><!-- /.wrap -->
@@ -3089,6 +3093,268 @@ function gbActivateDocgen(){
   gbSyncMainNav();
 })();
 
+/* ---------- 介面語言切換（中文／日本語）---------- */
+const GB_I18N = {
+  ja: {
+    brand_subtitle: '物件・顧客・月次報告書・帳務　統合管理システム',
+    nav_finance: '会社財務レポート',
+    notif_title: '通知',
+    notif_mark_all: 'すべて既読にする',
+    nav_logout: 'ログアウト',
+    nav_docgen: '書類作成',
+    nav_properties: '物件管理',
+    nav_customers: '顧客情報',
+    nav_monthlyreports: '月次報告書',
+    nav_customeraccounts: '顧客口座',
+    nav_ledger: '元帳',
+    nav_tracker: '進捗管理',
+    nav_todo: 'タスク',
+    tab_schedule: '契約日程表',
+    tab_mgmt: '管理委託契約書',
+    tab_history: '履歴・保存',
+    tab_excelimport: 'Excelインポート（重説・契約書）',
+    btn_quicksave: 'このデータを保存（履歴に保存）'
+  }
+};
+const GB_LANG_KEY = 'gbSystemLang';
+
+/* ---- 動態畫面（物件管理／客戶資料／進度追蹤／代辦事項）用的片語字典 ----
+   採「子字串取代」方式：不要求整個文字節點完全相等，這樣像「客戶：山田　擔當：李」
+   這種「固定字＋輸入資料混在同一段文字」的情況也能只翻譯固定的那部分。
+   金額、日期、客戶自己輸入的資料本身不會出現在這個字典裡，所以不會被誤翻。 */
+const GB_I18N_DICT = {
+  // ---- 進度追蹤（tracker）----
+  '⚠ 尚未設定資料庫連線': '⚠ データベース接続が未設定です',
+  '已登入：': 'ログイン中：',
+  '新增案子': '新規案件登録',
+  '類型': '種別',
+  '管理選項': '管理オプション',
+  '客戶姓名': '顧客氏名',
+  '擔當人員': '担当者',
+  '講解契約日期': '重説実施日',
+  '簽約日期': '契約日',
+  '交屋／入居日期': '引渡／入居日',
+  '款項到帳狀況': '入金状況',
+  '客戶資料是否收齊': '顧客資料の有無',
+  '標記為完成': '完了マーク',
+  '未到帳': '未入金',
+  '訂金到帳': '手付金入金',
+  '部分到帳': '一部入金',
+  '全部到帳': '全額入金',
+  '未收齊': '未収',
+  '已收齊': '収受済み',
+  '備註（LINE群組名稱／賣方仲介資訊等）': '備考（LINEグループ名／売主仲介情報など）',
+  '💾 儲存這筆案子': '💾 この案件を保存',
+  '取消編輯': '編集をキャンセル',
+  '擔當人員名單管理': '担当者リスト管理',
+  '新增人員姓名': '担当者名を追加',
+  '所有案子（即時同步，同事看到的都是同一份）': '案件一覧（リアルタイム同期・全員共通）',
+  '篩選：類型': '絞り込み：種別',
+  '篩選：擔當人員': '絞り込み：担当者',
+  '篩選：只顯示未完成': '絞り込み：未完了のみ表示',
+  '否（含已完成）': 'いいえ（完了を含む）',
+  '自住': '自己使用',
+  '民宿': '民泊',
+  '目前沒有符合條件的案子。': '条件に合う案件がありません。',
+  '尚未安排交屋日期': '引渡日未定',
+  '待交屋': '引渡待ち',
+  '款項確認': '入金確認',
+  '講解契約': '重説',
+  '洽談中': '商談中',
+  '契約日未定': '契約日未定',
+  '交屋日未定': '引渡日未定',
+  '款項未到帳': '入金未了',
+  '客戶資料未齊': '顧客資料未着',
+  '下一步：安排講解契約時間': '次のステップ：重説の日時を調整',
+  '下一步：確認並敲定簽約日期': '次のステップ：契約日を確定',
+  '下一步：確認訂金／款項到帳狀況': '次のステップ：手付金／入金状況を確認',
+  '下一步：等待款項全部到帳確認': '次のステップ：入金完了を待つ',
+  '下一步：安排交屋（或入居）日期、準備交屋文件': '次のステップ：引渡（入居）日を調整し、書類を準備',
+  '下一步：補齊客戶資料，並確認結案': '次のステップ：顧客資料を揃えて完了確認',
+  '下一步：確認結案後標記為完成': '次のステップ：完了確認後に「完了」にする',
+  '已完成，無待辦事項': '完了済み、対応事項なし',
+  '　｜　調公課證明並聯繫司法書士': '　｜　公課証明を取得し司法書士に連絡',
+  '客戶：': '顧客：',
+  '擔當：': '担当：',
+  '完成日期：': '完了日：',
+  '講解契約：': '重説：',
+  '簽約：': '契約：',
+  '交屋：': '引渡：',
+  '款項：': '入金：',
+  '備註：': '備考：',
+  // ---- 代辦事項（todo）----
+  '代辦事項（直接讀取「物件資料」裡每個物件的代辦事項子表格）': 'タスク（「物件資料」内の各物件のタスク一覧を直接読み込み）',
+  '這裡彙整了所有物件的代辦事項，即時跟著「物件資料」變動。要修改內容，直接到「物件管理」裡編輯該物件的代辦事項子表格，或直接點下面任一筆卡片跳過去編輯。': 'すべての物件のタスクをここにまとめて表示し、「物件資料」の内容にリアルタイムで連動します。内容を変更するには「物件管理」で該当物件のタスク一覧を編集するか、下のカードをクリックして直接編集してください。',
+  '篩選：物件編號／地址': '絞り込み：物件番号／住所',
+  '篩選：狀態': '絞り込み：状態',
+  '輸入編號或地址搜尋': '番号または住所で検索',
+  '待辦中': '対応中',
+  '目前沒有符合條件的代辦事項。': '条件に合うタスクがありません。',
+  '(未填地址)': '(住所未入力)',
+  // ---- 物件管理（properties）----
+  '物件資料管理': '物件資料管理',
+  '直接讀寫 Firebase 上的物件資料（原 Ragic「物件資訊」表單已搬移至此）。': 'Firebase上の物件データを直接読み書きします（旧Ragicの「物件資訊」フォームはこちらに移行済み）。',
+  '新增／編輯': '新規／編集',
+  '欄位設定': '項目設定',
+  '輸入物件編號、客戶編號、地址或客戶姓名搜尋': '物件番号・顧客番号・住所・顧客名で検索',
+  '＋ 新增物件': '＋ 新規物件',
+  '清除篩選': '絞り込み解除',
+  '（單位：萬）': '（単位：万円）',
+  '‹ 上一頁': '‹ 前へ',
+  '下一頁 ›': '次へ ›',
+  '試著改一下「租金」「購買金額」這些數字，看看「投報率換算」是不是會自動重新計算。': '「賃料」「購入金額」の数字を変えてみて、「利回り換算」が自動で再計算されるか試してください。',
+  '每個「大分類」區塊右上角有自己的「＋ 欄位」按鈕，新欄位就會加在那裡，不會再跑錯地方。下拉選單的選項可以直接在下面新增／刪除。欄位類型多了「文件添加」，可以像 Ragic 一樣直接上傳 PDF 等檔案。': '各「大分類」ブロックの右上に専用の「＋ 項目」ボタンがあり、新しい項目はそこに追加されます。ドロップダウンの選択肢は下で直接追加／削除できます。項目タイプに「ファイル添付」が追加され、Ragicのように PDF などのファイルを直接アップロードできます。',
+  '儲存變更': '変更を保存',
+  '✓ 已儲存': '✓ 保存済み',
+  '＋ 新增大分類': '＋ 大分類を追加',
+  '這個物件的客戶擔當不是您，這裡只能查看，不能修改或儲存。': 'この物件の担当者はあなたではないため、閲覧のみ可能で、変更・保存はできません。',
+  '目前還沒有資料，按下面「＋ 新增一列」開始新增': 'まだデータがありません。下の「＋ 行を追加」から始めてください',
+  '目前還沒有資料': 'まだデータがありません',
+  '＋ 新增一列': '＋ 行を追加',
+  '物件編號': '物件番号',
+  '客戶編號': '顧客番号',
+  '物件地址': '物件住所',
+  '利用型態': '利用形態',
+  '物件類型/備註': '物件種別／備考',
+  '購買金額': '購入金額',
+  '投報率換算': '利回り換算',
+  // ---- 客戶資料（customers）----
+  '客戶資料管理': '顧客資料管理',
+  '直接讀寫 Firebase 上的客戶資料（原 Ragic「客戶資料」表單已搬移至此）。': 'Firebase上の顧客データを直接読み書きします（旧Ragicの「客戶資料」フォームはこちらに移行済み）。',
+  '輸入客戶編號、客戶姓名或地址搜尋': '顧客番号・氏名・住所で検索',
+  '＋ 新增客戶': '＋ 新規顧客',
+  '欄位內容修改後按「儲存」才會真的存進 Firebase。': '項目を変更した後「保存」を押すと Firebase に反映されます。',
+  '刪除這位客戶': 'この顧客を削除',
+  '客戶名稱': '顧客名',
+  '帳單完整地址': '請求先住所',
+  '電話號碼': '電話番号',
+  // ---- 共用（管理選項小視窗・按鈕・欄位設定等，多個模組共用）----
+  '新增或刪除這個選單的選項，儲存後所有人畫面上都會立刻更新。': 'この選択肢の追加・削除ができます。保存すると全員の画面にすぐ反映されます。',
+  '目前沒有選項': '選択肢がありません',
+  '輸入新選項名稱': '新しい選択肢名を入力',
+  '加入': '追加',
+  '關閉': '閉じる',
+  '刪除': '削除',
+  '儲存': '保存',
+  '取消': 'キャンセル',
+  '編輯': '編集',
+  '全部': 'すべて',
+  '最低': '最小',
+  '最高': '最大',
+  '是': 'はい',
+  '否': 'いいえ',
+  '（可查看全部案子）': '（すべての案件を閲覧可）',
+  '（只能查看自己擔當的案子）': '（自分の担当案件のみ閲覧可）'
+};
+/* 較長、較specific的片語要優先比對，避免被較短的片語卡住（例如先比對「簽約日期」才比對「簽約：」）*/
+const GB_I18N_DICT_KEYS = Object.keys(GB_I18N_DICT)
+  .filter(k => GB_I18N_DICT[k] !== '' && GB_I18N_DICT[k] !== k)
+  .sort((a,b)=> b.length - a.length);
+const GB_I18N_PATTERNS = [
+  [/共\s*(\d+)\s*筆，第\s*(\d+)\s*\/\s*(\d+)\s*頁（每頁\s*(\d+)\s*筆）/g, (m,a,b,c,d)=>`合計 ${a} 件、${b} / ${c} ページ（1ページ ${d} 件）`],
+  [/共\s*0\s*筆/g, ()=>'合計 0 件'],
+  [/(\d+)年(\d+)月交屋/g, (m,y,mo)=>`${y}年${mo}月引渡`]
+];
+const GB_HAS_CJK = /[一-鿿]/;
+function gbTranslatePhrase(text){
+  if(!text || !GB_HAS_CJK.test(text)) return null;
+  let out = text, changed = false;
+  for(const key of GB_I18N_DICT_KEYS){
+    if(out.indexOf(key) !== -1){ out = out.split(key).join(GB_I18N_DICT[key]); changed = true; }
+  }
+  for(const [re, fn] of GB_I18N_PATTERNS){
+    if(re.test(out)){ out = out.replace(re, fn); changed = true; }
+  }
+  return changed ? out : null;
+}
+function gbTranslateWalk(root){
+  if(!root || root.nodeType === undefined) return;
+  if(root.closest && root.closest('[data-i18n]')) return;
+  const walker = document.createTreeWalker(root.nodeType===3 ? root.parentNode : root, NodeFilter.SHOW_TEXT, {
+    acceptNode(n){
+      const p = n.parentElement;
+      if(!p) return NodeFilter.FILTER_REJECT;
+      if(p.closest('script,style,textarea,[data-i18n]')) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  const nodes = [];
+  let n; while(n = walker.nextNode()) nodes.push(n);
+  nodes.forEach(node=>{
+    if(node.__gbZhOriginal !== undefined) return;
+    const raw = node.textContent;
+    const translated = gbTranslatePhrase(raw);
+    if(translated !== null && translated !== raw){
+      node.__gbZhOriginal = raw;
+      node.textContent = translated;
+    }
+  });
+  if(root.querySelectorAll){
+    root.querySelectorAll('[placeholder]').forEach(el=>{
+      if(el.dataset.gbPhZh !== undefined) return;
+      const ph = el.getAttribute('placeholder');
+      const t = gbTranslatePhrase(ph);
+      if(t !== null && t !== ph){ el.dataset.gbPhZh = ph; el.setAttribute('placeholder', t); }
+    });
+    root.querySelectorAll('[title]').forEach(el=>{
+      if(el.hasAttribute('data-gb-title-zh')) return;
+      const ti = el.getAttribute('title');
+      const t = gbTranslatePhrase(ti);
+      if(t !== null && t !== ti){ el.setAttribute('data-gb-title-zh', ti); el.setAttribute('title', t); }
+    });
+  }
+}
+function gbRestoreZh(root){
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let n;
+  while(n = walker.nextNode()){
+    if(n.__gbZhOriginal !== undefined){ n.textContent = n.__gbZhOriginal; delete n.__gbZhOriginal; }
+  }
+  root.querySelectorAll('[data-gb-ph-zh], [data-gb-title-zh]').forEach(el=>{
+    if(el.dataset.gbPhZh !== undefined){ el.setAttribute('placeholder', el.dataset.gbPhZh); delete el.dataset.gbPhZh; }
+    if(el.hasAttribute('data-gb-title-zh')){ el.setAttribute('title', el.getAttribute('data-gb-title-zh')); el.removeAttribute('data-gb-title-zh'); }
+  });
+}
+let gbBodyObserver = null;
+function gbEnsureBodyObserver(){
+  if(gbBodyObserver) return;
+  gbBodyObserver = new MutationObserver((mutations)=>{
+    if(document.documentElement.getAttribute('lang') !== 'ja') return;
+    const roots = new Set();
+    mutations.forEach(m=>{
+      m.addedNodes && m.addedNodes.forEach(nd=>{
+        if(nd.nodeType===1) roots.add(nd);
+        else if(nd.nodeType===3 && nd.parentElement) roots.add(nd.parentElement);
+      });
+    });
+    roots.forEach(r=> gbTranslateWalk(r));
+  });
+  gbBodyObserver.observe(document.body, {childList:true, subtree:true});
+}
+function gbApplyLang(lang){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key = el.dataset.i18n;
+    if(lang === 'ja' && GB_I18N.ja[key]) el.textContent = GB_I18N.ja[key];
+    else if(lang === 'zh' && el.dataset.i18nZh) el.textContent = el.dataset.i18nZh;
+  });
+  const label = document.getElementById('langToggleLabel');
+  if(label) label.textContent = (lang === 'ja') ? '中文' : '日本語';
+  document.documentElement.setAttribute('lang', lang === 'ja' ? 'ja' : 'zh-Hant');
+  if(lang === 'ja'){ gbTranslateWalk(document.body); gbEnsureBodyObserver(); }
+  else { gbRestoreZh(document.body); }
+  try{ localStorage.setItem(GB_LANG_KEY, lang); }catch(e){}
+}
+function gbToggleLang(){
+  const current = document.documentElement.getAttribute('lang') === 'ja' ? 'ja' : 'zh';
+  gbApplyLang(current === 'ja' ? 'zh' : 'ja');
+}
+(function gbInitLang(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.dataset.i18nZh = el.textContent; });
+  let saved = 'zh';
+  try{ saved = localStorage.getItem(GB_LANG_KEY) || 'zh'; }catch(e){}
+  gbApplyLang(saved);
+})();
+
 function setTxnMode(mode){
   const sel = document.getElementById('txn_mode');
   if(sel && sel.value !== mode){
@@ -3409,8 +3675,15 @@ function generateAll(){
   const isMansion = $('f_type') === 'マンション';
   const traffic = collectLines('f_traffic_list');
   const nearby = collectNearby();
-  const ownerName = document.getElementById('k_same_owner').checked ? $('k_name') : $('o_name');
-  const ownerAddr = document.getElementById('k_same_owner').checked ? $('k_address') : $('o_address');
+  const kExtra = collectKV('k_extra_list');
+  const kList = [{name:$('k_name'), address:$('k_address')}, ...kExtra.map(x=>({name:x.k, address:x.v}))]
+    .filter(p => p.name.trim() !== '' || p.address.trim() !== '');
+  const ownerName = document.getElementById('k_same_owner').checked
+    ? (kList.length ? kList.map(p=>p.name).filter(Boolean).join('、') : $('k_name'))
+    : $('o_name');
+  const ownerAddr = document.getElementById('k_same_owner').checked
+    ? [...new Set(kList.map(p=>p.address).filter(Boolean))].join('、')
+    : $('o_address');
 
   const sideRow = (label, value, wide) => value ? `<div class="srow${wide?' biko':''}"><b>${label}</b><span>${value}</span></div>` : '';
 
@@ -3539,8 +3812,7 @@ function generateAll(){
     <div class="sign-block">
       <div class="box">
         <b>甲・依頼者</b>
-        <div>住所：${$('k_address')}</div>
-        <div>氏名：${$('k_name')}　㊞</div>
+        ${kList.length ? kList.map(p=>`<div style="margin-bottom:6px;">住所：${p.address}<br>氏名：${p.name}　㊞</div>`).join('') : `<div>住所：${$('k_address')}</div><div>氏名：${$('k_name')}　㊞</div>`}
       </div>
       <div class="box">
         <b>乙・宅地建物取引業者</b>
@@ -4392,7 +4664,8 @@ const DYN_LIST_ADDERS = {
   s2_list6: ()=>addKVRow('s2_list6','項目（例：保険会社支払金額）','金額（円）'),
   s2_list7: ()=>addKVRow('s2_list7','項目（例：印紙代）','金額（円）'),
   ic_extra_list: ()=>addKVRow('ic_extra_list','項目','金額（円）'),
-  ld_occupant_list: ()=>addKVRow('ld_occupant_list','氏名（例：白 安理）','年齢・続柄（例：45歳・配偶者）')
+  ld_occupant_list: ()=>addKVRow('ld_occupant_list','氏名（例：白 安理）','年齢・続柄（例：45歳・配偶者）'),
+  k_extra_list: ()=>addKVRow('k_extra_list','氏名','住所')
 };
 
 function collectDynLists(){
