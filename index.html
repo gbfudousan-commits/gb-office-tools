@@ -67,6 +67,17 @@
   .menu-modal-add button{padding:7px 16px;border:none;border-radius:6px;background:#2d6a4f;color:#fff;font-size:13px;cursor:pointer;}
   .menu-modal-close{display:block;width:100%;margin-top:14px;padding:8px;border:1px solid #ddd;border-radius:6px;background:#fafafa;cursor:pointer;font-size:13px;color:#555;}
   .menu-modal-empty{font-size:12px;color:#999;padding:6px 0;}
+  .flyer-layout-option{border:2px solid var(--line);border-radius:8px;padding:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;width:200px;transition:border-color .15s,background .15s;}
+  .flyer-layout-option:hover{border-color:var(--navy);}
+  .flyer-layout-option.selected{border-color:var(--navy-dark);background:#eef7fb;}
+  .flyer-layout-option input{display:none;}
+  .flyer-layout-preview{width:100%;height:110px;display:flex;flex-direction:column;gap:3px;background:#fff;border:1px solid #ddd;border-radius:4px;padding:4px;box-sizing:border-box;}
+  .flyer-layout-label{font-size:12.5px;font-weight:600;color:#333;}
+  .fld-plan{background:#e3f2f7;border:1px dashed #7fb8cc;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#0b7da3;flex:1;min-width:0;min-height:0;}
+  .fld-row{display:flex;gap:3px;min-height:0;}
+  .fld-col{display:flex;flex-direction:column;gap:3px;min-height:0;}
+  .fld-grid2x2{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:3px;}
+  .fld-photo{background:#fdf3e3;border:1px dashed #d8b46a;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#a97a1e;flex:1;min-width:0;min-height:0;}
   nav{display:flex;background:var(--navy-dark);}
   nav button{flex:1;padding:12px;border:none;background:transparent;color:#cfd8e3;cursor:pointer;font-size:14px;border-bottom:3px solid transparent;}
   nav button.active{color:#fff;border-bottom-color:var(--gold);background:rgba(255,255,255,.06);}
@@ -138,9 +149,23 @@
   .fl-main{display:flex;flex-direction:column;gap:6px;overflow:hidden;min-height:0;}
   .fl-points{font-size:11.5px;line-height:1.5;flex:0 0 auto;max-height:22mm;overflow:hidden;}
   .fl-points b{color:var(--navy-dark);}
-  .fl-media{flex:1;display:flex;gap:8px;min-height:0;overflow:hidden;}
-  .fl-photos{width:36mm;display:flex;flex-direction:column;gap:4px;overflow:hidden;flex:0 0 auto;}
-  .fl-photos img{width:100%;flex:1;object-fit:cover;border-radius:3px;min-height:0;border:1px solid var(--line);}
+  .fl-media{flex:1;display:flex;flex-direction:column;gap:4px;min-height:0;overflow:hidden;}
+  .fl-top-row{display:flex;gap:4px;min-height:0;overflow:hidden;}
+  .fl-bottom-row{display:flex;gap:4px;min-height:0;overflow:hidden;}
+  .fl-side-stack{display:flex;flex-direction:column;gap:4px;min-height:0;overflow:hidden;}
+  .fl-grid2x2{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:3px;min-height:0;overflow:hidden;}
+  .fl-bottom-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr);gap:3px;min-height:0;overflow:hidden;}
+  .fl-media[data-layout="2"] .fl-top-row{flex:3;}
+  .fl-media[data-layout="2"] .fl-bottom-row{flex:1;}
+  .fl-media[data-layout="5"] .fl-top-row{flex:2;}
+  .fl-media[data-layout="5"] .fl-top-row .fl-plan{flex:3;}
+  .fl-media[data-layout="5"] .fl-top-row .fl-side-stack{flex:1;}
+  .fl-media[data-layout="5"] .fl-bottom-row{flex:1;}
+  .fl-media[data-layout="12"] .fl-top-row{flex:1;}
+  .fl-media[data-layout="12"] .fl-top-row .fl-plan{flex:1;}
+  .fl-media[data-layout="12"] .fl-top-row .fl-grid2x2{flex:1;}
+  .fl-media[data-layout="12"] .fl-bottom-grid{flex:1;}
+  .fl-top-row .fl-photo-img, .fl-bottom-row .fl-photo-img, .fl-grid2x2 .fl-photo-img, .fl-bottom-grid .fl-photo-img{flex:1;width:100%;height:100%;object-fit:cover;border-radius:2px;min-height:0;border:1px solid var(--line);}
   .fl-plan{flex:1;display:flex;gap:4px;align-items:stretch;justify-content:center;overflow:hidden;background:#fafafa;border:1px solid var(--line);border-radius:3px;min-height:0;}
   .fl-plan img{flex:1;max-width:100%;object-fit:contain;min-width:0;}
   .fl-nearby{flex:0 0 auto;font-size:10.5px;columns:2;column-gap:14px;max-height:16mm;overflow:hidden;color:#333;}
@@ -1447,7 +1472,7 @@
       <legend>写真・図面アップロード</legend>
       <div class="row">
         <div class="field">
-          <label>外観・室内写真</label>
+          <label>外観・室内写真（資料生成時に2／5／12枚から表示枚数を選べます）</label>
           <input type="file" id="f_photos" accept="image/*" multiple>
           <div class="file-count" id="photoCountText">未選択</div>
         </div>
@@ -1608,7 +1633,7 @@
     </div>
 
     <div class="toolbar no-print">
-      <button class="btn" onclick="generateAll()">▶ 資料を生成する（②③タブへ反映）</button>
+      <button class="btn" onclick="openFlyerLayoutModal()">▶ 資料を生成する（②③タブへ反映）</button>
       <button class="btn secondary" onclick="quickSaveToHistory()">💾 儲存這筆資料（存到歷史記錄）</button>
     </div>
   </div>
@@ -3175,6 +3200,7 @@ function collectMilestones(){
 let photoStore=[], planStore=[], logoStore=CONFIG.company.logo, photoWarnings=[];
 window.photoStore = photoStore;
 window.planStore = planStore;
+let flyerPhotoLayout = '5';
 
 /* Resize/convert any readable image to a compact JPEG dataURL via canvas.
    If the resize step itself has trouble, fall back to the original dataURL
@@ -3284,6 +3310,95 @@ function fmtDateJP(dateStr){
 }
 
 /* ---------- MAIN GENERATE ---------- */
+/* ---------- FLYER PHOTO LAYOUT (間取り図＋写真2/5/12枚) ---------- */
+function buildFlyerMedia(layout){
+  const planHtml = planStore.length
+    ? planStore.slice(0,3).map(s=>`<img src="${s}">`).join('')
+    : '<span style="color:#aaa;font-size:11px;">間取図未アップロード</span>';
+  const noPhoto = '<span style="color:#aaa;font-size:11px;">写真未アップロード</span>';
+  const img = s => `<img class="fl-photo-img" src="${s}">`;
+
+  if(layout === '2'){
+    const p = photoStore.slice(0,2);
+    return `<div class="fl-media" data-layout="2">
+      <div class="fl-top-row"><div class="fl-plan">${planHtml}</div></div>
+      <div class="fl-bottom-row">${p.length?p.map(img).join(''):noPhoto}</div>
+    </div>`;
+  }
+  if(layout === '12'){
+    const p = photoStore.slice(0,12);
+    const top4 = p.slice(0,4), rest8 = p.slice(4,12);
+    return `<div class="fl-media" data-layout="12">
+      <div class="fl-top-row">
+        <div class="fl-plan">${planHtml}</div>
+        <div class="fl-grid2x2">${top4.length?top4.map(img).join(''):noPhoto}</div>
+      </div>
+      <div class="fl-bottom-grid">${rest8.map(img).join('')}</div>
+    </div>`;
+  }
+  /* default: '5' */
+  const p = photoStore.slice(0,5);
+  const side2 = p.slice(0,2), bottom3 = p.slice(2,5);
+  return `<div class="fl-media" data-layout="5">
+    <div class="fl-top-row">
+      <div class="fl-plan">${planHtml}</div>
+      <div class="fl-side-stack">${side2.length?side2.map(img).join(''):noPhoto}</div>
+    </div>
+    <div class="fl-bottom-row">${bottom3.map(img).join('')}</div>
+  </div>`;
+}
+
+function flyerLayoutDiagram(kind){
+  if(kind==='2') return `<div class="fld-plan" style="height:60%;">間取り図</div><div class="fld-row" style="height:38%;"><div class="fld-photo">写真1</div><div class="fld-photo">写真2</div></div>`;
+  if(kind==='12') return `<div class="fld-row" style="height:48%;"><div class="fld-plan" style="flex:1;">間取り図</div><div class="fld-grid2x2" style="flex:1;">${[1,2,3,4].map(n=>`<div class="fld-photo">写${n}</div>`).join('')}</div></div><div class="fld-row" style="height:48%;">${[5,6,7,8,9,10,11,12].map(n=>`<div class="fld-photo">${n}</div>`).join('')}</div>`;
+  return `<div class="fld-row" style="height:60%;"><div class="fld-plan" style="flex:2;">間取り図</div><div class="fld-col" style="flex:1;"><div class="fld-photo">写真1</div><div class="fld-photo">写真2</div></div></div><div class="fld-row" style="height:38%;"><div class="fld-photo">写真3</div><div class="fld-photo">写真4</div><div class="fld-photo">写真5</div></div>`;
+}
+
+function flyerLayoutModalHtml(){
+  const count = photoStore.length;
+  const opt = (val,label) => `
+    <label class="flyer-layout-option${flyerPhotoLayout===val?' selected':''}">
+      <input type="radio" name="flyerLayoutRadio" value="${val}" ${flyerPhotoLayout===val?'checked':''} onchange="flyerSelectLayout('${val}',this)">
+      <div class="flyer-layout-preview">${flyerLayoutDiagram(val)}</div>
+      <div class="flyer-layout-label">間取り図＋写真${label}枚</div>
+    </label>`;
+  return `
+    <div class="menu-modal-box" style="width:min(760px,96vw);">
+      <h3>物件資料出力</h3>
+      <p class="menu-modal-hint">目前已上傳 <b>${count}</b> 張照片。請選擇要使用的照片版面（間取り図會自動一起顯示）：</p>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin:10px 0 6px;">
+        ${opt('2','2')}
+        ${opt('5','5')}
+        ${opt('12','12')}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="btn primary" style="flex:1;" onclick="document.getElementById('flyerLayoutOverlay').remove();generateAll();">產生資料</button>
+        <button class="menu-modal-close" style="flex:1;margin-top:0;" onclick="document.getElementById('flyerLayoutOverlay').remove()">取消</button>
+      </div>
+    </div>`;
+}
+
+function flyerSelectLayout(val, el){
+  flyerPhotoLayout = val;
+  document.querySelectorAll('.flyer-layout-option').forEach(o=>o.classList.remove('selected'));
+  if(el) el.closest('.flyer-layout-option').classList.add('selected');
+}
+
+function openFlyerLayoutModal(){
+  if(document.getElementById('txn_mode').value === '賃貸'){
+    generateAll();
+    return;
+  }
+  let overlay = document.getElementById('flyerLayoutOverlay');
+  if(overlay) overlay.remove();
+  overlay = document.createElement('div');
+  overlay.className = 'menu-modal-overlay';
+  overlay.id = 'flyerLayoutOverlay';
+  overlay.innerHTML = flyerLayoutModalHtml();
+  overlay.addEventListener('click', (ev)=>{ if(ev.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
 function generateAll(){
   if(document.getElementById('txn_mode').value === '賃貸'){
     generateRentalFlyer();
@@ -3311,12 +3426,7 @@ function generateAll(){
     <div class="fl-traffic">${traffic.map(t=>'交通　'+t).join('　｜　')}</div>
   `;
 
-  const mediaHtml = `
-    <div class="fl-media">
-      ${photoStore.length?`<div class="fl-photos">${photoStore.slice(0,4).map(s=>`<img src="${s}">`).join('')}</div>`:''}
-      <div class="fl-plan">${planStore.length?planStore.slice(0,3).map(s=>`<img src="${s}">`).join(''):'<span style="color:#aaa;font-size:11px;">間取図未アップロード</span>'}</div>
-    </div>
-  `;
+  const mediaHtml = buildFlyerMedia(flyerPhotoLayout);
 
   const pointsBody = ($('f_points')||'').split('\n').slice(1).join('\n') || $('f_points') || '';
   const pointsHtml = pointsBody ? `<div class="fl-points"><b>～おすすめポイント～</b><br>${pointsBody.replace(/\n/g,'<br>')}</div>` : '';
@@ -3528,7 +3638,7 @@ function generateRentalFlyer(){
 
   const photosBlock = `
     <div class="rent-photos">
-      ${photoStore.length?photoStore.slice(0,7).map(s=>`<img src="${s}">`).join(''):'<div style="display:flex;align-items:center;justify-content:center;color:#aaa;font-size:11px;grid-column:1/3;">写真未アップロード</div>'}
+      ${photoStore.length?photoStore.slice(0,10).map(s=>`<img src="${s}">`).join(''):'<div style="display:flex;align-items:center;justify-content:center;color:#aaa;font-size:11px;grid-column:1/3;">写真未アップロード</div>'}
     </div>
   `;
 
