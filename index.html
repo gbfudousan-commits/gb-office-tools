@@ -478,6 +478,15 @@
 #panel-properties .pp-cust-suggest-item{padding:8px 10px;font-size:13px;cursor:pointer;}
 #panel-properties .pp-cust-suggest-item:hover{background:var(--pp-accent-soft);}
 
+/* 進度追蹤（#panel-tracker）客戶姓名下拉選單，跟上面 pp-cust-suggest 同一套樣式，只是換個命名空間跟共用的全域變數 */
+.tr-cust-suggest{
+  position:absolute;top:100%;left:0;right:0;z-index:20;
+  background:#fff;border:1px solid var(--line);border-radius:8px;
+  max-height:220px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.08);margin-top:2px;
+}
+.tr-cust-suggest-item{padding:8px 10px;font-size:13px;cursor:pointer;}
+.tr-cust-suggest-item:hover{background:#eef5fa;}
+
 /* ============ 客戶資料管理（新功能，命名空間 #panel-customers 底下） ============ */
 
   #panel-customers{
@@ -1277,13 +1286,13 @@
 
 <nav class="main-nav">
   <button class="main-nav-btn" data-module="docgen" onclick="gbActivateDocgen();return false;"><span class="main-nav-icon">📄</span><span data-i18n="nav_docgen">文件產生</span></button>
-  <button class="main-nav-btn" data-module="properties" id="propertiesHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-properties').classList.add('active');renderList();return false;"><span class="main-nav-icon">🏠</span><span data-i18n="nav_properties">物件管理</span></button>
-  <button class="main-nav-btn" data-module="customers" id="customersHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-customers').classList.add('active');ccRenderList();return false;"><span class="main-nav-icon">👤</span><span data-i18n="nav_customers">客戶資料</span></button>
-  <button class="main-nav-btn" data-module="monthlyreports" id="monthlyReportsHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-monthlyreports').classList.add('active');mrRenderList();return false;"><span class="main-nav-icon">📊</span><span data-i18n="nav_monthlyreports">月次報告書</span></button>
-  <button class="main-nav-btn" data-module="customer-accounts" id="customerAccountsHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-customer-accounts').classList.add('active');caBackToList();return false;"><span class="main-nav-icon">💳</span><span data-i18n="nav_customeraccounts">客戶帳戶</span></button>
-  <button class="main-nav-btn" data-module="ledger" id="ledgerHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-ledger').classList.add('active');glRenderAll();return false;"><span class="main-nav-icon">📒</span><span data-i18n="nav_ledger">總帳</span></button>
-  <button class="main-nav-btn" data-module="tracker" id="trackerHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-tracker').classList.add('active');return false;"><span class="main-nav-icon">📈</span><span data-i18n="nav_tracker">進度追蹤</span></button>
-  <button class="main-nav-btn" data-module="todo" id="todoHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-todo').classList.add('active');const tds=document.getElementById('td_filter_status');if(tds)tds.value='待辦中';renderTodoList();return false;"><span class="main-nav-icon">✅</span><span data-i18n="nav_todo">代辦事項</span></button>
+  <button class="main-nav-btn" data-module="properties" id="propertiesHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-properties').classList.add('active');ppInitData();renderList();return false;"><span class="main-nav-icon">🏠</span><span data-i18n="nav_properties">物件管理</span></button>
+  <button class="main-nav-btn" data-module="customers" id="customersHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-customers').classList.add('active');ccInitData();ccRenderList();return false;"><span class="main-nav-icon">👤</span><span data-i18n="nav_customers">客戶資料</span></button>
+  <button class="main-nav-btn" data-module="monthlyreports" id="monthlyReportsHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-monthlyreports').classList.add('active');mrInitData();mrRenderList();return false;"><span class="main-nav-icon">📊</span><span data-i18n="nav_monthlyreports">月次報告書</span></button>
+  <button class="main-nav-btn" data-module="customer-accounts" id="customerAccountsHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-customer-accounts').classList.add('active');ensureSharedPropertiesListener();ensureSharedCustomersListener();ensureSharedMonthlyReportsListener();caBackToList();return false;"><span class="main-nav-icon">💳</span><span data-i18n="nav_customeraccounts">客戶帳戶</span></button>
+  <button class="main-nav-btn" data-module="ledger" id="ledgerHeaderLink" style="display:none;" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-ledger').classList.add('active');glInitData();glRenderAll();return false;"><span class="main-nav-icon">📒</span><span data-i18n="nav_ledger">總帳</span></button>
+  <button class="main-nav-btn" data-module="tracker" id="trackerHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-tracker').classList.add('active');ensureSharedCustomersListener();return false;"><span class="main-nav-icon">📈</span><span data-i18n="nav_tracker">進度追蹤</span></button>
+  <button class="main-nav-btn" data-module="todo" id="todoHeaderLink" onclick="document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-todo').classList.add('active');ppInitData();const tds=document.getElementById('td_filter_status');if(tds)tds.value='待辦中';renderTodoList();return false;"><span class="main-nav-icon">✅</span><span data-i18n="nav_todo">代辦事項</span></button>
 </nav>
 
 <nav class="category-nav">
@@ -2391,7 +2400,14 @@
           <div class="field wide"><label>物件</label><input id="tr_property"></div>
         </div>
         <div class="row">
-          <div class="field"><label>客戶姓名</label><input id="tr_client"></div>
+          <div class="field" style="position:relative;"><label>客戶姓名</label>
+            <input id="tr_client" autocomplete="off"
+              oninput="trCustomerAutocomplete(this)"
+              onfocus="trCustomerAutocomplete(this)"
+              onblur="setTimeout(()=>trHideCustomerSuggest(this), 150)">
+            <input type="hidden" id="tr_customer_no">
+            <div class="tr-cust-suggest" style="display:none;"></div>
+          </div>
           <div class="field"><label>擔當人員</label>
             <select id="tr_staff"></select>
           </div>
@@ -2773,6 +2789,7 @@
       <div class="list-toolbar">
         <select id="gl-cfYear"></select>
         <select id="gl-cfMonth"></select>
+        <select id="gl-cfCategory"></select>
         <button class="btn primary" onclick="glFocusBlankRow()">＋ 跳到最下面新增</button>
         <button class="btn" onclick="glOpenOpeningBalanceForm()">⚙ 設定期初餘額</button>
         <button type="button" class="menu-manage-btn" onclick="menuOpenManager('gl_income_categories','分類清單－收入')">管理收入分類</button>
@@ -3285,6 +3302,14 @@ function gbTranslateWalk(root){
     const raw = node.textContent;
     const translated = gbTranslatePhrase(raw);
     if(translated !== null && translated !== raw){
+      // <option>中文</option> 這種沒有寫 value="" 的選項，瀏覽器預設會把「顯示文字」當成它的值；
+      // 這裡把顯示文字翻成日文之前，先把原本的中文字補成明確的 value，
+      // 這樣不管畫面顯示中文還是日文，程式邏輯讀到的選項值永遠是同一個中文字串，
+      // 存檔、篩選、比對狀態（例如「待辦中」「是／否」）才不會因為切換語言而跑掉。
+      const p = node.parentElement;
+      if(p && p.tagName === 'OPTION' && !p.hasAttribute('value')){
+        p.setAttribute('value', raw);
+      }
       node.__gbZhOriginal = raw;
       node.textContent = translated;
     }
@@ -4907,10 +4932,25 @@ function initFirebaseTracker(){
         if(typeof glUnsubEntries === 'function'){ glUnsubEntries(); glUnsubEntries = null; }
         if(typeof glUnsubExtra === 'function'){ glUnsubExtra(); glUnsubExtra = null; }
         if(typeof glUnsubAdj === 'function'){ glUnsubAdj(); glUnsubAdj = null; }
+        if(typeof glUnsubMr === 'function'){ glUnsubMr(); glUnsubMr = null; }
         if(typeof notifUnsubLog === 'function'){ notifUnsubLog(); notifUnsubLog = null; }
         const notifWrap = document.getElementById('notifWrap');
         if(notifWrap) notifWrap.style.display = 'none';
         if(typeof mrUnsubPropertyList === 'function'){ mrUnsubPropertyList(); mrUnsubPropertyList = null; }
+        if(typeof ppUnsubCustomerList === 'function'){ ppUnsubCustomerList(); ppUnsubCustomerList = null; }
+        if(typeof ppUnsubMonthlyReportList === 'function'){ ppUnsubMonthlyReportList(); ppUnsubMonthlyReportList = null; }
+        // 上面那幾個變數，現在有好幾個其實是指向同一份共用監聽（見 ensureShared*Listener），
+        // 重複呼叫同一個取消訂閱函式沒有副作用；這裡再把共用監聽本身的旗標也清掉，
+        // 這樣下次登入（同一頁、換帳號）才會重新訂閱，不會誤以為「已經在監聽了」而抓不到新資料。
+        sharedCustomersUnsub = null;
+        sharedPropertiesUnsub = null;
+        sharedMonthlyReportsUnsub = null;
+        // 懶載入（Tier 2）：每個模組的資料監聽只在「第一次點進該分頁」時才啟動，
+        // 這裡登出時也要把「是否已經啟動過」的旗標重置，不然重新登入後點進分頁會誤以為已經載入過而不再訂閱。
+        ppDataInited = false;
+        ccDataInited = false;
+        mrDataInited = false;
+        glDataInited = false;
         gate.style.display = 'flex';
       }
     });
@@ -5133,9 +5173,79 @@ function toggleTrackerType(){
   if(scrivenerField) scrivenerField.style.display = isRental ? 'none' : '';
 }
 
+/* 進度追蹤「客戶姓名」欄位的自動完成：打字篩選客戶清單（顯示「客戶姓名（客戶編號）」），
+   選了會自動帶出客戶編號存進隱藏欄位 tr_customer_no；找不到符合的客戶時，
+   清單最下面會出現「＋ 新增客戶」，直接在這裡新增，新客戶會透過 ccQuickCreateCustomer 同步存進「客戶資料」。
+   共用「物件管理」模組已經在監聽的 ppCustomerList，不用再開一個新的 Firestore 監聽。 */
+function trCustomerAutocomplete(inputEl){
+  const box = inputEl.parentElement.querySelector('.tr-cust-suggest');
+  if(!box) return;
+  const kw = (inputEl.value||'').trim();
+  const list = (typeof ppCustomerList !== 'undefined') ? ppCustomerList : [];
+
+  if(typeof ppCustomerListLoaded === 'undefined' || !ppCustomerListLoaded){
+    box.innerHTML = `<div class="tr-cust-suggest-item" style="color:#888;cursor:default;">客戶資料載入中…請稍候幾秒再試一次</div>`;
+    box.style.display = 'block';
+    return;
+  }
+
+  let matches = list;
+  if(kw){
+    matches = list.filter(c => (c.customer_no||'').includes(kw) || (c.customer_name||'').includes(kw));
+  }
+  matches = matches.slice(0, 300);
+
+  let html = matches.map(c=>{
+    const no = (c.customer_no||'').replace(/'/g, "\\'");
+    const name = (c.customer_name||'').replace(/'/g, "\\'");
+    return `<div class="tr-cust-suggest-item" onmousedown="trSelectCustomer(this, '${no}', '${name}')">${c.customer_name||''}　（${c.customer_no||''}）</div>`;
+  }).join('');
+
+  const exactNameMatch = kw && list.some(c => c.customer_name === kw);
+  if(kw && !exactNameMatch){
+    // 這裡故意不把姓名直接寫死存進 onmousedown 的字串裡——
+    // 如果姓名裡有「・」這種特殊符號，中間經過組字輸入法（尤其是連續切換中日文輸入時）打字跟畫面重新整理的時間差，
+    // 有可能點下去的時候用到的是稍早、還沒打完整的舊版文字。改成點擊當下才重新去讀輸入框「現在」的內容，
+    // 確保新增的客戶姓名一定是使用者最後看到、最後打完的那個版本，不會漏字或漏符號。
+    html += `<div class="tr-cust-suggest-item" style="color:var(--navy-dark);font-weight:600;" onmousedown="trQuickAddCustomer(this)">＋ 新增客戶：「${kw}」</div>`;
+  }
+  if(!html){
+    html = `<div class="tr-cust-suggest-item" style="color:#888;cursor:default;">目前還沒有任何客戶資料</div>`;
+  }
+  box.innerHTML = html;
+  box.style.display = 'block';
+}
+function trSelectCustomer(itemEl, customerNo, customerName){
+  const box = itemEl.closest('.tr-cust-suggest');
+  document.getElementById('tr_client').value = customerName;
+  document.getElementById('tr_customer_no').value = customerNo || '';
+  box.style.display = 'none';
+  box.innerHTML = '';
+}
+function trHideCustomerSuggest(inputEl){
+  const box = inputEl.parentElement.querySelector('.tr-cust-suggest');
+  if(box) box.style.display = 'none';
+}
+async function trQuickAddCustomer(itemEl){
+  const box = itemEl.closest('.tr-cust-suggest');
+  // 點擊當下才重新讀取輸入框現在的內容（不是用畫面重新整理當下存的舊字），避免漏字/漏符號
+  const name = (document.getElementById('tr_client').value || '').trim();
+  itemEl.textContent = '新增中…';
+  itemEl.style.pointerEvents = 'none';
+  try{
+    const created = await ccQuickCreateCustomer(name);
+    document.getElementById('tr_client').value = created.customer_name;
+    document.getElementById('tr_customer_no').value = created.customer_no || '';
+  }catch(err){
+    alert('新增客戶失敗：'+err.message);
+  }
+  box.style.display = 'none';
+  box.innerHTML = '';
+}
+
 function resetTrackerForm(){
   editingCaseId = null;
-  ['tr_property','tr_client','tr_scrivener','tr_explain_date','tr_sign_date','tr_handover_date','tr_note'].forEach(id=>{
+  ['tr_property','tr_client','tr_customer_no','tr_scrivener','tr_explain_date','tr_sign_date','tr_handover_date','tr_note'].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.value = '';
   });
@@ -5162,6 +5272,7 @@ function saveCaseToTracker(){
     subtype: isRental ? '' : $('tr_subtype'),
     property: $('tr_property'),
     client: $('tr_client'),
+    customerNo: $('tr_customer_no'),
     staff: $('tr_staff'),
     scrivener: isRental ? '' : $('tr_scrivener'),
     explainDate: $('tr_explain_date'),
@@ -5195,6 +5306,7 @@ function editCase(id){
   document.getElementById('tr_subtype').value = c.subtype || '自住';
   document.getElementById('tr_property').value = c.property || '';
   document.getElementById('tr_client').value = c.client || '';
+  document.getElementById('tr_customer_no').value = c.customerNo || '';
   document.getElementById('tr_staff').value = c.staff || '';
   document.getElementById('tr_scrivener').value = c.scrivener || '';
   document.getElementById('tr_explain_date').value = c.explainDate || '';
@@ -6302,6 +6414,21 @@ function renderFieldInput(f, rec, access){
     </div>`;
   }
 
+  // 客戶姓名：一樣跟「客戶資料」模組連動——可以打字從客戶清單裡挑選（選了會自動帶出客戶編號），
+  // 找不到符合的客戶時，清單最下面會出現「＋ 新增客戶」，直接在這裡新增，新客戶會自動同步進「客戶資料」。
+  if(f.id === 'customer_name'){
+    return `<div class="field" style="position:relative;">
+      <label>${f.label}</label>
+      <input type="text" data-fid="${f.id}" value="${val}" ${ro?'readonly':''}
+        autocomplete="off"
+        oninput="ppCustomerAutocompleteByName(this)"
+        onfocus="ppCustomerAutocompleteByName(this)"
+        onblur="setTimeout(()=>ppHideCustomerSuggest(this), 150)">
+      <div class="pp-cust-suggest" style="display:none;"></div>
+      <span class="formula-note">可打字從客戶清單挑選；找不到的話可以直接新增新客戶</span>
+    </div>`;
+  }
+
   if(f.type==='formula'){
     const computed = computeFormula(f, rec);
     return `<div class="field formula">
@@ -6433,6 +6560,77 @@ function ppSelectCustomer(itemEl, customerNo, customerName){
 function ppHideCustomerSuggest(inputEl){
   const box = inputEl.parentElement.querySelector('.pp-cust-suggest');
   if(box) box.style.display = 'none';
+}
+
+/* 客戶姓名欄位的自動完成：打字篩選客戶清單（顯示「客戶姓名（客戶編號）」），
+   選了會自動帶出客戶編號；找不到符合的客戶時，清單最下面會出現「＋ 新增客戶」。 */
+function ppCustomerAutocompleteByName(inputEl){
+  const box = inputEl.parentElement.querySelector('.pp-cust-suggest');
+  if(!box) return;
+  const kw = (inputEl.value||'').trim();
+  const list = ppCustomerList;
+
+  if(!ppCustomerListLoaded){
+    box.innerHTML = `<div class="pp-cust-suggest-item" style="color:var(--pp-muted);cursor:default;">客戶資料載入中…請稍候幾秒再試一次</div>`;
+    box.style.display = 'block';
+    return;
+  }
+
+  let matches = list;
+  if(kw){
+    matches = list.filter(c => (c.customer_no||'').includes(kw) || (c.customer_name||'').includes(kw));
+  }
+  matches = matches.slice(0, 300);
+
+  let html = matches.map(c=>{
+    const no = (c.customer_no||'').replace(/'/g, "\\'");
+    const name = (c.customer_name||'').replace(/'/g, "\\'");
+    return `<div class="pp-cust-suggest-item" onmousedown="ppSelectCustomerByName(this, '${no}', '${name}')">${c.customer_name||''}　（${c.customer_no||''}）</div>`;
+  }).join('');
+
+  const exactNameMatch = kw && list.some(c => c.customer_name === kw);
+  if(kw && !exactNameMatch){
+    // 姓名不寫死存進 onmousedown 字串，點擊當下才重新讀輸入框內容，避免特殊符號（如「・」）因輸入法組字時間差而漏掉
+    html += `<div class="pp-cust-suggest-item" style="color:var(--pp-accent);font-weight:600;" onmousedown="ppQuickAddCustomerByName(this)">＋ 新增客戶：「${kw}」</div>`;
+  }
+  if(!html){
+    html = `<div class="pp-cust-suggest-item" style="color:var(--pp-muted);cursor:default;">目前還沒有任何客戶資料</div>`;
+  }
+  box.innerHTML = html;
+  box.style.display = 'block';
+}
+function ppSelectCustomerByName(itemEl, customerNo, customerName){
+  const box = itemEl.closest('.pp-cust-suggest');
+  const field = box.previousElementSibling;
+  if(field){
+    field.value = customerName;
+    const container = field.closest('#pp-formSections') || document;
+    const noInput = container.querySelector('[data-fid="customer_no"]');
+    if(noInput) noInput.value = customerNo || '';
+  }
+  box.style.display = 'none';
+  box.innerHTML = '';
+}
+async function ppQuickAddCustomerByName(itemEl){
+  const box = itemEl.closest('.pp-cust-suggest');
+  const field = box.previousElementSibling;
+  // 點擊當下才重新讀取輸入框現在的內容，避免漏字/漏符號
+  const name = (field ? field.value : '').trim();
+  itemEl.textContent = '新增中…';
+  itemEl.style.pointerEvents = 'none';
+  try{
+    const created = await ccQuickCreateCustomer(name);
+    if(field){
+      field.value = created.customer_name;
+      const container = field.closest('#pp-formSections') || document;
+      const noInput = container.querySelector('[data-fid="customer_no"]');
+      if(noInput) noInput.value = created.customer_no || '';
+    }
+  }catch(err){
+    alert('新增客戶失敗：'+err.message);
+  }
+  box.style.display = 'none';
+  box.innerHTML = '';
 }
 
 async function saveForm(){
@@ -6742,10 +6940,77 @@ function moveFieldWithinGroup(idx, dir){
   renderFieldSettings();
 }
 
+/* =========================================================
+   共用即時監聽（customers／properties／monthly_reports）：
+   這三個 collection 原本「物件管理」「客戶資料」「月次報告書」「總帳」好幾個模組各自獨立訂閱了一份一模一樣的資料，
+   等於同一份東西同時被監聽好幾次——只要任何一個人異動一筆，Firestore 的讀取次數就會被重複計算好幾倍，
+   而且不管有沒有真的用到那個模組，一登入全部都會開始監聽。
+   這裡改成每個 collection 全系統只訂閱「一次」，訂閱到的資料同時分給所有需要它的模組用，
+   畫面上看到的即時同步效果完全不變，但可以省下重複訂閱的讀取次數。
+   ========================================================= */
+let sharedCustomersUnsub = null;
+function ensureSharedCustomersListener(){
+  if(sharedCustomersUnsub) return sharedCustomersUnsub;
+  sharedCustomersUnsub = trackerDB.collection('customers').onSnapshot(snapshot=>{
+    const list = snapshot.docs.map(d=>d.data());
+    ppCustomerList = list;
+    ppCustomerListLoaded = true;
+    ccRecords = list;
+    const activeTab = document.querySelector('#panel-customers .cc-tab-btn.active');
+    if(activeTab && activeTab.dataset.tab === 'list' && typeof ccRenderList === 'function') ccRenderList();
+  }, err=>{
+    console.error(err);
+    alert('客戶資料讀取失敗，請確認 Firestore 規則或網路連線：' + err.message);
+  });
+  return sharedCustomersUnsub;
+}
+let sharedPropertiesUnsub = null;
+function ensureSharedPropertiesListener(){
+  if(sharedPropertiesUnsub) return sharedPropertiesUnsub;
+  sharedPropertiesUnsub = trackerDB.collection('properties').onSnapshot(snapshot=>{
+    const list = snapshot.docs.map(d=>d.data());
+    records = list;
+    renderList();
+    const todoPanel = document.getElementById('panel-todo');
+    if(todoPanel && todoPanel.classList.contains('active') && typeof renderTodoList === 'function') renderTodoList();
+    mrPropertyList = list;
+    mrPropertyListLoaded = true;
+  }, err=>{
+    console.error(err);
+    alert('物件資料讀取失敗，請確認 Firestore 規則或網路連線：' + err.message);
+  });
+  return sharedPropertiesUnsub;
+}
+/* 「月次報告書」本體 + 「物件管理」的「目前餘額」查詢，兩邊用的都是同一個 manageReports 權限，
+   所以這兩處可以共用同一份監聽；「總帳」的收支分析用的是另一個權限（manageFinance），暫時維持獨立監聽。 */
+let sharedMonthlyReportsUnsub = null;
+function ensureSharedMonthlyReportsListener(){
+  if(sharedMonthlyReportsUnsub) return sharedMonthlyReportsUnsub;
+  sharedMonthlyReportsUnsub = trackerDB.collection('monthly_reports').onSnapshot(snapshot=>{
+    const list = snapshot.docs.map(d=>d.data());
+    ppMonthlyReportList = list;
+    ppMonthlyReportListLoaded = true;
+    mrRecords = list;
+    if(typeof mrRenderList === 'function') mrRenderList();
+  }, err=>{
+    console.error(err);
+    alert('月次報告書讀取失敗，請確認 Firestore 規則或網路連線：' + err.message);
+  });
+  return sharedMonthlyReportsUnsub;
+}
+
 /* ---------------- 初始化（在主站登入成功、trackerCurrentUser 準備好後由 ppInit() 呼叫） ---------------- */
 function ppInit(){
+  // 這裡只做「登入當下就要正確」的分頁按鈕顯示邏輯，本身不花任何 Firestore 讀取。
+  // 真正的資料監聽（物件資料／客戶清單／月次報告書）改成懶載入，見 ppInitData()，
+  // 只有使用者實際點進「物件管理」（或其他需要用到這份資料的分頁）才會啟動。
   const settingsBtn = document.getElementById('ppSettingsTabBtn');
   if(settingsBtn) settingsBtn.style.display = ppCanManageAll() ? '' : 'none';
+}
+let ppDataInited = false;
+function ppInitData(){
+  if(ppDataInited) return;
+  ppDataInited = true;
 
   trackerDB.collection('settings').doc('properties_field_config').onSnapshot(snap=>{
     if(snap.exists){
@@ -6763,37 +7028,16 @@ function ppInit(){
     alert('物件資料的欄位設定讀取失敗：' + err.message);
   });
 
-  if(typeof ppUnsubProperties === 'function') ppUnsubProperties();
-  ppUnsubProperties = trackerDB.collection('properties').onSnapshot(snapshot=>{
-    records = snapshot.docs.map(d=>d.data());
-    renderList();
-    const todoPanel = document.getElementById('panel-todo');
-    if(todoPanel && todoPanel.classList.contains('active') && typeof renderTodoList === 'function') renderTodoList();
-  }, err=>{
-    console.error(err);
-    alert('物件資料讀取失敗，請確認 Firestore 規則或網路連線：' + err.message);
-  });
+  // 物件資料／客戶清單／月次報告書（目前餘額用）現在都共用同一份監聽，見上面 ensureShared*Listener()
+  ppUnsubProperties = ensureSharedPropertiesListener();
 
-  // 「客戶編號」自動完成用的客戶清單：物件資料自己獨立監聽，
-  // 不依賴「客戶資料」模組是否已經載入完成，避免時間差導致下拉選單抓不到資料。
-  if(typeof ppUnsubCustomerList === 'function') ppUnsubCustomerList();
-  ppUnsubCustomerList = trackerDB.collection('customers').onSnapshot(snapshot=>{
-    ppCustomerList = snapshot.docs.map(d=>d.data());
-    ppCustomerListLoaded = true;
-  }, err=>{
-    console.error(err);
-  });
+  // 「客戶編號」自動完成用的客戶清單
+  ppUnsubCustomerList = ensureSharedCustomersListener();
 
   // 「目前餘額」自動抓最新一期月次報告書的結算合計——只有管理員（manageReports）才讀得到
   // 月次報告書，所以這裡只有管理員身分才會去監聽；其他人看到的目前餘額就是物件資料裡存的原值。
-  if(typeof ppUnsubMonthlyReportList === 'function') ppUnsubMonthlyReportList();
   if(trackerCurrentUser && trackerCurrentUser.manageReports){
-    ppUnsubMonthlyReportList = trackerDB.collection('monthly_reports').onSnapshot(snapshot=>{
-      ppMonthlyReportList = snapshot.docs.map(d=>d.data());
-      ppMonthlyReportListLoaded = true;
-    }, err=>{
-      console.error(err);
-    });
+    ppUnsubMonthlyReportList = ensureSharedMonthlyReportsListener();
   }
 }
 
@@ -6817,6 +7061,36 @@ let ccUnsubProperties = null;
    管理者、事務職可以新增/編輯/刪除；業務只能新增、編輯，不能刪除） */
 function ccCanManageAll(){
   return !!(trackerCurrentUser && trackerCurrentUser.manageCustomers);
+}
+
+/* 從「物件管理」「進度追蹤」等地方快速新增一位客戶（只填姓名），
+   跟「客戶資料」模組的正式新增共用同一套流水號交易邏輯，確保不會跟別人同時新增時撞號；
+   新客戶存進 Firestore 後，因為 ccRecords／ppCustomerList 都是即時監聽，會自動同步出現在「客戶資料」列表裡。 */
+async function ccQuickCreateCustomer(name){
+  name = (name||'').trim();
+  if(!name) throw new Error('客戶姓名不能是空的');
+  if(!trackerDB) throw new Error('尚未連上資料庫');
+  const settingsRef = trackerDB.collection('settings').doc('customers_field_config');
+  let newDocId = null;
+  await trackerDB.runTransaction(async (tx)=>{
+    const settingsSnap = await tx.get(settingsRef);
+    const cfg = settingsSnap.data() || {sections: ccSections, fieldConfig: ccFieldConfig};
+    const liveFieldConfig = cfg.fieldConfig || ccFieldConfig;
+    const liveSerial = liveFieldConfig.find(f=>f.type==='serial');
+    const rec = {customer_name: name};
+    if(liveSerial){
+      const digits = liveSerial.serialDigits || 5;
+      newDocId = (liveSerial.serialPrefix||'') + String(liveSerial.serialNext||1).padStart(digits,'0');
+      rec[liveSerial.id] = newDocId;
+      liveSerial.serialNext = (liveSerial.serialNext||1) + 1;
+      tx.set(settingsRef, cfg);
+    }else{
+      newDocId = 'c_'+Date.now();
+    }
+    tx.set(trackerDB.collection('customers').doc(newDocId), rec);
+  });
+  if(typeof notifLog === 'function') notifLog('cc', 'create', name);
+  return {customer_no: newDocId, customer_name: name};
 }
 /* 客戶資料沒有「只能改自己負責的」限制，任何登入的員工都能新增／編輯任何客戶資料，
    只有刪除權限才分管理者/業務。這個函式保留給表單畫面共用邏輯呼叫，恆回傳可編輯。 */
@@ -7585,8 +7859,14 @@ function ccMoveFieldWithinGroup(idx, dir){
 
 /* ---------------- 初始化（在主站登入成功、trackerCurrentUser 準備好後由 ccInit() 呼叫） ---------------- */
 function ccInit(){
+  // 跟 ppInit() 一樣，這裡只做分頁按鈕顯示，資料監聽移到 ccInitData() 懶載入。
   const settingsBtn = document.getElementById('ccSettingsTabBtn');
   if(settingsBtn) settingsBtn.style.display = ccCanManageAll() ? '' : 'none';
+}
+let ccDataInited = false;
+function ccInitData(){
+  if(ccDataInited) return;
+  ccDataInited = true;
 
   trackerDB.collection('settings').doc('customers_field_config').onSnapshot(snap=>{
     if(snap.exists){
@@ -7604,14 +7884,8 @@ function ccInit(){
     alert('客戶資料的欄位設定讀取失敗：' + err.message);
   });
 
-  if(typeof ccUnsubProperties === 'function') ccUnsubProperties();
-  ccUnsubProperties = trackerDB.collection('customers').onSnapshot(snapshot=>{
-    ccRecords = snapshot.docs.map(d=>d.data());
-    ccRenderList();
-  }, err=>{
-    console.error(err);
-    alert('客戶資料讀取失敗，請確認 Firestore 規則或網路連線：' + err.message);
-  });
+  // 跟「物件管理」共用同一份客戶清單監聽，見 ensureSharedCustomersListener()
+  ccUnsubProperties = ensureSharedCustomersListener();
 }
 
 
@@ -8671,6 +8945,8 @@ function mrMoveFieldWithinGroup(idx, dir){
 
 /* ---------------- 初始化（在主站登入成功、trackerCurrentUser 準備好後由 mrInit() 呼叫） ---------------- */
 function mrInit(){
+  // 選單顯示／隱藏（誰看得到「月次報告書」這個分頁）一定要在登入當下就正確，
+  // 所以這段留在這裡、繼續 eager 執行；真正的資料監聽移到 mrInitData() 懶載入。
   const headerLink = document.getElementById('monthlyReportsHeaderLink');
   if(headerLink) headerLink.style.display = mrCanManageAll() ? '' : 'none';
   if(!mrCanManageAll()) return; // 月次報告書只有管理員能看，非管理員完全不嘗試讀取，避免跳出權限錯誤提示
@@ -8679,6 +8955,12 @@ function mrInit(){
   if(settingsBtn) settingsBtn.style.display = mrCanManageAll() ? '' : 'none';
   const reportBtn = document.getElementById('mrReportTabBtn');
   if(reportBtn) reportBtn.style.display = mrCanManageAll() ? '' : 'none';
+}
+let mrDataInited = false;
+function mrInitData(){
+  if(mrDataInited) return;
+  if(!mrCanManageAll()) return; // 非管理員完全不嘗試讀取，避免跳出權限錯誤提示
+  mrDataInited = true;
 
   trackerDB.collection('settings').doc('monthly_reports_field_config').onSnapshot(snap=>{
     if(snap.exists){
@@ -8696,24 +8978,11 @@ function mrInit(){
     alert('月次報告書的欄位設定讀取失敗：' + err.message);
   });
 
-  if(typeof mrUnsubProperties === 'function') mrUnsubProperties();
-  mrUnsubProperties = trackerDB.collection('monthly_reports').onSnapshot(snapshot=>{
-    mrRecords = snapshot.docs.map(d=>d.data());
-    mrRenderList();
-  }, err=>{
-    console.error(err);
-    alert('月次報告書讀取失敗，請確認 Firestore 規則或網路連線：' + err.message);
-  });
+  // 跟「物件管理」的「目前餘額」查詢共用同一份月次報告書監聽，見 ensureSharedMonthlyReportsListener()
+  mrUnsubProperties = ensureSharedMonthlyReportsListener();
 
-  // 「物件編號」自動完成用的物件清單：月次報告書自己獨立監聽物件資料，
-  // 不依賴「物件資料」模組是否已經載入完成，避免時間差導致下拉選單抓不到資料。
-  if(typeof mrUnsubPropertyList === 'function') mrUnsubPropertyList();
-  mrUnsubPropertyList = trackerDB.collection('properties').onSnapshot(snapshot=>{
-    mrPropertyList = snapshot.docs.map(d=>d.data());
-    mrPropertyListLoaded = true;
-  }, err=>{
-    console.error(err);
-  });
+  // 「物件編號」自動完成用的物件清單：跟「物件管理」本體共用同一份監聽，見 ensureSharedPropertiesListener()
+  mrUnsubPropertyList = ensureSharedPropertiesListener();
 }
 
 
@@ -8867,9 +9136,17 @@ function glCanView(){
   return !!(trackerCurrentUser && trackerCurrentUser.manageFinance);
 }
 function glInit(){
+  // 選單顯示／隱藏留在這裡 eager 執行；底下「總帳」自己的四個監聽（含它獨立訂閱的
+  // monthly_reports，這是「總帳」跟「月次報告書」各自獨立的權限，兩邊不共用、不合併）
+  // 整組移到 glInitData()，改成使用者第一次點進「總帳」分頁時才懶載入啟動，內部邏輯完全不變。
   const headerLink = document.getElementById('ledgerHeaderLink');
   if(headerLink) headerLink.style.display = glCanView() ? '' : 'none';
+}
+let glDataInited = false;
+function glInitData(){
+  if(glDataInited) return;
   if(!glCanView()) return;
+  glDataInited = true;
 
   if(typeof glUnsubEntries === 'function') glUnsubEntries();
   glUnsubEntries = trackerDB.collection('ledger_entries').onSnapshot(snapshot=>{
@@ -9022,20 +9299,47 @@ function glCheckBaselineOf(running){
   return best;
 }
 let glCheckBaseline = null;
+const GL_CF_CATEGORY_NONE = '__GL_CF_NONE__'; // 篩選用的「（未分類）」特殊值，跟「全部分類」（空字串）區分開
 function glPopulateCfFilters(){
   const yearSel = document.getElementById('gl-cfYear');
   const monthSel = document.getElementById('gl-cfMonth');
+  const catSel = document.getElementById('gl-cfCategory');
   const years = [...new Set(glEntries.map(e=>e.year).filter(Boolean))].sort((a,b)=>b-a);
   const curYear = new Date().getFullYear();
   if(!years.includes(curYear)) years.unshift(curYear);
   const prevYear = yearSel.value;
-  yearSel.innerHTML = years.map(y=>`<option value="${y}">${y}年</option>`).join('');
-  yearSel.value = (prevYear && years.includes(Number(prevYear))) ? prevYear : String(years[0]);
+  // 多一個「全部年份」選項：搭配「分類」篩選，就能查到「全部的薪資支出」這種跨年度的統計，
+  // 不用一年一年切換著找。只有第一次畫面渲染才預設選「目前年度」，之後使用者自己選的
+  // （包含選「全部年份」，value 一樣是空字串）都要保留住，不能每次重新整理選單又被蓋回去。
+  yearSel.innerHTML = `<option value="">全部年份</option>` + years.map(y=>`<option value="${y}">${y}年</option>`).join('');
+  if(!yearSel.dataset.filled){
+    yearSel.value = String(years[0]);
+    yearSel.dataset.filled = '1';
+  } else if(prevYear === '' || years.includes(Number(prevYear))){
+    yearSel.value = prevYear;
+  } else {
+    yearSel.value = String(years[0]);
+  }
 
   if(!monthSel.dataset.filled){
     monthSel.innerHTML = `<option value="">全部月份</option>` + [1,2,3,4,5,6,7,8,9,10,11,12].map(m=>`<option value="${m}">${m}月</option>`).join('');
     monthSel.value = String(new Date().getMonth()+1);
     monthSel.dataset.filled = '1';
+  }
+
+  // 「分類」篩選：用管理收入/支出分類的清單（跟每一列的「分類」下拉選單同一份），
+  // 這樣就算目前這個月份還沒打過某個分類，也還是能從清單選到它、篩出之前的紀錄。
+  {
+    const esc = (s)=> String(s==null?'':s).replace(/"/g,'&quot;');
+    const inc = menuGetList('gl_income_categories');
+    const exp = menuGetList('gl_expense_categories');
+    const prevCat = catSel.value;
+    catSel.innerHTML = `<option value="">全部分類</option>` +
+      `<option value="${GL_CF_CATEGORY_NONE}">（未分類）</option>` +
+      `<optgroup label="收入分類">${inc.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}</optgroup>` +
+      `<optgroup label="支出分類">${exp.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}</optgroup>` +
+      `<optgroup label="特殊"><option value="${esc(GL_CLIENT_ACCOUNT_CATEGORY)}">${esc(GL_CLIENT_ACCOUNT_CATEGORY)}</option></optgroup>`;
+    if(prevCat) catSel.value = prevCat;
   }
 }
 const GL_CLIENT_ACCOUNT_CATEGORY = '客人帳（非公司收支，不列入統計）';
@@ -9088,11 +9392,23 @@ function glRenderCashflow(){
   glCheckBaseline = glCheckBaselineOf(running);
   const y = Number(document.getElementById('gl-cfYear').value);
   const m = document.getElementById('gl-cfMonth').value;
-  const filtered = running.filter(e => e.year===y && (!m || e.month===Number(m)));
+  const cat = document.getElementById('gl-cfCategory').value;
+  // 分類篩選只影響「畫面上顯示哪幾列」，餘額／累計利益的計算（running）一律用全部資料算，
+  // 不會因為篩選了某個分類而讓餘額跟著跑掉。
+  const filtered = running.filter(e => (!y || e.year===y) && (!m || e.month===Number(m)) &&
+    (!cat || (cat===GL_CF_CATEGORY_NONE ? !e.category : e.category===cat)));
 
-  document.getElementById('gl-cfListCount').textContent = `共 ${filtered.length} 筆`;
+  if(cat){
+    const incSum = filtered.reduce((s,e)=> s + (Number(e.income)||0), 0);
+    const expSum = filtered.reduce((s,e)=> s + (Number(e.expense)||0), 0);
+    const catLabel = cat===GL_CF_CATEGORY_NONE ? '（未分類）' : cat;
+    document.getElementById('gl-cfListCount').innerHTML =
+      `共 ${filtered.length} 筆（分類：${catLabel}）　｜　收益小計：${glMoney(incSum)}　費用小計：${glMoney(expSum)}`;
+  } else {
+    document.getElementById('gl-cfListCount').textContent = `共 ${filtered.length} 筆`;
+  }
   const body = document.getElementById('gl-cfListBody');
-  const blankDate = filtered.length ? filtered[filtered.length-1].date : (m ? `${y}-${String(m).padStart(2,'0')}-01` : '');
+  const blankDate = filtered.length ? filtered[filtered.length-1].date : ((y && m) ? `${y}-${String(m).padStart(2,'0')}-01` : '');
   body.innerHTML = filtered.map(e=>glFieldRowHtml(e,false)).join('') + glFieldRowHtml({date:blankDate}, true);
 
   if(glFocusBlankAfterRender){
@@ -9112,6 +9428,7 @@ function glRenderCashflow(){
 }
 document.getElementById('gl-cfYear').addEventListener('change', glRenderCashflow);
 document.getElementById('gl-cfMonth').addEventListener('change', glRenderCashflow);
+document.getElementById('gl-cfCategory').addEventListener('change', glRenderCashflow);
 
 function glRowHasContent(rec){
   return !!(rec.income||rec.expense||rec.cash_in||rec.gmo_in||rec.sbi_in||rec.deposit_in||
