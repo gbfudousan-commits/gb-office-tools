@@ -274,7 +274,8 @@
   .af-qr{width:19mm;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;border-left:1px solid var(--line);padding:2px;gap:2px;}
   .af-qr img{width:13mm;height:13mm;}
   .af-recruit{font-size:7.5px;font-weight:bold;color:var(--navy-dark);text-align:center;line-height:1.2;}
-  @page{ margin: 12mm; }
+  /* 邊界設 0：瀏覽器只有在頁面邊界 > 0 時才會印出頁首頁尾（日期、標題、網址、頁碼），設 0 就不會印。實際的留白改用下面 .doc-page 的 padding。 */
+  @page{ margin: 0; }
 
   /* Contract specific */
   .sign-block{display:flex;justify-content:space-between;margin:14px 0;}
@@ -295,6 +296,8 @@
     body{background:#fff;}
     .wrap,.preview-wrap{padding:0 !important;margin:0 !important;max-width:none !important;}
     .doc-page{box-shadow:none;margin:0;width:auto;min-height:auto;}
+    .doc-page:not(.landscape){padding-top:12mm !important;padding-bottom:12mm !important;-webkit-box-decoration-break:clone;box-decoration-break:clone;}
+    #panel-ledger.printing{padding:12mm;-webkit-box-decoration-break:clone;box-decoration-break:clone;}
     .panel{display:none !important;}
     .panel.printing{display:block !important;}
     .cal-table{page-break-inside:avoid;break-inside:avoid;}
@@ -4105,7 +4108,7 @@ function printPanel(panelId){
   const pageStyle = document.getElementById('dynamicPageStyle');
   pageStyle.textContent = (panelId === 'panel-flyer')
     ? '@page{size:landscape;margin:0;}'
-    : '@page{size:auto;margin:12mm;}';
+    : '@page{size:auto;margin:0;}';
   window.print();
   setTimeout(()=>{ document.title = ORIGINAL_TITLE; }, 1000);
 }
@@ -10035,6 +10038,24 @@ function glAnGetRange(){
   return {sy,sm,ey,em};
 }
 function glAnPrintPdf(){ window.print(); }
+// 全站的列印規則是「.panel 一律隱藏，只有加了 .printing 的才顯示」（文件產生用的），
+// 總帳的收支分析沒有加這個標記，所以列印／存 PDF 整頁變空白。
+// 這裡在列印開始時，如果目前停在總帳的收支分析分頁，就替總帳面板加上 .printing，列印完再拿掉。
+window.addEventListener('beforeprint', ()=>{
+  const ledger = document.getElementById('panel-ledger');
+  const an = document.getElementById('gl-panel-analysis');
+  if(ledger && ledger.classList.contains('active') && an && an.classList.contains('active')){
+    ledger.classList.add('printing');
+    ledger.dataset.glAutoPrinting = '1';
+  }
+});
+window.addEventListener('afterprint', ()=>{
+  const ledger = document.getElementById('panel-ledger');
+  if(ledger && ledger.dataset.glAutoPrinting){
+    ledger.classList.remove('printing');
+    delete ledger.dataset.glAutoPrinting;
+  }
+});
 async function glAnAddAdjustment(){
   try{ await trackerDB.collection('ledger_manual_adjustments').add({label:'', amount:0, seq: Date.now()}); }
   catch(err){ console.error(err); alert('新增失敗：'+err.message); }
