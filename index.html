@@ -10673,7 +10673,392 @@ function mrRptAddPageImage(doc, canvas, pageWmm, pageHmm){
   const offsetX = (pageWmm - renderW)/2;
   doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', offsetX, 0, renderW, renderH);
 }
+/* ==== 向量文字版 PDF（方案 B）：直接把文字寫進 PDF，放大不糊；字型載入失敗時自動退回舊的截圖版 ==== */
+const MR_PDF_FONT_FILES = { normal:'fonts/GBReportSans-Regular.ttf', bold:'fonts/GBReportSans-Bold.ttf' };
+const MR_PDF_PT = 25.4/72; // 1pt = 0.3528mm（字級、行距、邊距都照 pdf_builder.py 的 pt 數值）
+const MR_PDF_C = {
+  dark:'#333333', lightGrey:'#f2f2f2', rowAlt:'#f7f6f2', border:'#d8d8d8', incomeBar:'#3f8f5f', expenseBar:'#b5493f',
+  amber:'#9c6b30', blue:'#3f6f8f', infoBg:'#f2ede0', neg:'#c0392b', brand:'#3fa4cf', dash:'#999999'
+};
+let mrPdfFontB64 = null;
+async function mrPdfLoadFonts(){
+  if(mrPdfFontB64) return mrPdfFontB64;
+  const out = {};
+  for(const [k, url] of Object.entries(MR_PDF_FONT_FILES)){
+    const res = await fetch(url, {cache:'force-cache'});
+    if(!res.ok) throw new Error('字型載入失敗：'+url);
+    const buf = new Uint8Array(await res.arrayBuffer());
+    let bin = '';
+    for(let i=0;i<buf.length;i+=0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i+0x8000));
+    out[k] = btoa(bin);
+  }
+  mrPdfFontB64 = out;
+  return out;
+}
+function mrPdfNewDoc(orientation, fonts){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'mm', format:'a4', orientation, compress:true});
+  doc.addFileToVFS('GBReportSans-Regular.ttf', fonts.normal);
+  doc.addFont('GBReportSans-Regular.ttf', 'GBSans', 'normal');
+  doc.addFileToVFS('GBReportSans-Bold.ttf', fonts.bold);
+  doc.addFont('GBReportSans-Bold.ttf', 'GBSans', 'bold');
+  doc.setFont('GBSans', 'normal');
+  return doc;
+}
+function mrPdfYenText(v){
+  v = Number(v)||0;
+  return (v<0?'-':'') + '¥' + Math.abs(Math.round(v)).toLocaleString('ja-JP');
+}
+function mrPdfHex(doc, kind, hex){
+  const n = parseInt(hex.slice(1), 16), r = n>>16&255, g = n>>8&255, b = n&255;
+  if(kind==='text') doc.setTextColor(r,g,b); else if(kind==='fill') doc.setFillColor(r,g,b); else doc.setDrawColor(r,g,b);
+}
+/* 設定字型後量寬（mm） */
+function mrPdfW(doc, str, size, bold){
+  doc.setFont('GBSans', bold?'bold':'normal'); doc.setFontSize(size);
+  return doc.getTextWidth(String(str));
+}
+/* 逐字換行：中文沒有空白，jsPDF 內建的 splitTextToSize 切不開，所以自己切 */
+function mrPdfWrap(doc, str, size, bold, maxW){
+  str = String(str==null?'':str);
+  const lines = [];
+  str.split('\n').forEach(para=>{
+    let cur = '';
+    for(const ch of Array.from(para)){
+      if(cur && mrPdfW(doc, cur+ch, size, bold) > maxW){
+        const sp = cur.lastIndexOf(' ');
+        if(ch!==' ' && sp>0 && /[A-Za-z0-9]/.test(ch) && /[A-Za-z0-9]/.test(cur[cur.length-1])){
+          lines.push(cur.slice(0, sp)); cur = cur.slice(sp+1)+ch;
+        }else{ lines.push(cur); cur = ch===' ' ? '' : ch; }
+      }else cur += ch;
+    }
+    lines.push(cur);
+  });
+  return lines;
+}
+/* 在「行框」內寫字：topMm=行框上緣、leadingPt=行距；align 以 x 為基準 */
+function mrPdfText(doc, str, x, topMm, size, leadingPt, o){
+  o = o||{};
+  doc.setFont('GBSans', o.bold?'bold':'normal'); doc.setFontSize(size);
+  mrPdfHex(doc, 'text', o.color||MR_PDF_C.dark);
+  const base = topMm + ((leadingPt - size)/2 + size*0.86) * MR_PDF_PT;
+  if(!doc._mrChars) doc._mrChars = new Set();
+  for(const ch of String(str)) doc._mrChars.add(ch);
+  doc.text(String(str), x, base, {align:o.align||'left'});
+}
+function mrPdfRect(doc, x, y, w, h, fill, line, lw){
+  if(fill){ mrPdfHex(doc,'fill',fill); doc.rect(x,y,w,h,'F'); }
+  if(line){ mrPdfHex(doc,'draw',line); doc.setLineWidth((lw||0.5)*MR_PDF_PT); doc.rect(x,y,w,h,'S'); }
+}
+function mrPdfHLine(doc, x1, x2, y, color, lwPt){
+  mrPdfHex(doc,'draw',color); doc.setLineWidth(lwPt*MR_PDF_PT); doc.line(x1,y,x2,y);
+}
+/* 公司抬頭（置中的 LOGO＋公司名稱、地址、聯絡資訊、分隔線），回傳下一個可用的 y */
+function mrPdfHeader(doc, x0, cw, y){
+  const c = MR_RPT_COMPANY, pt = MR_PDF_PT;
+  const nameSize = 17, logoH = nameSize*1.3*pt;
+  let logoW = logoH*1.09;
+  const logoUrl = 'data:image/png;base64,'+MR_RPT_LOGO_B64;
+  try{ const p = doc.getImageProperties(logoUrl); logoW = logoH*p.width/p.height; }catch(e){}
+  const nameW = mrPdfW(doc, c.name, nameSize, true);
+  const gap = 4*pt, groupW = logoW + gap + nameW;
+  const gx = x0 + (cw-groupW)/2, rowH = Math.max(logoH, 21*pt);
+  try{ doc.addImage(logoUrl, 'PNG', gx, y + (rowH-logoH)/2, logoW, logoH); }catch(e){}
+  mrPdfText(doc, c.name, gx+logoW+gap, y, nameSize, rowH/pt, {bold:true, color:MR_PDF_C.brand});
+  y += rowH + 10*pt;
+  const left = [c.zip].concat(c.addressLines);
+  const right = ['TEL：'+c.tel, 'FAX：'+c.fax, 'Email：'+c.email];
+  left.forEach((t,i)=> mrPdfText(doc, t, x0, y+i*15*pt, 9.5, 15, {color:MR_PDF_C.blue}));
+  right.forEach((t,i)=> mrPdfText(doc, t, x0+cw, y+i*15*pt, 9.5, 15, {color:MR_PDF_C.blue, align:'right'}));
+  y += Math.max(left.length, right.length)*15*pt + 8*pt;
+  mrPdfHLine(doc, x0, x0+cw, y, MR_PDF_C.dark, 1.1);
+  return y + 1*pt;
+}
+/* 一格文字（可多行，上下內距相同），回傳行數 */
+function mrPdfCell(doc, str, x, top, w, o){
+  // o: size, leading, bold, color, align, padL, padR
+  const pt = MR_PDF_PT, padL = (o.padL==null?3:o.padL), padR = (o.padR==null?3:o.padR);
+  const lines = mrPdfWrap(doc, str, o.size, o.bold, w-(padL+padR)*pt);
+  lines.forEach((ln,i)=>{
+    const xx = o.align==='right' ? x+w-padR*pt : (o.align==='center' ? x+w/2 : x+padL*pt);
+    mrPdfText(doc, ln, xx, top+i*o.leading*pt, o.size, o.leading, o);
+  });
+  return lines.length;
+}
+function mrPdfCellLines(doc, str, w, o){
+  const padL = (o.padL==null?3:o.padL), padR = (o.padR==null?3:o.padR);
+  return mrPdfWrap(doc, str, o.size, o.bold, w-(padL+padR)*MR_PDF_PT).length;
+}
+/* 字型裡沒有的字（例如罕見字、表情符號）會變成空白；發現時丟出錯誤，讓呼叫端退回舊的截圖版，不會漏字 */
+function mrPdfCheckGlyphs(doc){
+  const map = doc.getFont('GBSans','normal').metadata.cmap.unicode.codeMap;
+  const missing = [];
+  (doc._mrChars||[]).forEach(ch=>{ if(!/\s/.test(ch) && !map[ch.codePointAt(0)]) missing.push(ch); });
+  if(missing.length) throw new Error('字型缺字：'+missing.join(''));
+}
+const MR_PDF_PAGE_BOTTOM_PORTRAIT = 297-16, MR_PDF_PAGE_BOTTOM_LANDSCAPE = 210-14;
+
+/* ---- 月次報告書：第 1 頁總覽 ---- */
+function mrPdfCover(doc, customer, year, month, properties){
+  const pt = MR_PDF_PT, x0 = 18, cw = 174, bottom = MR_PDF_PAGE_BOTTOM_PORTRAIT, C = MR_PDF_C;
+  let y = mrPdfHeader(doc, x0, cw, 16) + 14*pt;
+  mrPdfText(doc, '月 次 報 告 書', x0+cw/2, y, 18, 24, {bold:true, align:'center'});
+  y += 24*pt + 6*pt + 10*pt;
+  // 客戶資訊框
+  const colW = 58, padLeft = 14*pt;
+  const vals = [customer.customer_no, customer.customer_name, year+' 年 '+month+' 月'];
+  const labs = ['客戶編號','客戶名稱','報表年月'];
+  const nLines = vals.map(v=>mrPdfWrap(doc, v, 13, true, colW-padLeft-6*pt).length);
+  const boxH = 12*pt*2 + 12*pt + Math.max(...nLines)*17*pt;
+  mrPdfRect(doc, x0, y, cw, boxH, C.infoBg, C.border, 0.6);
+  vals.forEach((v,i)=>{
+    const cx = x0 + i*colW + padLeft;
+    mrPdfText(doc, labs[i], cx, y+12*pt, 8.5, 12, {color:C.blue});
+    mrPdfWrap(doc, v, 13, true, colW-padLeft-6*pt).forEach((ln,j)=> mrPdfText(doc, ln, cx, y+24*pt+j*17*pt, 13, 17, {bold:true}));
+  });
+  y += boxH + 16*pt;
+  // 總覽表：數字欄依內容自動算寬，地址欄拿剩下的空間
+  const header = ['物件地址','年份','月份','上期餘額','收入合計','支出合計','結算合計'];
+  let tp=0,ti=0,te=0,ts=0;
+  const rows = properties.map(p=>{
+    tp+=Number(p.prev_balance)||0; ti+=Number(p.income_total)||0; te+=Number(p.expense_total)||0; ts+=Number(p.settle_total)||0;
+    return [p.address, String(p.year||year), String(p.month||month), p.prev_balance, p.income_total, p.expense_total, p.settle_total];
+  });
+  const widths = [];
+  for(let c=1;c<7;c++){
+    let w = mrPdfW(doc, header[c], 9, true);
+    rows.forEach(r=>{ const t = c<3 ? r[c] : mrPdfYenText(r[c]); w = Math.max(w, mrPdfW(doc, t, 8.5, false)); });
+    if(c>=3) w = Math.max(w, mrPdfW(doc, mrPdfYenText([0,0,0,tp,ti,te,ts][c]), 9, true));
+    widths[c] = Math.max(26*pt, w + 12*pt);
+  }
+  let used = 0; for(let c=1;c<7;c++) used += widths[c];
+  const flexMin = 40;
+  let flex = Math.max(flexMin, cw-used);
+  if(used+flex > cw){ const s = Math.max(cw-flexMin, 26*pt*6)/used; for(let c=1;c<7;c++) widths[c]*=s; flex = flexMin; }
+  widths[0] = flex;
+  const xs = [x0]; for(let c=0;c<7;c++) xs.push(xs[c]+widths[c]);
+  const drawHead = ()=>{
+    header.forEach((h,c)=>{
+      mrPdfCell(doc, h, xs[c], y+6*pt, widths[c], {size:9, leading:13, bold:true, align:c?'right':'left'});
+    });
+    y += 13*pt + 12*pt;
+    mrPdfHLine(doc, x0, x0+cw, y, C.dark, 0.9);
+  };
+  drawHead();
+  const money = (v, c, top, bold)=> mrPdfCell(doc, mrPdfYenText(v), xs[c], top, widths[c], {size:bold?9:8.5, leading:bold?13:12, bold, align:'right', color:(Number(v)<0?C.neg:C.dark)});
+  rows.forEach(r=>{
+    const n = mrPdfCellLines(doc, r[0], widths[0], {size:8.5});
+    const h = Math.max(1,n)*12*pt + 12*pt;
+    if(y+h+30*pt > bottom){ doc.addPage(); y = 16; drawHead(); }
+    mrPdfCell(doc, r[0], xs[0], y+6*pt, widths[0], {size:8.5, leading:12});
+    mrPdfCell(doc, r[1], xs[1], y+6*pt, widths[1], {size:8.5, leading:12, align:'right'});
+    mrPdfCell(doc, r[2], xs[2], y+6*pt, widths[2], {size:8.5, leading:12, align:'right'});
+    for(let c=3;c<7;c++) money(r[c], c, y+6*pt, false);
+    y += h;
+    mrPdfHLine(doc, x0, x0+cw, y, C.border, 0.4);
+  });
+  // 合計列
+  const th = 13*pt + 12*pt;
+  if(y+th > bottom){ doc.addPage(); y = 16; drawHead(); }
+  mrPdfRect(doc, x0, y, cw, th, C.infoBg);
+  mrPdfHLine(doc, x0, x0+cw, y, C.dark, 0.9);
+  mrPdfCell(doc, '合計', xs[0], y+6*pt, widths[0], {size:9, leading:13, bold:true, align:'right'});
+  mrPdfCell(doc, '—', xs[1], y+6*pt, widths[1], {size:8.5, leading:12, align:'center', color:C.dash});
+  mrPdfCell(doc, '—', xs[2], y+6*pt, widths[2], {size:8.5, leading:12, align:'center', color:C.dash});
+  [tp,ti,te,ts].forEach((v,i)=> money(v, 3+i, y+6*pt, true));
+}
+/* ---- 月次報告書：物件明細頁 ---- */
+function mrPdfItemSection(doc, y, title, items, total, barColor, subLabel){
+  const pt = MR_PDF_PT, x0 = 18, C = MR_PDF_C, bottom = MR_PDF_PAGE_BOTTOM_PORTRAIT;
+  const cw = [70,40,64], cx = [x0, x0+70, x0+110];
+  items = items||[];
+  const rowsData = items.length ? items.map(it=>({name:String(it.item||''), amount:it.amount, note:String(it.note||'')})) : null;
+  const nameO = {size:9, padL:6, padR:6}, noteO = {size:9, padL:6, padR:6};
+  const heights = rowsData ? rowsData.map(r=> Math.max(mrPdfCellLines(doc,r.name,cw[0],nameO), mrPdfCellLines(doc,r.note,cw[2],noteO), 1)*13*pt + 10*pt) : [12*pt+10*pt];
+  const totalH = 22*pt + (13*pt+10*pt) + heights.reduce((a,b)=>a+b,0) + (13*pt+10*pt);
+  if(y + totalH > bottom){ doc.addPage(); y = 16; } // 整段一起搬到下一頁，跟舊版 KeepTogether 一樣
+  mrPdfRect(doc, x0, y, 3.2*pt, 22*pt, barColor);
+  mrPdfText(doc, title, x0+8*pt+1.6*pt, y+2*pt, 11.5, 16, {bold:true});
+  y += 22*pt;
+  const top = y;
+  const headH = 13*pt+10*pt;
+  mrPdfRect(doc, x0, y, 174, headH, C.lightGrey);
+  [title,'金額','備註'].forEach((h,i)=> mrPdfCell(doc, h, cx[i], y+5*pt, cw[i], {size:9, leading:13, bold:true, padL:6, padR:6}));
+  y += headH;
+  if(rowsData){
+    rowsData.forEach((r,i)=>{
+      const t = y+5*pt;
+      mrPdfCell(doc, r.name, cx[0], t, cw[0], {size:9, leading:13, color:C.amber, padL:6, padR:6});
+      mrPdfCell(doc, mrPdfYenText(r.amount), cx[1], t, cw[1], {size:8.5, leading:12, align:'right', padL:6, padR:6, color:(Number(r.amount)<0?C.neg:C.dark)});
+      mrPdfCell(doc, r.note, cx[2], t, cw[2], {size:9, leading:13, color:C.amber, padL:6, padR:6});
+      y += heights[i];
+      mrPdfHLine(doc, x0, x0+174, y, C.border, 0.4);
+    });
+  }else{
+    mrPdfCell(doc, '本月無項目', cx[0], y+5*pt, cw[0], {size:8.5, leading:12, padL:6, padR:6});
+    y += heights[0];
+    mrPdfHLine(doc, x0, x0+174, y, C.border, 0.4);
+  }
+  const subH = 13*pt+10*pt;
+  mrPdfRect(doc, x0, y, 174, subH, C.rowAlt);
+  mrPdfCell(doc, subLabel, cx[0], y+5*pt, cw[0], {size:9, leading:13, bold:true, padL:6, padR:6});
+  mrPdfCell(doc, mrPdfYenText(total), cx[1], y+5*pt, cw[1], {size:9, leading:13, bold:true, align:'right', padL:6, padR:6, color:(Number(total)<0?C.neg:C.dark)});
+  y += subH;
+  mrPdfRect(doc, x0, top, 174, y-top, null, C.border, 0.5);
+  mrPdfHex(doc,'draw',C.border); doc.setLineWidth(0.4*pt);
+  doc.line(cx[1], top, cx[1], y); doc.line(cx[2], top, cx[2], y);
+  return y;
+}
+function mrPdfPropertyPage(doc, customer, year, month, prop){
+  const pt = MR_PDF_PT, x0 = 18, cw = 174, C = MR_PDF_C;
+  let y = mrPdfHeader(doc, x0, cw, 16) + 6*pt;
+  mrPdfText(doc, '月 次 報 告 書', x0+cw/2, y, 18, 24, {bold:true, align:'center'});
+  y += 24*pt + 6*pt + 4*pt;
+  const yenCol = v=> ({t:mrPdfYenText(v), color:(Number(v)<0?C.neg:C.dark)});
+  const T = s=>({t:String(s==null?'':s)});
+  const rows = [
+    [['物件編號'],T(prop.property_no),['報表編號'],T(prop.report_no)],
+    [['物件地址'],{t:String(prop.address||''), span:true}],
+    [['客戶編號'],T(customer.customer_no),['客戶名稱'],{t:String(customer.customer_name||''), color:C.amber}],
+    [['報表年份'],T(prop.year||year),['報表月份'],T(prop.month||month)],
+    [['上期餘額'],yenCol(prop.prev_balance),['結算合計'],yenCol(prop.settle_total)],
+    [['收入合計'],yenCol(prop.income_total),['支出合計'],yenCol(prop.expense_total)]
+  ];
+  const w = [24,63,24,63], xs = [x0, x0+24, x0+87, x0+111];
+  const top = y;
+  rows.forEach((r,i)=>{
+    const valW = r[1].span ? 150 : w[1];
+    const n = mrPdfCellLines(doc, r[1].t, valW, {size:10, padL:6, padR:6});
+    const n2 = r[3] ? mrPdfCellLines(doc, r[3].t, w[3], {size:10, padL:6, padR:6}) : 1;
+    const h = Math.max(n, n2, 1)*14*pt + 12*pt;
+    if(i%2===1) mrPdfRect(doc, x0, y, cw, h, C.rowAlt);
+    mrPdfCell(doc, r[0][0], xs[0], y+6*pt, w[0], {size:9, leading:13, bold:true, padL:6, padR:6});
+    mrPdfCell(doc, r[1].t, xs[1], y+6*pt, valW, {size:10, leading:14, color:r[1].color, padL:6, padR:6});
+    if(r[2]){
+      mrPdfCell(doc, r[2][0], xs[2], y+6*pt, w[2], {size:9, leading:13, bold:true, padL:6, padR:6});
+      mrPdfCell(doc, r[3].t, xs[3], y+6*pt, w[3], {size:10, leading:14, color:r[3].color, padL:6, padR:6});
+    }
+    y += h;
+    mrPdfHLine(doc, x0, x0+cw, y, C.border, 0.5);
+  });
+  mrPdfRect(doc, x0, top, cw, y-top, null, C.border, 0.5);
+  y += 12*pt;
+  y = mrPdfItemSection(doc, y, '收入項目', prop.income_items, prop.income_total, C.incomeBar, '收入小計') + 12*pt;
+  mrPdfItemSection(doc, y, '支出項目', prop.expense_items, prop.expense_total, C.expenseBar, '支出小計');
+}
+async function mrPdfBuildCustomerVector(customer, year, month, properties){
+  const fonts = await mrPdfLoadFonts();
+  const doc = mrPdfNewDoc('portrait', fonts);
+  mrPdfCover(doc, customer, year, month, properties);
+  for(const prop of properties){ doc.addPage(); mrPdfPropertyPage(doc, customer, year, month, prop); }
+  mrPdfCheckGlyphs(doc);
+  return doc;
+}
+/* ---- 年度收支一覽表（橫式，一個物件一頁）---- */
+function mrPdfAnnualPage(doc, customer, propAddress, year, uptoMonth, monthlyData){
+  const pt = MR_PDF_PT, x0 = 18, cw = 261, C = MR_PDF_C, bottom = MR_PDF_PAGE_BOTTOM_LANDSCAPE;
+  let y = mrPdfHeader(doc, x0, cw, 14) + 8*pt;
+  mrPdfText(doc, '年 度 收 支 一 覽 表', x0+cw/2, y, 16, 20, {bold:true, align:'center'});
+  y += 20*pt + 8*pt;
+  const infoTexts = ['客戶名稱：'+(customer.customer_name||'')+'（'+(customer.customer_no||'')+'）', '物件地址：'+(propAddress||''), '產生日期：'+new Date().toLocaleDateString('ja-JP')];
+  const infoX = [x0, x0+85, x0+215], infoW = [85,130,46];
+  const infoLines = infoTexts.map((t,i)=>mrPdfWrap(doc, t, 9.5, false, infoW[i]));
+  infoLines.forEach((ls,i)=> ls.forEach((ln,j)=> mrPdfText(doc, ln, infoX[i], y+j*14*pt, 9.5, 14)));
+  y += Math.max(...infoLines.map(l=>l.length))*14*pt + 10*pt;
+  const months = []; for(let m=1;m<=uptoMonth;m++) months.push(m);
+  const labelW = 26, totalW = 18, monthW = (cw-labelW-totalW)/months.length;
+  const xs = [x0]; months.forEach((m,i)=>xs.push(x0+labelW+i*monthW)); xs.push(x0+cw-totalW); // xs[i]=第 i 欄左緣
+  const colW = [labelW].concat(months.map(()=>monthW), [totalW]);
+  const numTxt = v=> mrPdfYenText(v);
+  // 數字太長塞不進欄寬時，自動縮小字級（最小 6pt）
+  const fitNum = (str, w, size, bold)=>{ let s = size; while(s>6 && mrPdfW(doc, str, s, bold) > w-6*pt) s -= 0.2; return s; };
+  const numCell = (v, c, top, size, bold)=>{
+    const s = fitNum(numTxt(v), colW[c], size, bold);
+    mrPdfText(doc, numTxt(v), xs[c]+colW[c]-3*pt, top, s, 10, {bold, align:'right', color:(Number(v)<0?C.neg:C.dark)});
+  };
+  let tableTop = y;
+  const hdrH = 11*pt + 6*pt;
+  let sectionRows = [];
+  const finishBlock = ()=>{ // 框線與直線；「收入項目／支出項目」整列不分欄，所以蓋回底色
+    mrPdfRect(doc, x0, tableTop, cw, y-tableTop, null, C.border, 0.6);
+    mrPdfHex(doc,'draw',C.border); doc.setLineWidth(0.3*pt);
+    for(let c=1;c<colW.length;c++) doc.line(xs[c], tableTop, xs[c], y);
+    sectionRows.forEach(r=>{ mrPdfRect(doc, x0+0.2*pt, r.y, cw-0.4*pt, 17*pt, C.infoBg); mrPdfCell(doc, r.title, x0, r.y+3*pt, cw, {size:8.5, leading:11, bold:true}); });
+    sectionRows = [];
+  };
+  const drawHead = ()=>{
+    mrPdfRect(doc, x0, y, cw, hdrH, C.lightGrey);
+    mrPdfCell(doc, '項目', xs[0], y+3*pt, labelW, {size:8, leading:11, bold:true, align:'center'});
+    months.forEach((m,i)=> mrPdfCell(doc, MR_RPT_MONTH_NAMES[m-1], xs[i+1], y+3*pt, monthW, {size:8, leading:11, bold:true, align:'center'}));
+    mrPdfCell(doc, '合計', x0+cw-totalW, y+3*pt, totalW, {size:8, leading:11, bold:true, align:'center'});
+    y += hdrH; mrPdfHLine(doc, x0, x0+cw, y, C.dark, 0.8);
+  };
+  drawHead();
+  const ensure = h=>{ if(y+h > bottom){ finishBlock(); doc.addPage(); y = 14; tableTop = y; drawHead(); } };
+  const section = (title, dataMap)=>{
+    const names = Object.keys(dataMap||{});
+    ensure(11*pt+6*pt);
+    mrPdfRect(doc, x0, y, cw, 17*pt, C.infoBg);
+    mrPdfCell(doc, title, x0, y+3*pt, cw, {size:8.5, leading:11, bold:true});
+    sectionRows.push({y, title});
+    y += 17*pt;
+    const mt = {}; months.forEach(m=>mt[m]=0);
+    names.forEach(name=>{
+      const n = mrPdfCellLines(doc, name, labelW, {size:8});
+      const h = Math.max(n,1)*11*pt + 6*pt;
+      ensure(h);
+      mrPdfCell(doc, name, x0, y+3*pt, labelW, {size:8, leading:11});
+      let rt = 0;
+      months.forEach((m,i)=>{ const a = (dataMap[name]&&dataMap[name][m])||0; rt += a; mt[m]+=a; numCell(a, i+1, y+3*pt, 7.3, false); });
+      numCell(rt, months.length+1, y+3*pt, 7.3, false);
+      y += h; mrPdfHLine(doc, x0, x0+cw, y, C.border, 0.3);
+    });
+    ensure(17*pt);
+    mrPdfRect(doc, x0, y, cw, 17*pt, C.rowAlt);
+    mrPdfHLine(doc, x0, x0+cw, y, C.dark, 0.5);
+    mrPdfCell(doc, '合計', x0, y+3*pt, labelW, {size:8.5, leading:11, bold:true});
+    let g = 0;
+    months.forEach((m,i)=>{ g += mt[m]; numCell(mt[m], i+1, y+3*pt, 7.6, true); });
+    numCell(g, months.length+1, y+3*pt, 7.6, true);
+    y += 17*pt;
+    return mt;
+  };
+  const inc = section('收入項目', monthlyData.income);
+  const exp = section('支出項目', monthlyData.expense);
+  ensure(17*pt);
+  mrPdfRect(doc, x0, y, cw, 17*pt, C.infoBg);
+  mrPdfHLine(doc, x0, x0+cw, y, C.dark, 0.9);
+  mrPdfCell(doc, '收支合計', x0, y+3*pt, labelW, {size:8.5, leading:11, bold:true});
+  let bg = 0;
+  months.forEach((m,i)=>{ const b = (inc[m]||0)-(exp[m]||0); bg += b; numCell(b, i+1, y+3*pt, 7.6, true); });
+  numCell(bg, months.length+1, y+3*pt, 7.6, true);
+  y += 17*pt;
+  finishBlock();
+}
+async function mrPdfBuildAnnualVector(customer, year, uptoMonth, byProperty){
+  const fonts = await mrPdfLoadFonts();
+  const doc = mrPdfNewDoc('landscape', fonts);
+  let first = true;
+  for(const key of Object.keys(byProperty)){
+    if(!first) doc.addPage();
+    first = false;
+    mrPdfAnnualPage(doc, customer, byProperty[key].address, year, uptoMonth, byProperty[key]);
+  }
+  mrPdfCheckGlyphs(doc);
+  return doc;
+}
+/* ==== 向量文字版 PDF 結束 ==== */
+
+/* 月次報告書：優先用向量文字版；字型載入失敗或有缺字時，退回舊的截圖版（版面稍糊但一定能產出） */
 async function mrRptBuildCustomerPdf(customer, year, month, properties){
+  try{
+    return await mrPdfBuildCustomerVector(customer, year, month, properties);
+  }catch(err){
+    console.warn('向量文字版 PDF 失敗，改用截圖版：', err);
+    return await mrRptBuildCustomerPdfImage(customer, year, month, properties);
+  }
+}
+async function mrRptBuildCustomerPdfImage(customer, year, month, properties){
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({unit:'mm', format:'a4', orientation:'portrait'});
   const coverHtml = mrRptCoverPageHtml(customer, year, month, properties);
@@ -10802,15 +11187,21 @@ async function mrRptGenerateAnnual(){
       });
     });
     const customer = { customer_no: customerNo, customer_name: own[0].customer_name };
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({unit:'mm', format:'a4', orientation:'landscape'});
-    let first = true;
-    for(const key of Object.keys(byProperty)){
-      if(!first) doc.addPage();
-      first = false;
-      const html = mrRptAnnualPageHtml(customer, byProperty[key].address, year, uptoMonth, byProperty[key]);
-      const canvas = await mrRptHtmlToCanvas(html);
-      mrRptAddPageImage(doc, canvas, 297, 210);
+    let doc;
+    try{
+      doc = await mrPdfBuildAnnualVector(customer, year, uptoMonth, byProperty);
+    }catch(vecErr){
+      console.warn('向量文字版年度報表失敗，改用截圖版：', vecErr);
+      const { jsPDF } = window.jspdf;
+      doc = new jsPDF({unit:'mm', format:'a4', orientation:'landscape'});
+      let first = true;
+      for(const key of Object.keys(byProperty)){
+        if(!first) doc.addPage();
+        first = false;
+        const html = mrRptAnnualPageHtml(customer, byProperty[key].address, year, uptoMonth, byProperty[key]);
+        const canvas = await mrRptHtmlToCanvas(html);
+        mrRptAddPageImage(doc, canvas, 297, 210);
+      }
     }
     const safe = `${customerNo}_${customer.customer_name}_${year}\u5e74\u5ea6`.replace(/\//g,'_');
     doc.save(`\u5e74\u5ea6\u6536\u652f\u4e00\u89bd\u8868_${safe}.pdf`);
