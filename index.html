@@ -748,6 +748,7 @@
 .mrps-annual-table tr.section td{background:#f2ede0;font-weight:700;text-align:left;}
 .mrps-annual-table tr.subtotal td{background:#f7f6f2;font-weight:700;}
 .mrps-annual-table tr.balance td{background:#f2ede0;font-weight:700;border-top:0.9px solid #333;}
+.mrps-annual-table tr.acct td{background:#e3eef5;font-weight:700;}
 #panel-monthlyreports .mr-panel{display:none;}
 #panel-monthlyreports .mr-panel.active{display:block;}
 #panel-monthlyreports .card{background:var(--mr-surface);border:1px solid var(--mr-line);border-radius:var(--mr-radius);padding:18px 20px;}
@@ -10603,6 +10604,43 @@ function mrRptPropertyPageHtml(customer, year, month, prop){
       ${mrRptItemSectionHtml('\u652f\u51fa\u9805\u76ee', prop.expense_items, prop.expense_total, true, '\u652f\u51fa\u5c0f\u8a08')}
     </div>`;
 }
+/* 年度報表：單一物件的餘額資訊（上年度餘額、今年累計收支、目前餘額），多物件合計用 */
+function mrRptAnnualItemSum(map, m){
+  let t = 0;
+  Object.keys(map||{}).forEach(n=>{ t += (map[n] && map[n][m]) || 0; });
+  return t;
+}
+function mrRptAnnualBalanceInfo(entry, uptoMonth, key){
+  let net = 0, lastM = null, lastSettle = null;
+  for(let m=1;m<=uptoMonth;m++){
+    if(!(entry.seen && entry.seen[m])) continue;
+    net += mrRptAnnualItemSum(entry.income, m) - mrRptAnnualItemSum(entry.expense, m);
+    lastM = m;
+    if(entry.settle && entry.settle[m]!=null) lastSettle = Number(entry.settle[m])||0;
+  }
+  const prev = (entry.prevYearBalance==null) ? null : Number(entry.prevYearBalance);
+  const end = (prev!=null) ? prev + net : (lastSettle!=null ? lastSettle : null);
+  return { key, propNo: entry.propNo||'', address: entry.address||'', prev, net, lastM, lastSettle, end };
+}
+/* 頁面右上角的餘額摘要文字（回傳 [{text, val}]） */
+function mrRptAnnualSummaryLines(info, year, allBalances, yen){
+  const lines = [];
+  if(info.prev!=null && info.lastM){
+    lines.push({ text: `上年度餘額（${year-1}年底）：${yen(info.prev)} ${info.net>=0?'+':'-'} ${year}年度收支：${yen(Math.abs(info.net))} = 截至${info.lastM}月餘額：${yen(info.end)}`, val: info.end });
+  }else if(info.prev!=null){
+    lines.push({ text: `上年度餘額（${year-1}年底）：${yen(info.prev)}`, val: info.prev });
+  }else if(info.lastSettle!=null){
+    lines.push({ text: `截至${info.lastM}月結算合計：${yen(info.lastSettle)}`, val: info.lastSettle });
+  }
+  if(allBalances && allBalances.length>1){
+    const known = allBalances.filter(b=>b.end!=null);
+    const total = known.reduce((a,b)=>a+b.end, 0);
+    let t = `客戶全部 ${allBalances.length} 個物件合計餘額：${yen(total)}`;
+    if(known.length < allBalances.length) t += `（另有 ${allBalances.length-known.length} 個物件無資料，未計入）`;
+    lines.push({ text: t, val: total });
+  }
+  return lines;
+}
 function mrRptAnnualSectionCalc(itemNames, dataMap, months){
   let rowsHtml = '';
   const monthTotals = {}; months.forEach(m=>monthTotals[m]=0);
@@ -10620,7 +10658,7 @@ function mrRptAnnualSectionCalc(itemNames, dataMap, months){
   months.forEach(m=>{ subtotalCells += `<td>${mrRptYen(monthTotals[m])}</td>`; grand += monthTotals[m]; });
   return { rowsHtml, subtotalCells, monthTotals, grand };
 }
-function mrRptAnnualPageHtml(customer, propAddress, year, uptoMonth, monthlyData){
+function mrRptAnnualPageHtml(customer, propAddress, year, uptoMonth, monthlyData, allBalances){
   const months = [];
   for(let m=1;m<=uptoMonth;m++) months.push(m);
   const inc = mrRptAnnualSectionCalc(Object.keys(monthlyData.income||{}), monthlyData.income||{}, months);
@@ -10632,6 +10670,25 @@ function mrRptAnnualPageHtml(customer, propAddress, year, uptoMonth, monthlyData
   let balCells=''; let balGrand=0;
   months.forEach(m=>{ const b=(inc.monthTotals[m]||0)-(exp.monthTotals[m]||0); balCells+=`<td>${mrRptYen(b)}</td>`; balGrand+=b; });
   const balRow = `<tr class="balance"><td>\u6536\u652f\u5408\u8a08</td>${balCells}<td>${mrRptYen(balGrand)}</td></tr>`;
+  const bInfo = mrRptAnnualBalanceInfo(monthlyData, uptoMonth);
+  let acctRows = '';
+  if(bInfo.prev!=null){
+    acctRows += `<tr class="acct"><td>\u4e0a\u5e74\u5ea6\u9918\u984d\uff08${year-1}\u5e74\u5e95\uff09</td>${months.map(()=>'<td></td>').join('')}<td>${mrRptYen(bInfo.prev)}</td></tr>`;
+    let run = bInfo.prev, lastRun = null, runCells = '';
+    months.forEach(m=>{
+      if(monthlyData.seen && monthlyData.seen[m]){ run += (inc.monthTotals[m]||0)-(exp.monthTotals[m]||0); lastRun = run; runCells += `<td>${mrRptYen(run)}</td>`; }
+      else runCells += '<td></td>';
+    });
+    acctRows += `<tr class="acct"><td>\u7d2f\u8a08\u9918\u984d\uff08\u4e0a\u5e74\u5ea6\u9918\u984d+\u6536\u652f\uff09</td>${runCells}<td>${lastRun==null?'':mrRptYen(lastRun)}</td></tr>`;
+  }
+  let setCells = '', lastSet = null;
+  months.forEach(m=>{
+    if(monthlyData.seen && monthlyData.seen[m] && monthlyData.settle && monthlyData.settle[m]!=null){ lastSet = Number(monthlyData.settle[m])||0; setCells += `<td>${mrRptYen(lastSet)}</td>`; }
+    else setCells += '<td></td>';
+  });
+  acctRows += `<tr class="acct"><td>\u6708\u5e95\u7d50\u7b97\u5408\u8a08\uff08\u5831\u544a\u66f8\uff09</td>${setCells}<td>${lastSet==null?'':mrRptYen(lastSet)}</td></tr>`;
+  const sumLinesHtml = mrRptAnnualSummaryLines(bInfo, year, allBalances, mrPdfYenText)
+    .map(l=>`<div style="text-align:right;font-weight:700;font-size:10.5px;margin-bottom:3px;color:${l.val<0?'#c0392b':'#0b5f7a'};">${mrRptEsc(l.text)}</div>`).join('');
   return `
     <div class="mrps-page landscape">
       ${mrRptHeaderHtml()}
@@ -10641,10 +10698,32 @@ function mrRptAnnualPageHtml(customer, propAddress, year, uptoMonth, monthlyData
         <div>\u7269\u4ef6\u5730\u5740\uff1a${mrRptEsc(propAddress)}</div>
         <div>\u7522\u751f\u65e5\u671f\uff1a${new Date().toLocaleDateString('ja-JP')}</div>
       </div>
+      ${sumLinesHtml}
       <table class="mrps-annual-table">
         <thead><tr><th>\u9805\u76ee</th>${months.map(m=>`<th>${MR_RPT_MONTH_NAMES[m-1]}</th>`).join('')}<th>\u5408\u8a08</th></tr></thead>
-        <tbody>${incSectionRow}${inc.rowsHtml}${incSubtotalRow}${expSectionRow}${exp.rowsHtml}${expSubtotalRow}${balRow}</tbody>
+        <tbody>${incSectionRow}${inc.rowsHtml}${incSubtotalRow}${expSectionRow}${exp.rowsHtml}${expSubtotalRow}${balRow}${acctRows}</tbody>
       </table>
+    </div>`;
+}
+function mrRptAnnualSummaryHtml(customer, year, uptoMonth, balances){
+  let tp = 0, tn = 0, te = 0;
+  const rows = balances.map(b=>{
+    tp += b.prev||0; tn += b.net; te += b.end||0;
+    return `<tr><td style="text-align:left;">${mrRptEsc(b.propNo)}</td><td style="text-align:left;">${mrRptEsc(b.address)}</td><td>${b.prev==null?'\u2014':mrRptYen(b.prev)}</td><td>${mrRptYen(b.net)}</td><td>${b.lastM?b.lastM+'\u6708':'\u2014'}</td><td><b>${b.end==null?'\u2014':mrRptYen(b.end)}</b></td></tr>`;
+  }).join('');
+  return `
+    <div class="mrps-page landscape">
+      ${mrRptHeaderHtml()}
+      <div class="mrps-title">\u5ba2 \u6236 \u9918 \u984d \u7e3d \u8868\uff08\u5168\u90e8\u7269\u4ef6\u5408\u8a08\uff09</div>
+      <div style="display:flex;justify-content:space-between;font-size:9.5px;margin-bottom:10px;">
+        <div>\u5ba2\u6236\u540d\u7a31\uff1a${mrRptEsc(customer.customer_name)}\uff08${mrRptEsc(customer.customer_no)}\uff09</div>
+        <div>\u7522\u751f\u65e5\u671f\uff1a${new Date().toLocaleDateString('ja-JP')}</div>
+      </div>
+      <table class="mrps-annual-table" style="font-size:9px;">
+        <thead><tr><th>\u7269\u4ef6\u7de8\u865f</th><th style="text-align:left;">\u7269\u4ef6\u5730\u5740</th><th>\u4e0a\u5e74\u5ea6\u9918\u984d\uff08${year-1}\u5e74\u5e95\uff09</th><th>${year}\u5e74\u5ea6\u6536\u652f</th><th>\u622a\u81f3</th><th>\u76ee\u524d\u9918\u984d</th></tr></thead>
+        <tbody>${rows}<tr class="acct"><td>\u5408\u8a08</td><td style="text-align:left;">\u5168\u90e8 ${balances.length} \u500b\u7269\u4ef6</td><td>${mrRptYen(tp)}</td><td>${mrRptYen(tn)}</td><td></td><td>${mrRptYen(te)}</td></tr></tbody>
+      </table>
+      <div style="font-size:8.5px;margin-top:6px;">\u8a3b\uff1a\u76ee\u524d\u9918\u984d = \u4e0a\u5e74\u5ea6\u9918\u984d + \u4eca\u5e74\u5ea6\u6536\u652f\uff08\u6536\u5165-\u652f\u51fa\uff09\uff0c\u591a\u500b\u7269\u4ef6\u7684\u5408\u8a08\u5373\u70ba\u5ba2\u4eba\u76ee\u524d\u5728\u516c\u53f8\u5e33\u4e0a\u7684\u7e3d\u9918\u984d\u3002</div>
     </div>`;
 }
 
@@ -10955,7 +11034,7 @@ async function mrPdfBuildCustomerVector(customer, year, month, properties){
   return doc;
 }
 /* ---- 年度收支一覽表（橫式，一個物件一頁）---- */
-function mrPdfAnnualPage(doc, customer, propAddress, year, uptoMonth, monthlyData){
+function mrPdfAnnualPage(doc, customer, propAddress, year, uptoMonth, monthlyData, allBalances){
   const pt = MR_PDF_PT, x0 = 18, cw = 261, C = MR_PDF_C, bottom = MR_PDF_PAGE_BOTTOM_LANDSCAPE;
   let y = mrPdfHeader(doc, x0, cw, 14) + 8*pt;
   mrPdfText(doc, '年 度 收 支 一 覽 表', x0+cw/2, y, 16, 20, {bold:true, align:'center'});
@@ -10965,6 +11044,12 @@ function mrPdfAnnualPage(doc, customer, propAddress, year, uptoMonth, monthlyDat
   const infoLines = infoTexts.map((t,i)=>mrPdfWrap(doc, t, 9.5, false, infoW[i]));
   infoLines.forEach((ls,i)=> ls.forEach((ln,j)=> mrPdfText(doc, ln, infoX[i], y+j*14*pt, 9.5, 14)));
   y += Math.max(...infoLines.map(l=>l.length))*14*pt + 10*pt;
+  const bInfo = mrRptAnnualBalanceInfo(monthlyData, uptoMonth);
+  mrRptAnnualSummaryLines(bInfo, year, allBalances, mrPdfYenText).forEach(l=>{
+    mrPdfText(doc, l.text, x0+cw, y, 10, 14, {bold:true, align:'right', color:(l.val<0?C.neg:'#0b5f7a')});
+    y += 14*pt + 2*pt;
+  });
+  y += 2*pt;
   const months = []; for(let m=1;m<=uptoMonth;m++) months.push(m);
   const labelW = 26, totalW = 18, monthW = (cw-labelW-totalW)/months.length;
   const xs = [x0]; months.forEach((m,i)=>xs.push(x0+labelW+i*monthW)); xs.push(x0+cw-totalW); // xs[i]=第 i 欄左緣
@@ -11033,17 +11118,96 @@ function mrPdfAnnualPage(doc, customer, propAddress, year, uptoMonth, monthlyDat
   months.forEach((m,i)=>{ const b = (inc[m]||0)-(exp[m]||0); bg += b; numCell(b, i+1, y+3*pt, 7.6, true); });
   numCell(bg, months.length+1, y+3*pt, 7.6, true);
   y += 17*pt;
+  // 餘額區：上年度餘額 → 累計餘額（上年度餘額+收支）→ 月底結算合計（報告書實際值）
+  const ACCT_BG = '#e3eef5';
+  const balRow = (label, vals, totalVal, first)=>{
+    const n = mrPdfCellLines(doc, label, labelW, {size:8.5, bold:true});
+    const h = Math.max(n,1)*11*pt + 6*pt;
+    ensure(h);
+    mrPdfRect(doc, x0, y, cw, h, ACCT_BG);
+    if(first) mrPdfHLine(doc, x0, x0+cw, y, '#0b7a9b', 0.9);
+    mrPdfCell(doc, label, x0, y+3*pt, labelW, {size:8.5, leading:11, bold:true});
+    months.forEach((m,i)=>{ if(vals[m]!=null) numCell(vals[m], i+1, y+3*pt, 7.6, true); });
+    if(totalVal!=null) numCell(totalVal, months.length+1, y+3*pt, 7.6, true);
+    y += h; mrPdfHLine(doc, x0, x0+cw, y, C.border, 0.3);
+  };
+  const seen = monthlyData.seen || {};
+  let firstAcct = true;
+  if(bInfo.prev!=null){
+    balRow('上年度餘額（'+(year-1)+'年底）', {}, bInfo.prev, firstAcct); firstAcct = false;
+    const run = {}; let r = bInfo.prev, lastRun = null;
+    months.forEach(m=>{ if(seen[m]){ r += (inc[m]||0)-(exp[m]||0); run[m] = r; lastRun = r; } });
+    balRow('累計餘額（上年度餘額+收支）', run, lastRun, false);
+  }
+  const setl = {}; let lastSet = null;
+  months.forEach(m=>{ if(seen[m] && monthlyData.settle && monthlyData.settle[m]!=null){ lastSet = Number(monthlyData.settle[m])||0; setl[m] = lastSet; } });
+  balRow('月底結算合計（報告書）', setl, lastSet, firstAcct);
   finishBlock();
+}
+/* 客戶餘額總表：把這位客戶所有物件的餘額列出來並加總（多物件時才會產生） */
+function mrPdfAnnualSummaryPage(doc, customer, year, uptoMonth, balances){
+  const pt = MR_PDF_PT, x0 = 18, cw = 261, C = MR_PDF_C, bottom = MR_PDF_PAGE_BOTTOM_LANDSCAPE;
+  let y = mrPdfHeader(doc, x0, cw, 14) + 8*pt;
+  mrPdfText(doc, '客 戶 餘 額 總 表（全部物件合計）', x0+cw/2, y, 16, 20, {bold:true, align:'center'});
+  y += 20*pt + 8*pt;
+  mrPdfText(doc, '客戶名稱：'+(customer.customer_name||'')+'（'+(customer.customer_no||'')+'）', x0, y, 9.5, 14);
+  mrPdfText(doc, '產生日期：'+new Date().toLocaleDateString('ja-JP'), x0+cw, y, 9.5, 14, {align:'right'});
+  y += 14*pt + 10*pt;
+  const colW = [24, cw-24-42-34-20-46, 42, 34, 20, 46];
+  const xs = [x0]; colW.forEach((w,i)=>xs.push(xs[i]+w));
+  let tableTop = y;
+  const heads = ['物件編號','物件地址','上年度餘額（'+(year-1)+'年底）', year+'年度收支', '截至', '目前餘額'];
+  const drawHead = ()=>{
+    const hh = 11*pt + 8*pt;
+    mrPdfRect(doc, x0, y, cw, hh, C.lightGrey);
+    heads.forEach((t,i)=> mrPdfCell(doc, t, xs[i], y+4*pt, colW[i], {size:8, leading:11, bold:true, align:'center'}));
+    y += hh; mrPdfHLine(doc, x0, x0+cw, y, C.dark, 0.8);
+  };
+  const finishBlock = ()=>{
+    mrPdfRect(doc, x0, tableTop, cw, y-tableTop, null, C.border, 0.6);
+    mrPdfHex(doc,'draw',C.border); doc.setLineWidth(0.3*pt);
+    for(let c=1;c<colW.length;c++) doc.line(xs[c], tableTop, xs[c], y);
+  };
+  drawHead();
+  const num = (v, c, top, bold)=> mrPdfText(doc, mrPdfYenText(v), xs[c]+colW[c]-3*pt, top, 8, 11, {bold, align:'right', color:(Number(v)<0?C.neg:C.dark)});
+  const ensure = h=>{ if(y+h > bottom){ finishBlock(); doc.addPage(); y = 14; tableTop = y; drawHead(); } };
+  let tp = 0, tn = 0, te = 0;
+  balances.forEach(b=>{
+    const n = Math.max(mrPdfCellLines(doc, b.address||'', colW[1], {size:8}), mrPdfCellLines(doc, b.propNo||'', colW[0], {size:8}), 1);
+    const h = n*11*pt + 8*pt;
+    ensure(h);
+    mrPdfCell(doc, b.propNo||'', xs[0], y+4*pt, colW[0], {size:8, leading:11});
+    mrPdfCell(doc, b.address||'', xs[1], y+4*pt, colW[1], {size:8, leading:11});
+    if(b.prev!=null) num(b.prev, 2, y+4*pt, false); else mrPdfCell(doc, '—', xs[2], y+4*pt, colW[2], {size:8, leading:11, align:'right'});
+    num(b.net, 3, y+4*pt, false);
+    mrPdfCell(doc, b.lastM? (b.lastM+'月') : '—', xs[4], y+4*pt, colW[4], {size:8, leading:11, align:'right'});
+    if(b.end!=null) num(b.end, 5, y+4*pt, true); else mrPdfCell(doc, '—', xs[5], y+4*pt, colW[5], {size:8, leading:11, align:'right'});
+    tp += b.prev||0; tn += b.net; te += b.end||0;
+    y += h; mrPdfHLine(doc, x0, x0+cw, y, C.border, 0.3);
+  });
+  const th = 11*pt + 8*pt;
+  ensure(th);
+  mrPdfRect(doc, x0, y, cw, th, '#e3eef5');
+  mrPdfHLine(doc, x0, x0+cw, y, '#0b7a9b', 0.9);
+  mrPdfCell(doc, '合計', xs[0], y+4*pt, colW[0], {size:8.5, leading:11, bold:true});
+  mrPdfCell(doc, '全部 '+balances.length+' 個物件', xs[1], y+4*pt, colW[1], {size:8.5, leading:11, bold:true});
+  num(tp, 2, y+4*pt, true); num(tn, 3, y+4*pt, true); num(te, 5, y+4*pt, true);
+  y += th;
+  finishBlock();
+  y += 6*pt;
+  mrPdfText(doc, '註：目前餘額 = 上年度餘額 + 今年度收支（收入-支出），多個物件的合計即為客人目前在公司帳上的總餘額。', x0, y, 8.5, 12);
 }
 async function mrPdfBuildAnnualVector(customer, year, uptoMonth, byProperty){
   const fonts = await mrPdfLoadFonts();
   const doc = mrPdfNewDoc('landscape', fonts);
   let first = true;
+  const balances = Object.keys(byProperty).map(k=>mrRptAnnualBalanceInfo(byProperty[k], uptoMonth, k));
   for(const key of Object.keys(byProperty)){
     if(!first) doc.addPage();
     first = false;
-    mrPdfAnnualPage(doc, customer, byProperty[key].address, year, uptoMonth, byProperty[key]);
+    mrPdfAnnualPage(doc, customer, byProperty[key].address, year, uptoMonth, byProperty[key], balances);
   }
+  if(balances.length > 1){ doc.addPage(); mrPdfAnnualSummaryPage(doc, customer, year, uptoMonth, balances); }
   mrPdfCheckGlyphs(doc);
   return doc;
 }
@@ -11176,7 +11340,10 @@ async function mrRptGenerateAnnual(){
     const byProperty = {};
     own.forEach(r=>{
       const key = r.property_no || r.address;
-      if(!byProperty[key]) byProperty[key] = { address: r.address, income:{}, expense:{} };
+      if(!byProperty[key]) byProperty[key] = { propNo: r.property_no||'', address: r.address, income:{}, expense:{}, seen:{}, settle:{}, prevYearBalance:null, janPrev:null };
+      byProperty[key].seen[Number(r.month)] = true;
+      byProperty[key].settle[Number(r.month)] = (r.settle_total==null||r.settle_total==='') ? null : (Number(r.settle_total)||0);
+      if(Number(r.month)===1 && r.prev_balance!=null && r.prev_balance!=='') byProperty[key].janPrev = Number(r.prev_balance)||0;
       (r.income_items||[]).forEach(it=>{
         if(!byProperty[key].income[it.item]) byProperty[key].income[it.item] = {};
         byProperty[key].income[it.item][Number(r.month)] = (byProperty[key].income[it.item][Number(r.month)]||0) + (Number(it.amount)||0);
@@ -11186,6 +11353,26 @@ async function mrRptGenerateAnnual(){
         byProperty[key].expense[it.item][Number(r.month)] = (byProperty[key].expense[it.item][Number(r.month)]||0) + (Number(it.amount)||0);
       });
     });
+    // 上年度餘額：去年 12 月月次報告書的「結算合計」（逐物件）；沒有去年 12 月的報表就用今年 1 月的「上期餘額」
+    const prevDec = {};
+    mrRecords.filter(r=> r.customer_no===customerNo && Number(r.year)===year-1 && Number(r.month)===12)
+      .forEach(r=>{ prevDec[r.property_no || r.address] = r; });
+    Object.keys(byProperty).forEach(k=>{
+      const e = byProperty[k];
+      if(prevDec[k]) e.prevYearBalance = Number(prevDec[k].settle_total)||0;
+      else if(e.janPrev!=null) e.prevYearBalance = e.janPrev;
+    });
+    // 今年完全沒有月次報告書、但去年底還有餘額的物件，也要列入（否則客戶總餘額會少算）
+    Object.keys(prevDec).forEach(k=>{
+      if(!byProperty[k] && Number(prevDec[k].settle_total)){
+        byProperty[k] = { propNo: prevDec[k].property_no||'', address: prevDec[k].address, income:{}, expense:{}, seen:{}, settle:{}, prevYearBalance: Number(prevDec[k].settle_total)||0, janPrev:null };
+      }
+    });
+    // 物件依編號排序
+    const sortedKeys = Object.keys(byProperty).sort();
+    const sortedBP = {}; sortedKeys.forEach(k=>{ sortedBP[k] = byProperty[k]; });
+    Object.keys(byProperty).forEach(k=>{ delete byProperty[k]; });
+    sortedKeys.forEach(k=>{ byProperty[k] = sortedBP[k]; });
     const customer = { customer_no: customerNo, customer_name: own[0].customer_name };
     let doc;
     try{
@@ -11195,11 +11382,17 @@ async function mrRptGenerateAnnual(){
       const { jsPDF } = window.jspdf;
       doc = new jsPDF({unit:'mm', format:'a4', orientation:'landscape'});
       let first = true;
+      const balances = Object.keys(byProperty).map(k=>mrRptAnnualBalanceInfo(byProperty[k], uptoMonth, k));
       for(const key of Object.keys(byProperty)){
         if(!first) doc.addPage();
         first = false;
-        const html = mrRptAnnualPageHtml(customer, byProperty[key].address, year, uptoMonth, byProperty[key]);
+        const html = mrRptAnnualPageHtml(customer, byProperty[key].address, year, uptoMonth, byProperty[key], balances);
         const canvas = await mrRptHtmlToCanvas(html);
+        mrRptAddPageImage(doc, canvas, 297, 210);
+      }
+      if(balances.length > 1){
+        doc.addPage();
+        const canvas = await mrRptHtmlToCanvas(mrRptAnnualSummaryHtml(customer, year, uptoMonth, balances));
         mrRptAddPageImage(doc, canvas, 297, 210);
       }
     }
