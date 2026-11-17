@@ -8428,6 +8428,21 @@ function mrRenderFieldInput(f, rec, access){
     </div>`;
   }
 
+  // 客戶名稱／客戶編號：可以打字篩選的選單（名字裡任何一個字都能搜得到，例如打「小」就會跳出所有名字有「小」的客戶）。
+  // 選了客戶之後，下面的「物件編號」選單就只會剩下這位客戶的案子。
+  if(f.id === 'customer_name' || f.id === 'customer_no'){
+    return `<div class="field" style="position:relative;">
+      <label>${f.label}</label>
+      <input type="text" data-fid="${f.id}" value="${val}" ${ro?'readonly':''}
+        autocomplete="off"
+        oninput="mrCustomerAutocomplete(this)"
+        onfocus="mrCustomerAutocomplete(this)"
+        onblur="setTimeout(()=>mrHidePropertySuggest(this), 150)">
+      <div class="mr-cust-suggest" style="display:none;"></div>
+      <span class="formula-note">${f.id==='customer_name' ? '可打姓名裡的任何一個字來篩選客戶，選了之後物件編號只會剩下這位客戶的案子' : '可打客戶編號或姓名來篩選客戶'}</span>
+    </div>`;
+  }
+
   // 物件編號：跟「物件資料」模組連動的自動完成輸入框——
   // 可以打字從物件清單裡篩選（顯示「物件編號 物件地址」），也可以直接手動輸入物件編號，
   // 選了或打對既有的物件編號，物件地址、客戶編號、客戶姓名都會自動帶出來，不用再填。
@@ -8440,7 +8455,7 @@ function mrRenderFieldInput(f, rec, access){
         onfocus="mrPropertyAutocomplete(this)"
         onblur="setTimeout(()=>mrHidePropertySuggest(this), 150)">
       <div class="mr-cust-suggest" style="display:none;"></div>
-      <span class="formula-note">可打字篩選物件清單，也可以直接手動輸入物件編號</span>
+      <span class="formula-note">可打字篩選物件清單；上面選了客戶，這裡就只會列出這位客戶的案子</span>
     </div>`;
   }
 
@@ -8530,11 +8545,71 @@ function mrHandleFileSelect(inputEl){
 }
 
 /* ---------------- 客戶編號自動完成（連動「客戶資料」模組的 ccRecords） ---------------- */
+/* 目前表單上選中的客戶（用客戶編號對；編號沒填就用「剛好只有一位同名」的客戶姓名對），找不到回傳 null */
+function mrGetFormCustomer(container){
+  const getVal = fid => { const el = container.querySelector('[data-fid="'+fid+'"]'); return el ? (el.value||'').trim() : ''; };
+  const custs = (typeof ppCustomerList !== 'undefined') ? ppCustomerList : [];
+  const no = getVal('customer_no');
+  if(no){ const c = custs.find(c => c.customer_no === no); if(c) return c; }
+  const name = getVal('customer_name');
+  if(name){ const same = custs.filter(c => c.customer_name === name); if(same.length === 1) return same[0]; }
+  return null;
+}
+function mrPropertiesOfCustomer(c){
+  return mrPropertyList.filter(p => (p.customer_no && p.customer_no === c.customer_no) || (!p.customer_no && p.customer_name && p.customer_name === c.customer_name));
+}
+function mrCustomerAutocomplete(inputEl){
+  const box = inputEl.parentElement.querySelector('.mr-cust-suggest');
+  if(!box) return;
+  const kw = (inputEl.value||'').trim();
+  const list = (typeof ppCustomerList !== 'undefined') ? ppCustomerList : [];
+  if(typeof ppCustomerListLoaded === 'undefined' || !ppCustomerListLoaded){
+    box.innerHTML = `<div class="mr-cust-suggest-item" style="color:var(--mr-muted);cursor:default;">客戶資料載入中…請稍候幾秒再試一次</div>`;
+    box.style.display = 'block';
+    return;
+  }
+  let matches = list;
+  if(kw) matches = list.filter(c => (c.customer_name||'').includes(kw) || (c.customer_no||'').includes(kw));
+  matches = matches.slice(0, 300);
+  if(!matches.length){
+    box.innerHTML = `<div class="mr-cust-suggest-item" style="color:var(--mr-muted);cursor:default;">${kw ? '沒有符合的客戶，可以直接手動輸入' : '目前還沒有任何客戶資料'}</div>`;
+  }else{
+    const counts = {};
+    (mrPropertyList||[]).forEach(p => { const k = p.customer_no || ('name:' + (p.customer_name||'')); counts[k] = (counts[k]||0) + 1; });
+    box.innerHTML = matches.map(c=>{
+      const n = counts[c.customer_no] || counts['name:' + (c.customer_name||'')] || 0;
+      return `<div class="mr-cust-suggest-item" data-no="${mrRptEsc(c.customer_no||'')}" data-name="${mrRptEsc(c.customer_name||'')}" onmousedown="mrSelectCustomer(this)">${mrRptEsc(c.customer_name||'')}　（${mrRptEsc(c.customer_no||'')}）<span style="color:var(--mr-muted);font-size:12px;">　${n} 個案子</span></div>`;
+    }).join('');
+  }
+  box.style.display = 'block';
+}
+function mrSelectCustomer(itemEl){
+  const box = itemEl.closest('.mr-cust-suggest');
+  const container = itemEl.closest('#mr-formSections') || document;
+  const no = itemEl.dataset.no || '', name = itemEl.dataset.name || '';
+  const setVal = (fid, v) => { const el = container.querySelector('[data-fid="'+fid+'"]'); if(el) el.value = v; };
+  setVal('customer_no', no);
+  setVal('customer_name', name);
+  // 目前填的物件如果不是這位客戶的，就清掉物件編號／地址，避免客戶跟物件對不起來
+  const propEl = container.querySelector('[data-fid="property_no"]');
+  if(propEl && propEl.value){
+    const cur = mrPropertyList.find(p => p.property_no === propEl.value);
+    const belongs = cur && ((cur.customer_no && cur.customer_no === no) || (!cur.customer_no && cur.customer_name === name));
+    if(!belongs){ propEl.value = ''; setVal('address', ''); }
+  }
+  box.style.display = 'none';
+  box.innerHTML = '';
+  mrRecalcAutoFields();
+  // 選完客戶，直接把游標移到物件編號，讓清單跳出這位客戶的案子
+  if(propEl && !propEl.readOnly) setTimeout(()=>propEl.focus(), 0);
+}
 function mrPropertyAutocomplete(inputEl){
   const box = inputEl.parentElement.querySelector('.mr-cust-suggest');
   if(!box) return;
   const kw = (inputEl.value||'').trim();
   const list = mrPropertyList;
+  const formContainer = inputEl.closest('#mr-formSections') || document;
+  const selCust = mrGetFormCustomer(formContainer);
 
   if(!mrPropertyListLoaded){
     box.innerHTML = `<div class="mr-cust-suggest-item" style="color:var(--mr-muted);cursor:default;">物件資料載入中…請稍候幾秒再試一次</div>`;
@@ -8542,19 +8617,26 @@ function mrPropertyAutocomplete(inputEl){
     return;
   }
 
-  let matches = list;
+  // 已經選了客戶：只列這位客戶的案子
+  let matches = selCust ? mrPropertiesOfCustomer(selCust) : list;
+  const scopedCount = selCust ? matches.length : 0;
   if(kw){
-    matches = list.filter(p => (p.property_no||'').includes(kw) || (p.address||'').includes(kw));
+    matches = matches.filter(p => (p.property_no||'').includes(kw) || (p.address||'').includes(kw));
   }
   matches = matches.slice(0, 300); // 上限提高，避免清單被截斷看不到後面的項目
+  const scopeHint = selCust
+    ? `<div class="mr-cust-suggest-item" style="color:var(--mr-muted);cursor:default;font-size:12px;background:#f7f6f2;">只顯示「${mrRptEsc(selCust.customer_name||'')}」的案子（共 ${scopedCount} 個）；要看全部物件，請先清空上面的客戶欄位</div>`
+    : '';
 
   if(!matches.length){
-    box.innerHTML = kw
-      ? `<div class="mr-cust-suggest-item" style="color:var(--mr-muted);cursor:default;">沒有符合的物件，可以直接手動輸入物件編號</div>`
-      : `<div class="mr-cust-suggest-item" style="color:var(--mr-muted);cursor:default;">目前還沒有任何物件資料</div>`;
+    box.innerHTML = scopeHint + (selCust
+      ? `<div class="mr-cust-suggest-item" style="color:var(--mr-muted);cursor:default;">${kw ? '這位客戶沒有符合的物件，可以直接手動輸入物件編號' : '這位客戶目前沒有任何物件，可以直接手動輸入物件編號'}</div>`
+      : (kw
+        ? `<div class="mr-cust-suggest-item" style="color:var(--mr-muted);cursor:default;">沒有符合的物件，可以直接手動輸入物件編號</div>`
+        : `<div class="mr-cust-suggest-item" style="color:var(--mr-muted);cursor:default;">目前還沒有任何物件資料</div>`));
     box.style.display = 'block';
   }else{
-    box.innerHTML = matches.map(p=>{
+    box.innerHTML = scopeHint + matches.map(p=>{
       const no = (p.property_no||'').replace(/'/g, "\\'");
       const addr = (p.address||'').replace(/'/g, "\\'");
       const custNo = (p.customer_no||'').replace(/'/g, "\\'");
@@ -8987,6 +9069,8 @@ function mrInitData(){
 
   // 「物件編號」自動完成用的物件清單：跟「物件管理」本體共用同一份監聽，見 ensureSharedPropertiesListener()
   mrUnsubPropertyList = ensureSharedPropertiesListener();
+  // 「客戶名稱／客戶編號」選單用的客戶清單：同樣共用「客戶資料」模組的那一份監聽（idempotent，不會重複訂閱）
+  ensureSharedCustomersListener();
 }
 
 
