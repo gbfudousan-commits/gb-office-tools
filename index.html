@@ -8637,11 +8637,8 @@ function mrPropertyAutocomplete(inputEl){
     box.style.display = 'block';
   }else{
     box.innerHTML = scopeHint + matches.map(p=>{
-      const no = (p.property_no||'').replace(/'/g, "\\'");
-      const addr = (p.address||'').replace(/'/g, "\\'");
-      const custNo = (p.customer_no||'').replace(/'/g, "\\'");
-      const custName = (p.customer_name||'').replace(/'/g, "\\'");
-      return `<div class="mr-cust-suggest-item" onmousedown="mrSelectProperty(this, '${no}', '${addr}', '${custNo}', '${custName}')">${p.property_no||''}　${p.address||''}</div>`;
+      // 用 data- 屬性存值（而不是塞進 onmousedown 的字串裡），地址或姓名裡有引號、反斜線等特殊符號也不會讓點擊失效
+      return `<div class="mr-cust-suggest-item" data-no="${mrRptEsc(p.property_no||'')}" data-addr="${mrRptEsc(p.address||'')}" data-custno="${mrRptEsc(p.customer_no||'')}" data-custname="${mrRptEsc(p.customer_name||'')}" onmousedown="mrSelectProperty(this)">${mrRptEsc(p.property_no||'')}　${mrRptEsc(p.address||'')}</div>`;
     }).join('');
     box.style.display = 'block';
   }
@@ -8660,12 +8657,12 @@ function mrFillLinkedPropertyFields(inputEl, prop){
   if(custNameInput) custNameInput.value = prop.customer_name || '';
   mrRecalcAutoFields();
 }
-function mrSelectProperty(itemEl, propertyNo, address, customerNo, customerName){
+function mrSelectProperty(itemEl){
   const box = itemEl.closest('.mr-cust-suggest');
   const field = box.previousElementSibling;
   if(field){
-    field.value = propertyNo;
-    mrFillLinkedPropertyFields(field, {address, customer_no:customerNo, customer_name:customerName});
+    field.value = itemEl.dataset.no || '';
+    mrFillLinkedPropertyFields(field, {address: itemEl.dataset.addr || '', customer_no: itemEl.dataset.custno || '', customer_name: itemEl.dataset.custname || ''});
   }
   box.style.display = 'none';
   box.innerHTML = '';
