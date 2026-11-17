@@ -8194,6 +8194,8 @@ function mrGoToNextMonthReport(){
     // 上期餘額／上月報表是自動欄位（mrRecalcAutoFields 會依物件編號＋年月自動找上一期），不用手動填
     if(typeof mrRecalcFormulas === 'function') mrRecalcFormulas();
     if(typeof mrRecalcAutoFields === 'function') mrRecalcAutoFields();
+    mrFormSnapshot = mrSnapshotForm();
+    mrRememberYM();
   }, 0);
 }
 function mrRenderForm(){
@@ -8238,8 +8240,57 @@ function mrRenderForm(){
     inp.addEventListener('change', mrRecalcFormulas);
     inp.addEventListener('input', mrRecalcAutoFields);
     inp.addEventListener('change', mrRecalcAutoFields);
+    // 年份／月份／物件編號改了：如果這個物件那個月已經有報表，就直接切過去看
+    if(['year','month','property_no'].includes(inp.dataset.fid)){
+      inp.addEventListener('change', ()=>mrCheckExistingReport());
+    }
   });
   mrRecalcAutoFields();
+  mrFormSnapshot = mrSnapshotForm();
+  mrRememberYM();
+}
+let mrFormSnapshot = '';
+let mrSwitchingReport = false;
+let mrLastYM = {};
+function mrRememberYM(){
+  const c = document.getElementById('mr-formSections'); if(!c) return;
+  ['year','month','property_no'].forEach(f=>{ const el=c.querySelector(`[data-fid="${f}"]`); mrLastYM[f] = el ? el.value : ''; });
+}
+function mrSnapshotForm(){
+  const o = {};
+  document.querySelectorAll('#mr-formSections [data-fid]').forEach(el=>{
+    if(el.type==='file') return;
+    if(['year','month','property_no','address','customer_no','customer_name'].includes(el.dataset.fid)) return; // 切換用的欄位不算「已經編輯的內容」
+    o[el.dataset.fid] = el.value;
+  });
+  o.__sub = mrCurrentSubtableData;
+  try{ return JSON.stringify(o); }catch(e){ return String(Math.random()); }
+}
+function mrFormHasUnsavedChanges(){ return mrSnapshotForm() !== mrFormSnapshot; }
+function mrCheckExistingReport(){
+  if(mrSwitchingReport) return;
+  const container = document.getElementById('mr-formSections');
+  if(!container) return;
+  const getVal = (fid)=>{ const el = container.querySelector(`[data-fid="${fid}"]`); return el ? el.value : ''; };
+  const pno = getVal('property_no'), y = Number(getVal('year')), m = Number(getVal('month'));
+  if(!pno || !y || !m) return;
+  const idx = mrRecords.findIndex(r => r.property_no===pno && Number(r.year)===y && Number(r.month)===m);
+  if(idx < 0 || idx === mrEditingIndex){ mrRememberYM(); return; }
+  const label = `${pno}　${y} 年 ${m} 月`;
+  if(mrFormHasUnsavedChanges()){
+    if(!confirm(`這個物件 ${y} 年 ${m} 月已經有報表了。\n\n要切換過去查看「${label}」的報表嗎？\n\n按「確定」：切換過去（目前這張還沒存的內容會消失）\n按「取消」：留在這裡，年月改回原本的`)){
+      const setBack = (fid, v)=>{ const el = container.querySelector(`[data-fid="${fid}"]`); if(el) el.value = (v===undefined?'':v); };
+      setBack('year', mrLastYM.year); setBack('month', mrLastYM.month); setBack('property_no', mrLastYM.property_no);
+      container.querySelectorAll('select[data-fid="year"],select[data-fid="month"]').forEach(el=>{ try{ mrShowYearMonthPreview(el); }catch(e){} });
+      mrRecalcAutoFields();
+      return;
+    }
+  }
+  mrSwitchingReport = true;
+  try{ mrOpenForm(idx); } finally { mrSwitchingReport = false; }
+  const top = document.getElementById('mr-formSections');
+  if(top && top.scrollIntoView) top.scrollIntoView({block:'start'});
+  if(typeof showToast === 'function') showToast(`已切換到 ${label} 的既有報表`);
 }
 function mrRenderSubtableSection(sec, access){
   access = access || {readOnly:false};
@@ -8666,6 +8717,7 @@ function mrSelectProperty(itemEl){
   }
   box.style.display = 'none';
   box.innerHTML = '';
+  mrCheckExistingReport();
 }
 function mrHidePropertySuggest(inputEl){
   const box = inputEl.parentElement.querySelector('.mr-cust-suggest');
