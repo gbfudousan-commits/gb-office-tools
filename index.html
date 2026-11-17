@@ -2642,6 +2642,7 @@
     <div class="card">
       <div class="list-toolbar">
         <input type="text" id="mr-searchBox" placeholder="輸入報表編號、物件編號、客戶編號、地址或客戶姓名搜尋">
+        <button class="btn" title="檢查並修正每份報表的上期餘額和結算合計" onclick="mrRecalcAllReports()">重算結算合計</button>
         <button class="btn primary" onclick="mrOpenForm(null)">＋ 新增報表</button>
       </div>
       <div id="mr-filterBar" style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin:4px 0 14px;padding:12px;background:var(--mr-sub-bg);border:1px solid var(--mr-line);border-radius:var(--mr-radius);"></div>
@@ -8047,7 +8048,7 @@ function mrClearFilters(){
 
 function mrRenderList(){
   const listCols = mrFieldConfig.filter(f=>f.showInList);
-  document.getElementById('mr-listHeadRow').innerHTML = listCols.map(f=>`<th>${f.label}</th>`).join('');
+  document.getElementById('mr-listHeadRow').innerHTML = listCols.map(f=>`<th>${f.label}</th>`).join('') + '<th style="width:56px;"></th>';
   const body = document.getElementById('mr-listBody');
   const kw = (document.getElementById('mr-searchBox').value||'').trim();
 
@@ -8106,11 +8107,70 @@ function mrRenderList(){
       if(f.type==='number' || f.type==='formula') return `<td class="num">${mrFormatValue(f, val)}</td>`;
       if(f.id==='address') return `<td style="white-space:normal;">${val ?? ''}</td>`;
       return `<td>${val ?? ''}</td>`;
-    }).join('') + '</tr>';
+    }).join('') + `<td><button class="btn ghost danger small" title="刪除這份報表" onclick="event.stopPropagation();mrDeleteReport(${realIdx})">✕</button></td></tr>`;
   }).join('');
 
   mrRenderListPagination(totalPages);
   mrRenderFilterBar();
+}
+async function mrDeleteReport(idx){
+  const rec = mrRecords[idx];
+  if(!rec) return;
+  const docId = String(rec.report_no || `${rec.property_no}-${rec.year}-${String(rec.month).padStart(2,'0')}`);
+  const later = mrRecords.filter(r => r.property_no===rec.property_no && (Number(r.year)*100+Number(r.month)) > (Number(rec.year)*100+Number(rec.month))).length;
+  let msg = `確定要刪除這份報表嗎？\n\n報表編號：${docId}\n客戶：${rec.customer_name||''}\n地址：${rec.address||''}\n結算合計：${Number(rec.settle_total||0).toLocaleString()}\n\n刪除後無法復原。`;
+  if(later) msg += `\n\n注意：這個物件之後還有 ${later} 份報表，它們的「上期餘額」要重新儲存一次才會更新。`;
+  if(!confirm(msg)) return;
+  try{
+    await trackerDB.collection('monthly_reports').doc(docId).delete();
+    if(mrEditingIndex === idx){ mrEditingIndex = null; mrCurrentSubtableData = {}; }
+    notifLog('mr', 'delete', `物件 ${rec.property_no}（${rec.year}年${rec.month}月報表）`);
+  }catch(err){
+    console.error(err);
+    alert('刪除失敗：' + err.message);
+  }
+}
+/* 修正舊資料：依物件、年月順序重算每份報表的「上期餘額／結算合計」（結算合計 = 上期餘額 + 收入 − 支出） */
+function mrBuildRecalcPlan(){
+  const groups = {};
+  mrRecords.forEach(r=>{ const k = r.property_no; if(!k) return; (groups[k] = groups[k] || []).push(r); });
+  const changes = [];
+  Object.keys(groups).forEach(k=>{
+    const list = groups[k].slice().sort((a,b)=> (Number(a.year)*100+Number(a.month)) - (Number(b.year)*100+Number(b.month)));
+    let bal = 0, prevNo = '';
+    list.forEach(r=>{
+      const t = mrComputeTotals(r);
+      const newPrev = bal;
+      const newSettle = newPrev + t.settle_total;
+      if((Number(r.prev_balance)||0) !== newPrev || (Number(r.settle_total)||0) !== newSettle || (r.prev_report||'') !== prevNo){
+        changes.push({ rec:r, oldPrev:Number(r.prev_balance)||0, oldSettle:Number(r.settle_total)||0, newPrev, newSettle, newPrevNo: prevNo, t });
+      }
+      bal = newSettle; prevNo = r.report_no || '';
+    });
+  });
+  return changes;
+}
+async function mrRecalcAllReports(){
+  const changes = mrBuildRecalcPlan();
+  if(!changes.length){ alert('檢查完畢：所有報表的「上期餘額」和「結算合計」都是正確的，不用修正。'); return; }
+  const preview = changes.slice(0,12).map(c=>`${c.rec.report_no}　結算合計 ${c.oldSettle.toLocaleString()} → ${c.newSettle.toLocaleString()}`).join('\n');
+  if(!confirm(`有 ${changes.length} 份報表的「上期餘額／結算合計」跟正確算法（結算合計 = 上期餘額 + 收入 − 支出）不一樣。\n\n前幾筆：\n${preview}${changes.length>12?'\n…（還有 '+(changes.length-12)+' 份）':''}\n\n要全部修正嗎？（只會改這幾個數字，不會動收入支出明細）`)) return;
+  try{
+    let done = 0;
+    for(const c of changes){
+      const docId = String(c.rec.report_no);
+      await trackerDB.collection('monthly_reports').doc(docId).set(Object.assign({}, c.rec, {
+        prev_balance: c.newPrev, prev_report: c.newPrevNo,
+        income_total: c.t.income_total, expense_total: c.t.expense_total, settle_total: c.newSettle
+      }));
+      done++;
+    }
+    notifLog('mr', 'update', `重算結算合計：共修正 ${done} 份報表`);
+    alert(`已修正 ${done} 份報表。`);
+  }catch(err){
+    console.error(err);
+    alert('修正失敗：' + err.message);
+  }
 }
 function mrRenderListPagination(totalPages){
   const el = document.getElementById('mr-listPagination');
@@ -8778,7 +8838,7 @@ function mrRecalcAutoFields(){
   setAuto('prev_report', prev ? prev.report_no : '（沒有更早的報表，視為第一期）');
   setAuto('income_total', totals.income_total);
   setAuto('expense_total', totals.expense_total);
-  setAuto('settle_total', totals.settle_total);
+  setAuto('settle_total', (prev ? (Number(prev.settle_total)||0) : 0) + totals.settle_total);
 }
 
 async function mrSaveForm(){
@@ -8808,8 +8868,9 @@ async function mrSaveForm(){
   rec.settle_total = totals.settle_total;
 
   const prev = mrFindPrevReport(rec.property_no, rec.year, rec.month, mrEditingIndex);
-  rec.prev_balance = prev ? (prev.settle_total||0) : 0;
+  rec.prev_balance = prev ? (Number(prev.settle_total)||0) : 0;
   rec.prev_report = prev ? prev.report_no : '';
+  rec.settle_total = rec.prev_balance + totals.settle_total; // 結算合計 = 上期餘額 + 收入合計 − 支出合計
 
   const newDocId = `${rec.property_no}-${rec.year}-${String(rec.month).padStart(2,'0')}`;
   rec.report_no = newDocId;
@@ -10926,9 +10987,22 @@ function mrPdfHex(doc, kind, hex){
   if(kind==='text') doc.setTextColor(r,g,b); else if(kind==='fill') doc.setFillColor(r,g,b); else doc.setDrawColor(r,g,b);
 }
 /* 設定字型後量寬（mm） */
+function mrPdfSan(doc, str){
+  str = String(str==null?'':str);
+  let map;
+  try{ map = doc.getFont('GBSans','normal').metadata.cmap.unicode.codeMap; }catch(e){ return str; }
+  let out = '';
+  for(const ch of str){
+    if(/\s/.test(ch) || map[ch.codePointAt(0)]){ out += ch; continue; }
+    const n = ch.normalize('NFKC');              // Ⅱ→II、①→1、㈱→(株) 等
+    if(n !== ch && Array.from(n).every(c=>/\s/.test(c) || map[c.codePointAt(0)])){ out += n; continue; }
+    out += map[63] ? '?' : ' ';                  // 真的沒有這個字：用 ? 代替（總比整份變模糊好）
+  }
+  return out;
+}
 function mrPdfW(doc, str, size, bold){
   doc.setFont('GBSans', bold?'bold':'normal'); doc.setFontSize(size);
-  return doc.getTextWidth(String(str));
+  return doc.getTextWidth(mrPdfSan(doc, str));
 }
 /* 逐字換行：中文沒有空白，jsPDF 內建的 splitTextToSize 切不開，所以自己切 */
 function mrPdfWrap(doc, str, size, bold, maxW){
@@ -10954,9 +11028,10 @@ function mrPdfText(doc, str, x, topMm, size, leadingPt, o){
   doc.setFont('GBSans', o.bold?'bold':'normal'); doc.setFontSize(size);
   mrPdfHex(doc, 'text', o.color||MR_PDF_C.dark);
   const base = topMm + ((leadingPt - size)/2 + size*0.86) * MR_PDF_PT;
+  str = mrPdfSan(doc, str);
   if(!doc._mrChars) doc._mrChars = new Set();
-  for(const ch of String(str)) doc._mrChars.add(ch);
-  doc.text(String(str), x, base, {align:o.align||'left'});
+  for(const ch of str) doc._mrChars.add(ch);
+  doc.text(str, x, base, {align:o.align||'left'});
 }
 function mrPdfRect(doc, x, y, w, h, fill, line, lw){
   if(fill){ mrPdfHex(doc,'fill',fill); doc.rect(x,y,w,h,'F'); }
@@ -11172,11 +11247,27 @@ function mrPdfAnnualPage(doc, customer, propAddress, year, uptoMonth, monthlyDat
   let y = mrPdfHeader(doc, x0, cw, 14) + 8*pt;
   mrPdfText(doc, '年 度 收 支 一 覽 表', x0+cw/2, y, 16, 20, {bold:true, align:'center'});
   y += 20*pt + 8*pt;
-  const infoTexts = ['客戶名稱：'+(customer.customer_name||'')+'（'+(customer.customer_no||'')+'）', '物件地址：'+(propAddress||''), '產生日期：'+new Date().toLocaleDateString('ja-JP')];
-  const infoX = [x0, x0+85, x0+215], infoW = [85,130,46];
-  const infoLines = infoTexts.map((t,i)=>mrPdfWrap(doc, t, 9.5, false, infoW[i]));
-  infoLines.forEach((ls,i)=> ls.forEach((ln,j)=> mrPdfText(doc, ln, infoX[i], y+j*14*pt, 9.5, 14)));
-  y += Math.max(...infoLines.map(l=>l.length))*14*pt + 10*pt;
+  // 客戶資訊框（跟月次報告書第 1 頁同樣的米色框）
+  const boxCols = [
+    {lab:'客戶編號', val: customer.customer_no||'', w:40},
+    {lab:'客戶名稱', val: customer.customer_name||'', w:48},
+    {lab:'報表期間', val: year+' 年 1～'+uptoMonth+' 月', w:50},
+    {lab:'物件地址', val: propAddress||'', w:cw-40-48-50}
+  ];
+  const padL = 14*pt;
+  const colLines = boxCols.map(c=>mrPdfWrap(doc, c.val, c.lab==='物件地址'?11:13, true, c.w-padL-6*pt));
+  const boxH = 12*pt*2 + 12*pt + Math.max(...colLines.map(l=>l.length))*17*pt;
+  mrPdfRect(doc, x0, y, cw, boxH, C.infoBg, C.border, 0.6);
+  let bx = x0;
+  boxCols.forEach((c,i)=>{
+    const cx = bx + padL;
+    mrPdfText(doc, c.lab, cx, y+12*pt, 8.5, 12, {color:C.blue});
+    colLines[i].forEach((ln,j)=> mrPdfText(doc, ln, cx, y+24*pt+j*17*pt, c.lab==='物件地址'?11:13, 17, {bold:true}));
+    bx += c.w;
+  });
+  y += boxH + 8*pt;
+  mrPdfText(doc, '產生日期：'+new Date().toLocaleDateString('ja-JP'), x0+cw, y, 8.5, 12, {align:'right', color:C.blue});
+  y += 12*pt + 6*pt;
   const bInfo = mrRptAnnualBalanceInfo(monthlyData, uptoMonth);
   mrRptAnnualSummaryLines(bInfo, year, allBalances, mrPdfYenText).forEach(l=>{
     mrPdfText(doc, l.text, x0+cw, y, 10, 14, {bold:true, align:'right', color:(l.val<0?C.neg:'#0b5f7a')});
@@ -11494,6 +11585,13 @@ async function mrRptGenerateAnnual(){
       const e = byProperty[k];
       if(prevDec[k]) e.prevYearBalance = Number(prevDec[k].settle_total)||0;
       else if(e.janPrev!=null) e.prevYearBalance = e.janPrev;
+    });
+    // 沒有去年 12 月報表、也沒有 1 月報表：用今年最早一份報表的「上期餘額」當期初（它是前一期帶過來的餘額；沒有更早的報表就是 0）
+    Object.keys(byProperty).forEach(k=>{
+      const e = byProperty[k];
+      if(e.prevYearBalance!=null) return;
+      const firstRec = own.filter(r=>(r.property_no||r.address)===k).sort((a,b)=>Number(a.month)-Number(b.month))[0];
+      if(firstRec) e.prevYearBalance = Number(firstRec.prev_balance)||0;
     });
     // 今年完全沒有月次報告書、但去年底還有餘額的物件，也要列入（否則客戶總餘額會少算）
     Object.keys(prevDec).forEach(k=>{
