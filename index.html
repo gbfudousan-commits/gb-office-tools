@@ -3866,7 +3866,7 @@ function generateAll(){
       <tr><th>所在地</th><td colspan="3">${$('f_address')}</td></tr>
       <tr><th>物件種別</th><td>${$('f_type')}</td><th>間取り</th><td>${isMansion?$('m_madori'):$('f_madori')}</td></tr>
       <tr><th>土地面積</th><td>${landAreaForContract||'－'}</td><th>建物延面積</th><td>${buildAreaForContract||'－'}</td></tr>
-      <tr><th>媒介価額</th><td colspan="3">${$('f_price')?Number($('f_price')).toLocaleString()+'万円（消費税別）':''}</td></tr>
+      <tr><th>媒介価額</th><td colspan="3">${$('f_price')?Number($('f_price')).toLocaleString()+'万円':''}</td></tr>
       <tr><th>所有者</th><td>${ownerName}</td><th>登記名義人</th><td>${ownerName}</td></tr>
       <tr><th>所有者住所</th><td colspan="3">${ownerAddr}</td></tr>
     </table>
