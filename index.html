@@ -130,6 +130,13 @@
   .mode-rental-only{display:none;}
 
   /* ---- Document preview shared ---- */
+  .pay-scroll{overflow:auto;padding:4px 0 20px;}
+  .pay-page{position:relative;width:595.27pt;height:841.89pt;margin:0 auto;background:#fff;color:#000;box-shadow:0 0 8px rgba(0,0,0,.15);overflow:hidden;font-family:"MS Gothic","MS PGothic","Noto Sans CJK JP","Yu Gothic","Hiragino Kaku Gothic ProN",monospace,sans-serif;}
+  .pay-page .pp-t{position:absolute;white-space:pre;line-height:1;}
+  .pay-page .pp-rect{position:absolute;border:.2pt solid #000;box-sizing:border-box;}
+  .pay-page .pp-hr{position:absolute;border-top:.2pt solid #000;}
+  .pay-page .pp-cut{position:absolute;border-top:1pt dashed #000;}
+  .pay-page .pp-circle{position:absolute;width:28.3pt;height:28.3pt;border:2pt dotted #000;border-radius:50%;box-sizing:border-box;}
   .doc-page{background:#fff;width:210mm;max-width:100%;min-height:297mm;margin:0 auto 20px;padding:14mm;box-shadow:0 0 8px rgba(0,0,0,.15);font-size:13px;}
   .doc-page.landscape{width:277mm;max-width:100%;height:207mm;min-height:0;display:flex;flex-direction:column;overflow:hidden;padding:5mm 8mm;}
   .doc-page h2.doctitle{text-align:center;font-size:20px;letter-spacing:6px;margin:10px 0 20px;color:var(--navy-dark);}
@@ -296,6 +303,8 @@
     body{background:#fff;}
     .wrap,.preview-wrap{padding:0 !important;margin:0 !important;max-width:none !important;}
     .doc-page{box-shadow:none;margin:0;width:auto;min-height:auto;}
+    .pay-scroll{overflow:visible !important;padding:0 !important;}
+    .pay-page{box-shadow:none !important;margin:0 !important;}
     .doc-page:not(.landscape){padding-top:12mm !important;padding-bottom:12mm !important;-webkit-box-decoration-break:clone;box-decoration-break:clone;}
     #panel-ledger.printing{padding:12mm;-webkit-box-decoration-break:clone;box-decoration-break:clone;}
     .panel{display:none !important;}
@@ -2263,47 +2272,66 @@
         <legend>基本情報</legend>
         <div class="row">
           <div class="field"><label>作成日</label><input id="pa_date" type="date"></div>
-        </div>
-        <div class="row">
-          <div class="field wide"><label>支払人 住所</label><input id="pa_address"></div>
-        </div>
-        <div class="row">
-          <div class="field wide"><label>支払人 氏名</label><input id="pa_name"></div>
+          <div class="field"><label>登録番号</label><input id="pa_regno"></div>
+          <div class="field"><label>宛先（貴社）</label><input id="pa_to" value="ＧＢ商事合同会社"></div>
         </div>
       </fieldset>
 
       <fieldset>
-        <legend>支払内容</legend>
+        <legend>金額・支払時期</legend>
         <div class="row">
-          <div class="field wide"><label>内容（例：◯◯契約書による仲介手数料として）</label><input id="pa_content" placeholder="別紙契約書による仲介手数料として"></div>
-        </div>
-        <div class="row">
-          <div class="field"><label>金額（円）</label><input id="pa_amount" type="number"></div>
-          <div class="field"><label>うち消費税相当額（円）</label><input id="pa_tax_amount" type="number"></div>
+          <div class="field"><label>金額（円・仲介手数料）</label><input id="pa_amount" type="number"></div>
           <div class="field small"><label>消費税率(%)</label><input id="pa_tax_rate" type="number" value="10"></div>
+          <div class="field"><label>うち消費税額（円）空欄なら自動計算</label><input id="pa_tax_amount" type="number"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>支払時期</label><input id="pa_timing" value="残金決済時"></div>
+          <div class="field"><label>取引年月日</label><input id="pa_trade_date" type="date"></div>
         </div>
       </fieldset>
 
       <fieldset>
-        <legend>支払スケジュール（最大2回）</legend>
+        <legend>依頼者（支払人）</legend>
         <div class="row">
-          <div class="field"><label>①支払日</label><input id="pa_date1" type="date"></div>
-          <div class="field"><label>①金額（円）</label><input id="pa_amount1" type="number"></div>
-          <div class="field"><label>①内消費税（円）</label><input id="pa_tax1" type="number"></div>
+          <div class="field wide"><label>住所</label><input id="pa_address"></div>
         </div>
         <div class="row">
-          <div class="field"><label>②支払日</label><input id="pa_date2" type="date"></div>
-          <div class="field"><label>②金額（円）</label><input id="pa_amount2" type="number"></div>
-          <div class="field"><label>②内消費税（円）</label><input id="pa_tax2" type="number"></div>
+          <div class="field wide"><label>氏名（会社名など）</label><input id="pa_name"></div>
         </div>
-        <div class="field wide"><label>特記事項</label><textarea id="pa_note" placeholder="上記期日にお支払いいただけない場合、違約による解約となった場合にも貴社にお支払いいたします。"></textarea></div>
+        <div class="row">
+          <div class="field"><label>役職（例：代表取締役）</label><input id="pa_title"></div>
+          <div class="field"><label>代表者名</label><input id="pa_rep"></div>
+          <div class="field"><label>取扱店名</label><input id="pa_store"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>買主 氏名</label><input id="pa_buyer"></div>
+        </div>
       </fieldset>
 
       <fieldset>
         <legend>物件の表示</legend>
         <div class="row">
           <div class="field wide"><label>所在地</label><input id="pa_bukken_address"></div>
-          <div class="field wide"><label>物件名</label><input id="pa_bukken_name"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>名称</label><input id="pa_bukken_name"></div>
+          <div class="field small"><label>号棟（番号のみ）</label><input id="pa_bukken_room"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>支払内容確認書（振込先）</legend>
+        <div class="row">
+          <div class="field"><label>金融機関名</label><input id="pa_bank" value="ＧＭＯあおぞらネット銀行"></div>
+          <div class="field"><label>支店名</label><input id="pa_branch" value="法人営業部"></div>
+        </div>
+        <div class="row">
+          <div class="field small"><label>種別</label><input id="pa_acct_type" value="普通"></div>
+          <div class="field"><label>口座番号</label><input id="pa_acct_no" value="2031431"></div>
+          <div class="field"><label>口座名義人</label><input id="pa_acct_name" value="ｼﾞ-ﾋﾞ-ｼﾖｳｼﾞ(ﾄﾞ"></div>
+        </div>
+        <div class="row">
+          <div class="field wide"><label>宅地建物取引業者（署名欄に入れる名前。空欄なら手書き用に空けます）</label><input id="pa_agent"></div>
         </div>
       </fieldset>
 
@@ -5593,35 +5621,88 @@ function generateLease(){
    支払約定書
    ========================================================================= */
 function generatePayment(){
-  document.getElementById('paymentOutput').innerHTML = `
-    <div class="doc-page">
-      <div style="text-align:right;font-size:10px;color:#888;">${$('pa_date')?fmtDateJP($('pa_date')):''}</div>
-      <h2 class="doctitle" style="letter-spacing:6px;">支 払 約 定 書</h2>
+  const H = 841.89;
+  const g = id => (document.getElementById(id)||{value:''}).value || '';
+  const esc = v => String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // x, y は「用紙の左下からの位置(pt)」。align: 'l'左 / 'r'右(xが右端) / 'c'中央(xが中心)
+  const T = (x, y, size, text, align) => {
+    if(text === '' || text == null) return '';
+    const top = (H - y - size*0.86).toFixed(1);
+    const pos = align==='r' ? `right:${(595.27-x).toFixed(1)}pt;` : align==='c' ? `left:${x}pt;transform:translateX(-50%);` : `left:${x}pt;`;
+    return `<span class="pp-t" style="${pos}top:${top}pt;font-size:${size}pt;">${esc(text)}</span>`;
+  };
+  const yen = n => (n===''||n==null||isNaN(Number(n))) ? '' : '¥' + Number(n).toLocaleString('ja-JP');
+  const d2 = v => String(v).padStart(2,'0');
+  const dateParts = str => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str||''); return m ? [m[1], d2(m[2]), d2(m[3])] : ['','','']; };
+  const amount = g('pa_amount')===''? '' : Number(g('pa_amount'));
+  const rate = g('pa_tax_rate')===''? '' : Number(g('pa_tax_rate'));
+  let tax = g('pa_tax_amount')===''? '' : Number(g('pa_tax_amount'));
+  if(tax==='' && amount!=='' && rate!=='' && rate>0) tax = Math.floor(amount*rate/(100+rate));
+  const dp = dateParts(g('pa_date')), tp = dateParts(g('pa_trade_date'));
+  const room = g('pa_bukken_room');
 
-      <table class="price-table" style="margin-top:20px;">
-        <tr><th style="width:20%">住所</th><td>${$('pa_address')}</td></tr>
-        <tr><th>氏名</th><td>${$('pa_name')}　㊞</td></tr>
-      </table>
+  let h = '';
+  // --- 上端：作成日・タイトル・宛先 ---
+  h += T(479.1,809.1,10.5,dp[0]) + T(502.3,809.1,10.5,'年') + T(512.8,809.1,10.5,dp[1]) + T(524.7,809.1,10.5,'月') + T(535.2,809.1,10.5,dp[2]) + T(547.2,809.1,10.5,'日');
+  h += T(35.0,805.3,10.5,'登録番号：') + T(97,805.3,10.5,g('pa_regno'));
+  [['支',223.3],['払',256.3],['約',289.3],['定',322.3],['書',355.3]].forEach(([c,x])=>{ h += T(x,805.1,22,c); });
+  h += T(110.6,777.3,18,g('pa_to')) + T(456.2,777.3,18,'殿');
+  // --- 金額 ---
+  h += T(114.2,744.9,18,'金額') + T(395,744.9,18,yen(amount),'r') + T(420.2,744.9,18,'※');
+  h += T(107.0,728.5,12,'（上記記載金額には消費税');
+  h += T(260.7,728.5,12,rate===''?'':String(rate));
+  h += T(275.0,728.5,12,'％として');
+  h += T(428,728.5,12,yen(tax),'r');
+  h += T(431.0,728.5,12,'※を含む）');
+  h += T(56.6,710.5,12,'　媒介契約に基づく貴社の仲介により、下記物件の売買契約が成立しましたので、');
+  h += T(56.6,698.5,12,'下記のとおり仲介手数料を貴社に支払うことを承諾致します。');
+  h += T(303.2,636.9,18,'支払時期　'+g('pa_timing'),'c');
+  h += T(287.0,613.1,12,'記');
+  h += T(103.4,598.9,12,'売買契約解除の場合、依頼者は約定報酬他一切の支払義務を負わない。');
+  h += T(103.4,584.5,12,'（※上記文言を媒介契約書にも必ず記載してください。）');
+  h += T(103.4,555.7,12,'貴社の責に帰すべき事由により、本契約記載の残金決済日が遅延したる場合、');
+  h += T(103.4,541.3,12,'依頼者および貴社は、協議のうえ、上記約定報酬について減額することが');
+  h += T(103.4,526.9,12,'できるものとする。');
+  // --- 取引年月日・依頼者・買主 ---
+  h += T(53.0,506.5,10.5,'取引年月日') + T(144.3,506.5,10.5,tp[0]) + T(167.5,506.5,10.5,'年') + T(178.0,506.5,10.5,tp[1]) + T(189.9,506.5,10.5,'月') + T(200.4,506.5,10.5,tp[2]) + T(212.4,506.5,10.5,'日');
+  h += T(53.0,488.5,10.5,'依頼者') + T(110.6,488.5,10.5,'住所') + T(143.0,488.5,10.5,g('pa_address'));
+  h += T(349.9,479.6,10.5,'印');
+  h += T(110.6,474.1,10.5,'氏名') + T(143.0,474.1,10.5,g('pa_name'));
+  h += T(146.2,459.8,8,g('pa_title')) + T(225.8,459.7,10.5,g('pa_rep'));
+  h += T(143.0,445.3,10.5,'取扱店名') + T(225.8,445.3,10.5,g('pa_store'));
+  h += T(53.0,427.3,10.5,'買主') + T(110.6,427.3,10.5,'氏名') + T(143.0,427.3,10.5,g('pa_buyer'));
+  // --- 物件の表示 ---
+  h += T(49.4,400.7,8,'（物件の表示）');
+  h += T(107.0,398.5,10.5,'所在地') + T(143.0,398.5,10.5,g('pa_bukken_address'));
+  h += T(110.6,376.9,10.5,'名称') + T(143.0,376.9,10.5,g('pa_bukken_name'));
+  if(room) h += T(230,376.9,10.5,room,'r') + T(232.2,376.9,10.5,'号棟');
+  // --- 支払内容確認書 ---
+  h += T(226.2,334.7,22,'支払内容確認書');
+  h += T(78.2,314.6,16,'【振込】');
+  h += T(99.8,301.3,10.5,'仲介手数料を振込みにより受け取る場合は、以下の金融機関口座を振込先とします。');
+  h += T(99.8,286.9,10.5,'※振込手数料は当社負担となります。');
+  h += T(99.8,272.5,10.5,'※振込の手続きを行った時間や日によって、入金されるまでの時間が異なります。');
+  h += T(99.8,258.1,10.5,'　お振込先の金融機関の状況によっては、翌営業日以降となる場合があります。');
+  h += T(78.2,240.1,10.5,'振込先');
+  h += T(85.4,222.1,10.5,'金融機関名') + T(333.8,222.1,10.5,'支店名');
+  h += T(89.0,200.5,10.5,g('pa_bank')) + T(337.4,200.5,10.5,g('pa_branch'));
+  h += T(85.4,178.9,10.5,'種別') + T(333.8,178.9,10.5,'口座番号');
+  h += T(89.0,157.3,10.5,g('pa_acct_type')) + T(337.4,157.3,10.5,g('pa_acct_no'));
+  h += T(85.4,135.7,10.5,'口座名義人') + T(89.0,114.1,10.5,g('pa_acct_name'));
+  h += T(78.2,88.9,10.5,'宅地建物取引業者') + T(89.0,46,10.5,g('pa_agent'));
+  h += T(440.3,61.5,10.5,'印');
+  h += T(85.4,20.5,10.5,'※振込の場合は、振込先名義人と宅地建物取引業者名が必ず一致していることが必要です。');
 
-      <p style="font-size:13px;line-height:2;margin-top:16px;">
-        ${$('pa_content')}　金 <b>${$('pa_amount')?Number($('pa_amount')).toLocaleString():''}</b> 円也　を下記期日に貴社にお支払いいたします。
-        ${$('pa_tax_amount')?`（但し、上記金額には消費税等相当額　金 ${Number($('pa_tax_amount')).toLocaleString()} 円也（消費税率${$('pa_tax_rate')}％）を含みます）`:''}
-      </p>
+  // --- 罫線・枠・印の丸 ---
+  const R = (l,t,w,hh) => `<div class="pp-rect" style="left:${l}pt;top:${t}pt;width:${w}pt;height:${hh}pt;"></div>`;
+  let lines = R(85.4,631.8,219.6,25.2) + R(85.4,675.0,136.8,25.2) + R(85.4,718.2,392.4,25.2) + R(333.8,631.8,219.6,25.2) + R(333.8,675.0,219.6,25.2);
+  lines += `<div class="pp-hr" style="left:110.6pt;top:77.4pt;width:370.8pt;"></div>`;
+  lines += `<div class="pp-hr" style="left:85.4pt;top:804.6pt;width:378pt;"></div>`;
+  lines += `<div class="pp-cut" style="left:45.8pt;top:484.2pt;width:522pt;"></div>`;
+  lines += `<div class="pp-circle" style="left:341pt;top:${(H-476.5-14.15).toFixed(1)}pt;"></div>`;
+  lines += `<div class="pp-circle" style="left:431.4pt;top:${(H-58.6-14.15).toFixed(1)}pt;"></div>`;
 
-      <table class="price-table" style="margin-top:14px;">
-        <tr><th style="width:8%">1.</th><th style="width:20%">支払日</th><td style="width:32%">${$('pa_date1')?fmtDateJP($('pa_date1')):''}</td><th style="width:16%">金額</th><td>${$('pa_amount1')?Number($('pa_amount1')).toLocaleString()+'円也':''}${$('pa_tax1')?'（内消費税：'+Number($('pa_tax1')).toLocaleString()+'円）':''}</td></tr>
-        <tr><th>2.</th><th>支払日</th><td>${$('pa_date2')?fmtDateJP($('pa_date2')):''}</td><th>金額</th><td>${$('pa_amount2')?Number($('pa_amount2')).toLocaleString()+'円也':''}${$('pa_tax2')?'（内消費税：'+Number($('pa_tax2')).toLocaleString()+'円）':''}</td></tr>
-      </table>
-
-      ${$('pa_note')?`<p style="font-size:11px;color:#555;margin-top:10px;">${$('pa_note').replace(/\n/g,'<br>')}</p>`:''}
-
-      <h3 style="color:var(--navy-dark);margin-top:20px;">【物件の表示】</h3>
-      <table class="price-table">
-        <tr><th style="width:20%">所在地</th><td>${$('pa_bukken_address')}</td></tr>
-        <tr><th>物件名</th><td>${$('pa_bukken_name')}</td></tr>
-      </table>
-    </div>
-  `;
+  document.getElementById('paymentOutput').innerHTML = `<div class="pay-scroll"><div class="pay-page">${lines}${h}</div></div>`;
 }
 
 /* =========================================================================
