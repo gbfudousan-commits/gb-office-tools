@@ -10880,7 +10880,6 @@ function mrRptAnnualPageHtml(customer, propAddress, year, uptoMonth, monthlyData
     if(monthlyData.seen && monthlyData.seen[m] && monthlyData.settle && monthlyData.settle[m]!=null){ lastSet = Number(monthlyData.settle[m])||0; setCells += `<td>${mrRptYen(lastSet)}</td>`; }
     else setCells += '<td></td>';
   });
-  acctRows += `<tr class="acct"><td>\u6708\u5e95\u7d50\u7b97\u5408\u8a08\uff08\u5831\u544a\u66f8\uff09</td>${setCells}<td>${lastSet==null?'':mrRptYen(lastSet)}</td></tr>`;
   const sumLinesHtml = mrRptAnnualSummaryLines(bInfo, year, allBalances, mrPdfYenText)
     .map(l=>`<div style="text-align:right;font-weight:700;font-size:10.5px;margin-bottom:3px;color:${l.val<0?'#c0392b':'#0b5f7a'};">${mrRptEsc(l.text)}</div>`).join('');
   return `
@@ -11363,9 +11362,6 @@ function mrPdfAnnualPage(doc, customer, propAddress, year, uptoMonth, monthlyDat
     months.forEach(m=>{ if(seen[m]){ r += (inc[m]||0)-(exp[m]||0); run[m] = r; lastRun = r; } });
     balRow('累計餘額（上年度餘額+收支）', run, lastRun, false);
   }
-  const setl = {}; let lastSet = null;
-  months.forEach(m=>{ if(seen[m] && monthlyData.settle && monthlyData.settle[m]!=null){ lastSet = Number(monthlyData.settle[m])||0; setl[m] = lastSet; } });
-  balRow('月底結算合計（報告書）', setl, lastSet, firstAcct);
   finishBlock();
 }
 /* 客戶餘額總表：把這位客戶所有物件的餘額列出來並加總（多物件時才會產生） */
@@ -11605,10 +11601,11 @@ async function mrRptGenerateAnnual(){
     Object.keys(byProperty).forEach(k=>{ delete byProperty[k]; });
     sortedKeys.forEach(k=>{ byProperty[k] = sortedBP[k]; });
     const customer = { customer_no: customerNo, customer_name: own[0].customer_name };
-    let doc;
+    let doc, vecFailMsg = '';
     try{
       doc = await mrPdfBuildAnnualVector(customer, year, uptoMonth, byProperty);
     }catch(vecErr){
+      vecFailMsg = (vecErr && vecErr.message) ? vecErr.message : String(vecErr);
       console.warn('向量文字版年度報表失敗，改用截圖版：', vecErr);
       const { jsPDF } = window.jspdf;
       doc = new jsPDF({unit:'mm', format:'a4', orientation:'landscape'});
@@ -11629,7 +11626,8 @@ async function mrRptGenerateAnnual(){
     }
     const safe = `${customerNo}_${customer.customer_name}_${year}\u5e74\u5ea6`.replace(/\//g,'_');
     doc.save(`\u5e74\u5ea6\u6536\u652f\u4e00\u89bd\u8868_${safe}.pdf`);
-    mrRptSetStatus('mrRpt-singleStatus', '\u5df2\u7d93\u7522\u751f\u5b8c\u6210\uff0c\u8acb\u67e5\u770b\u700f\u89bd\u5668\u7684\u4e0b\u8f09\u9805\u76ee\u3002');
+    if(vecFailMsg) mrRptSetStatus('mrRpt-singleStatus', '已產生，但這次用了「截圖版」（比較不清晰）。原因：'+vecFailMsg+'　請把這行字截圖給 Claude。', true);
+    else mrRptSetStatus('mrRpt-singleStatus', '\u5df2\u7d93\u7522\u751f\u5b8c\u6210\uff0c\u8acb\u67e5\u770b\u700f\u89bd\u5668\u7684\u4e0b\u8f09\u9805\u76ee\u3002');
   }catch(err){
     console.error(err);
     mrRptSetStatus('mrRpt-singleStatus', '\u7522\u751f\u5931\u6557\uff1a'+err.message, true);
