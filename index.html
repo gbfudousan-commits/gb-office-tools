@@ -304,7 +304,9 @@
     .wrap,.preview-wrap{padding:0 !important;margin:0 !important;max-width:none !important;}
     .doc-page{box-shadow:none;margin:0;width:auto;min-height:auto;}
     .pay-scroll{overflow:visible !important;padding:0 !important;}
-    .pay-page{box-shadow:none !important;margin:0 !important;}
+    #panel-payment .side-form{display:none !important;}
+    #panel-payment,#paymentOutput{padding:0 !important;margin:0 !important;}
+    .pay-page{box-shadow:none !important;margin:0 !important;height:840pt !important;page-break-after:avoid;break-after:avoid;page-break-inside:avoid;}
     .doc-page:not(.landscape){padding-top:12mm !important;padding-bottom:12mm !important;-webkit-box-decoration-break:clone;box-decoration-break:clone;}
     #panel-ledger.printing{padding:12mm;-webkit-box-decoration-break:clone;box-decoration-break:clone;}
     .panel{display:none !important;}
@@ -4138,6 +4140,7 @@ function printPanel(panelId){
   const pageStyle = document.getElementById('dynamicPageStyle');
   pageStyle.textContent = (panelId === 'panel-flyer')
     ? '@page{size:landscape;margin:0;}'
+    : (panelId === 'panel-payment') ? '@page{size:A4 portrait;margin:0;}'
     : '@page{size:auto;margin:0;}';
   window.print();
   setTimeout(()=>{ document.title = ORIGINAL_TITLE; }, 1000);
@@ -5689,18 +5692,18 @@ function generatePayment(){
   h += T(85.4,178.9,10.5,'種別') + T(333.8,178.9,10.5,'口座番号');
   h += T(89.0,157.3,10.5,g('pa_acct_type')) + T(337.4,157.3,10.5,g('pa_acct_no'));
   h += T(85.4,135.7,10.5,'口座名義人') + T(89.0,114.1,10.5,g('pa_acct_name'));
-  h += T(78.2,88.9,10.5,'宅地建物取引業者') + T(89.0,46,10.5,g('pa_agent'));
+  h += T(78.2,88.9,10.5,'宅地建物取引業者') + T(89.0,47.5,10.5,g('pa_agent'));
   h += T(440.3,61.5,10.5,'印');
   h += T(85.4,20.5,10.5,'※振込の場合は、振込先名義人と宅地建物取引業者名が必ず一致していることが必要です。');
 
   // --- 罫線・枠・印の丸 ---
   const R = (l,t,w,hh) => `<div class="pp-rect" style="left:${l}pt;top:${t}pt;width:${w}pt;height:${hh}pt;"></div>`;
-  let lines = R(85.4,631.8,219.6,25.2) + R(85.4,675.0,136.8,25.2) + R(85.4,718.2,392.4,25.2) + R(333.8,631.8,219.6,25.2) + R(333.8,675.0,219.6,25.2);
-  lines += `<div class="pp-hr" style="left:110.6pt;top:77.4pt;width:370.8pt;"></div>`;
-  lines += `<div class="pp-hr" style="left:85.4pt;top:804.6pt;width:378pt;"></div>`;
-  lines += `<div class="pp-cut" style="left:45.8pt;top:484.2pt;width:522pt;"></div>`;
-  lines += `<div class="pp-circle" style="left:341pt;top:${(H-476.5-14.15).toFixed(1)}pt;"></div>`;
-  lines += `<div class="pp-circle" style="left:431.4pt;top:${(H-58.6-14.15).toFixed(1)}pt;"></div>`;
+  let lines = R(85.4,625.1,219.6,25.2) + R(85.4,668.3,136.8,25.2) + R(85.4,711.5,392.4,25.2) + R(333.8,625.1,219.6,25.2) + R(333.8,668.3,219.6,25.2);
+  lines += `<div class="pp-hr" style="left:110.6pt;top:70.7pt;width:370.8pt;"></div>`;
+  lines += `<div class="pp-hr" style="left:85.4pt;top:797.9pt;width:378pt;"></div>`;
+  lines += `<div class="pp-cut" style="left:45.8pt;top:477.5pt;width:522pt;"></div>`;
+  lines += `<div class="pp-circle" style="left:341pt;top:${(H-483.2-14.15).toFixed(1)}pt;"></div>`;
+  lines += `<div class="pp-circle" style="left:431.4pt;top:${(H-65.3-14.15).toFixed(1)}pt;"></div>`;
 
   document.getElementById('paymentOutput').innerHTML = `<div class="pay-scroll"><div class="pay-page">${lines}${h}</div></div>`;
 }
