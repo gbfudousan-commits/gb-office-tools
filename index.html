@@ -11322,6 +11322,7 @@ async function mrPdfBuildCustomerVector(customer, year, month, properties){
   mrPdfCover(doc, customer, year, month, properties);
   for(const prop of properties){ doc.addPage(); mrPdfPropertyPage(doc, customer, year, month, prop); }
   mrPdfCheckGlyphs(doc);
+  doc._mrVector = true;
   return doc;
 }
 /* ---- 年度收支一覽表（橫式，一個物件一頁）---- */
@@ -11612,10 +11613,23 @@ async function mrRptGenerateSingle(){
   mrRptSetStatus('mrRpt-singleStatus', '\u7522\u751f\u4e2d\uff0c\u8acb\u7a0d\u5019\u2026');
   try{
     const customer = { customer_no: customerNo, customer_name: properties[0].customer_name };
-    const doc = await mrRptBuildCustomerPdf(customer, Number(year), Number(month), properties);
+    let doc = await mrRptBuildCustomerPdf(customer, Number(year), Number(month), properties);
+    let annualNote = '';
+    if(doc._mrVector){
+      try{
+        const col = mrRptCollectAnnual(customerNo, Number(year), Number(month));
+        if(col.own.length) mrPdfAppendAnnual(doc, customer, Number(year), Number(month), col.byProperty);
+      }catch(annErr){
+        console.warn('附加年報失敗，只輸出月報：', annErr);
+        doc = await mrRptBuildCustomerPdf(customer, Number(year), Number(month), properties);
+        annualNote = '（年報部分產生失敗，這份只有月報。原因：'+((annErr&&annErr.message)||annErr)+'）';
+      }
+    }else{
+      annualNote = '（這次月報用了截圖版，沒有附上年報）';
+    }
     const safe = `${customerNo}_${customer.customer_name}_${year}-${String(month).padStart(2,'0')}`.replace(/\//g,'_');
     doc.save(`\u6708\u6b21\u5831\u544a\u66f8_${safe}.pdf`);
-    mrRptSetStatus('mrRpt-singleStatus', '\u5df2\u7d93\u7522\u751f\u5b8c\u6210\uff0c\u8acb\u67e5\u770b\u700f\u89bd\u5668\u7684\u4e0b\u8f09\u9805\u76ee\u3002');
+    mrRptSetStatus('mrRpt-singleStatus', '\u5df2\u7d93\u7522\u751f\u5b8c\u6210\uff08\u6708\u5831\u5f8c\u9762\u9644\u5e74\u5ea6\u5831\u8868\uff09\uff0c\u8acb\u67e5\u770b\u700f\u89bd\u5668\u7684\u4e0b\u8f09\u9805\u76ee\u3002'+annualNote, !!annualNote);
   }catch(err){
     console.error(err);
     mrRptSetStatus('mrRpt-singleStatus', '\u7522\u751f\u5931\u6557\uff1a'+err.message, true);
@@ -11632,6 +11646,62 @@ async function mrRptGenerateLatest(){
   document.getElementById('mrRpt-month').value = best.month;
   await mrRptGenerateSingle();
 }
+function mrRptCollectAnnual(customerNo, year, uptoMonth){
+  const own = mrRecords.filter(r=> r.customer_no===customerNo && Number(r.year)===year && Number(r.month)<=uptoMonth);
+  const byProperty = {};
+  own.forEach(r=>{
+    const key = r.property_no || r.address;
+    if(!byProperty[key]) byProperty[key] = { propNo: r.property_no||'', address: r.address, income:{}, expense:{}, seen:{}, settle:{}, prevYearBalance:null, janPrev:null };
+    byProperty[key].seen[Number(r.month)] = true;
+    byProperty[key].settle[Number(r.month)] = (r.settle_total==null||r.settle_total==='') ? null : (Number(r.settle_total)||0);
+    if(Number(r.month)===1 && r.prev_balance!=null && r.prev_balance!=='') byProperty[key].janPrev = Number(r.prev_balance)||0;
+    (r.income_items||[]).forEach(it=>{
+      if(!byProperty[key].income[it.item]) byProperty[key].income[it.item] = {};
+      byProperty[key].income[it.item][Number(r.month)] = (byProperty[key].income[it.item][Number(r.month)]||0) + (Number(it.amount)||0);
+    });
+    (r.expense_items||[]).forEach(it=>{
+      if(!byProperty[key].expense[it.item]) byProperty[key].expense[it.item] = {};
+      byProperty[key].expense[it.item][Number(r.month)] = (byProperty[key].expense[it.item][Number(r.month)]||0) + (Number(it.amount)||0);
+    });
+  });
+  // 上年度餘額：去年 12 月月次報告書的「結算合計」（逐物件）；沒有去年 12 月的報表就用今年 1 月的「上期餘額」
+  const prevDec = {};
+  mrRecords.filter(r=> r.customer_no===customerNo && Number(r.year)===year-1 && Number(r.month)===12)
+    .forEach(r=>{ prevDec[r.property_no || r.address] = r; });
+  Object.keys(byProperty).forEach(k=>{
+    const e = byProperty[k];
+    if(prevDec[k]) e.prevYearBalance = Number(prevDec[k].settle_total)||0;
+    else if(e.janPrev!=null) e.prevYearBalance = e.janPrev;
+  });
+  // 沒有去年 12 月報表、也沒有 1 月報表：用今年最早一份報表的「上期餘額」當期初（它是前一期帶過來的餘額；沒有更早的報表就是 0）
+  Object.keys(byProperty).forEach(k=>{
+    const e = byProperty[k];
+    if(e.prevYearBalance!=null) return;
+    const firstRec = own.filter(r=>(r.property_no||r.address)===k).sort((a,b)=>Number(a.month)-Number(b.month))[0];
+    if(firstRec) e.prevYearBalance = Number(firstRec.prev_balance)||0;
+  });
+  // 今年完全沒有月次報告書、但去年底還有餘額的物件，也要列入（否則客戶總餘額會少算）
+  Object.keys(prevDec).forEach(k=>{
+    if(!byProperty[k] && Number(prevDec[k].settle_total)){
+      byProperty[k] = { propNo: prevDec[k].property_no||'', address: prevDec[k].address, income:{}, expense:{}, seen:{}, settle:{}, prevYearBalance: Number(prevDec[k].settle_total)||0, janPrev:null };
+    }
+  });
+  // 物件依編號排序
+  const sortedKeys = Object.keys(byProperty).sort();
+  const sortedBP = {}; sortedKeys.forEach(k=>{ sortedBP[k] = byProperty[k]; });
+  Object.keys(byProperty).forEach(k=>{ delete byProperty[k]; });
+  sortedKeys.forEach(k=>{ byProperty[k] = sortedBP[k]; });
+  return { own, byProperty };
+}
+function mrPdfAppendAnnual(doc, customer, year, uptoMonth, byProperty){
+  const balances = Object.keys(byProperty).map(k=>mrRptAnnualBalanceInfo(byProperty[k], uptoMonth, k));
+  for(const key of Object.keys(byProperty)){
+    doc.addPage('a4','landscape');
+    mrPdfAnnualPage(doc, customer, byProperty[key].address, year, uptoMonth, byProperty[key], balances);
+  }
+  if(balances.length > 1){ doc.addPage('a4','landscape'); mrPdfAnnualSummaryPage(doc, customer, year, uptoMonth, balances); }
+  mrPdfCheckGlyphs(doc);
+}
 async function mrRptGenerateAnnual(){
   const customerNo = mrRptSelectedCustomerNo();
   const year = Number(document.getElementById('mrRpt-year').value);
@@ -11641,49 +11711,7 @@ async function mrRptGenerateAnnual(){
   if(!own.length){ mrRptSetStatus('mrRpt-singleStatus', `\u5ba2\u6236 ${customerNo} \u5728 ${year}\u5e74 1\uff5e${uptoMonth}\u6708 \u6c92\u6709\u4efb\u4f55\u5831\u8868\u8cc7\u6599`, true); return; }
   mrRptSetStatus('mrRpt-singleStatus', '\u7522\u751f\u5e74\u5ea6\u5831\u8868\u4e2d\uff0c\u8acb\u7a0d\u5019\u2026');
   try{
-    const byProperty = {};
-    own.forEach(r=>{
-      const key = r.property_no || r.address;
-      if(!byProperty[key]) byProperty[key] = { propNo: r.property_no||'', address: r.address, income:{}, expense:{}, seen:{}, settle:{}, prevYearBalance:null, janPrev:null };
-      byProperty[key].seen[Number(r.month)] = true;
-      byProperty[key].settle[Number(r.month)] = (r.settle_total==null||r.settle_total==='') ? null : (Number(r.settle_total)||0);
-      if(Number(r.month)===1 && r.prev_balance!=null && r.prev_balance!=='') byProperty[key].janPrev = Number(r.prev_balance)||0;
-      (r.income_items||[]).forEach(it=>{
-        if(!byProperty[key].income[it.item]) byProperty[key].income[it.item] = {};
-        byProperty[key].income[it.item][Number(r.month)] = (byProperty[key].income[it.item][Number(r.month)]||0) + (Number(it.amount)||0);
-      });
-      (r.expense_items||[]).forEach(it=>{
-        if(!byProperty[key].expense[it.item]) byProperty[key].expense[it.item] = {};
-        byProperty[key].expense[it.item][Number(r.month)] = (byProperty[key].expense[it.item][Number(r.month)]||0) + (Number(it.amount)||0);
-      });
-    });
-    // 上年度餘額：去年 12 月月次報告書的「結算合計」（逐物件）；沒有去年 12 月的報表就用今年 1 月的「上期餘額」
-    const prevDec = {};
-    mrRecords.filter(r=> r.customer_no===customerNo && Number(r.year)===year-1 && Number(r.month)===12)
-      .forEach(r=>{ prevDec[r.property_no || r.address] = r; });
-    Object.keys(byProperty).forEach(k=>{
-      const e = byProperty[k];
-      if(prevDec[k]) e.prevYearBalance = Number(prevDec[k].settle_total)||0;
-      else if(e.janPrev!=null) e.prevYearBalance = e.janPrev;
-    });
-    // 沒有去年 12 月報表、也沒有 1 月報表：用今年最早一份報表的「上期餘額」當期初（它是前一期帶過來的餘額；沒有更早的報表就是 0）
-    Object.keys(byProperty).forEach(k=>{
-      const e = byProperty[k];
-      if(e.prevYearBalance!=null) return;
-      const firstRec = own.filter(r=>(r.property_no||r.address)===k).sort((a,b)=>Number(a.month)-Number(b.month))[0];
-      if(firstRec) e.prevYearBalance = Number(firstRec.prev_balance)||0;
-    });
-    // 今年完全沒有月次報告書、但去年底還有餘額的物件，也要列入（否則客戶總餘額會少算）
-    Object.keys(prevDec).forEach(k=>{
-      if(!byProperty[k] && Number(prevDec[k].settle_total)){
-        byProperty[k] = { propNo: prevDec[k].property_no||'', address: prevDec[k].address, income:{}, expense:{}, seen:{}, settle:{}, prevYearBalance: Number(prevDec[k].settle_total)||0, janPrev:null };
-      }
-    });
-    // 物件依編號排序
-    const sortedKeys = Object.keys(byProperty).sort();
-    const sortedBP = {}; sortedKeys.forEach(k=>{ sortedBP[k] = byProperty[k]; });
-    Object.keys(byProperty).forEach(k=>{ delete byProperty[k]; });
-    sortedKeys.forEach(k=>{ byProperty[k] = sortedBP[k]; });
+    const __c = mrRptCollectAnnual(customerNo, year, uptoMonth); const byProperty = __c.byProperty;
     const customer = { customer_no: customerNo, customer_name: own[0].customer_name };
     let doc, vecFailMsg = '';
     try{
