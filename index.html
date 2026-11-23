@@ -12122,17 +12122,17 @@ function notifInit(){
 
 /* =====================================================================
    人事資料表（hr_employees）＋ 業績表
-   權限：只有 staffAccess.viewFinance === true 的人看得到／讀寫（Firestore 規則也要對應設定）
+   權限：只有 staffAccess.manageFinance === true 的人（跟「總帳」同一組帳號）看得到／讀寫（Firestore 規則也要對應設定）
    ===================================================================== */
 let hrEmployees = [], hrUnsub = null, hrEditingId = null;
 const HR_DEFAULT_RULE = { base_salary:180000, mode:'whole', tiers:[
   {from:300000,rate:5},{from:600000,rate:10},{from:1200000,rate:15},{from:1800000,rate:20},{from:2400000,rate:25}] };
 const HR_FIELDS = [
   {sec:'員工資料'},
-  {k:'name',l:'姓名',req:1},{k:'name_en',l:'英文名稱'},{k:'emp_no',l:'資料編號',ro:1},
+  {k:'name',l:'姓名',req:1},{k:'name_en',l:'英文名稱'},{k:'emp_no',l:'員工編號',ro:1},
   {k:'id_no',l:'身分證字號'},{k:'birth',l:'出生日期',t:'date'},{k:'age',l:'年齡',ro:1},
   {k:'gender',l:'性別',req:1,o:['','男','女']},{k:'marital',l:'婚姻狀態',o:['','未婚','已婚','離婚','其他']},{k:'education',l:'最高教育程度',o:['','高中以下','專科','大學','碩士','博士']},
-  {k:'status',l:'在職狀態',req:1,o:['在職','離職','留職停薪']},{k:'emp_code',l:'工號'},{k:'account_email',l:'員工帳號（登入系統的 Email）'},
+  {k:'status',l:'在職狀態',req:1,o:['在職','離職','留職停薪']},{k:'account_email',l:'員工帳號（登入系統的 Email）'},
   {k:'dept',l:'部門',o:['','經營階層','業務部','法務部','管理部','其他']},{k:'title',l:'職稱'},{k:'supervisor',l:'直屬主管'},
   {k:'grade',l:'職等'},{k:'hire_type',l:'聘雇類別',o:['','正社員','契約社員','打工','其他']},{k:'recruit_source',l:'招聘來源'},
   {k:'company_tel',l:'公司電話'},{k:'ext',l:'分機'},{k:'mobile',l:'手機'},
@@ -12140,13 +12140,15 @@ const HR_FIELDS = [
   {k:'hire_date',l:'到職日期',req:1,t:'date'},{k:'leave_date',l:'離職日期',t:'date'},{k:'seniority',l:'工作年資',ro:1},
   {k:'pto_days',l:'享有特休(日)',t:'number'},{k:'pto_hours',l:'享有特休(時數)',t:'number'},
   {k:'note',l:'備註',wide:1,ta:1},
+  {sec:'底薪紀錄（每次調薪新增一筆，歷史都會保留）'},
+  {special:'salary'},
   {sec:'私人聯絡資訊',light:1},
   {k:'p_tel',l:'聯絡電話'},{k:'p_mobile',l:'手機'},{k:'p_email',l:'Email'},
   {k:'p_addr',l:'通訊地址',wide:1},{k:'p_reg_addr',l:'戶籍地址',wide:1},
   {sec:'業績對應'},
   {k:'sales_name',l:'對應「進度追蹤」的擔當人員名稱（有業績的人才需要選）',wide:1,sel:'staff'}
 ];
-function hrCanUse(){ return !!(typeof trackerCurrentUser!=='undefined' && trackerCurrentUser && trackerCurrentUser.viewFinance); }
+function hrCanUse(){ return !!(typeof trackerCurrentUser!=='undefined' && trackerCurrentUser && trackerCurrentUser.manageFinance); }
 function hrEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function hrYen(v){ return '¥'+Math.round(Number(v)||0).toLocaleString(); }
 function hrInit(){
@@ -12157,12 +12159,33 @@ function hrStartListener(){
   hrUnsub = trackerDB.collection('hr_employees').onSnapshot(snap=>{
     hrEmployees = snap.docs.map(d=>({id:d.id, ...d.data()}));
     hrEmployees.sort((a,b)=>(Number(a.emp_no_num)||0)-(Number(b.emp_no_num)||0));
+    hrMigrateEmpNo();
     hrRenderList();
     if(document.getElementById('panel-performance').classList.contains('active')) pfRender();
   }, err=>{
     console.error(err);
     alert('人事資料讀取失敗，請確認 Firestore 規則已加入 hr_employees：'+err.message);
   });
+}
+
+/* 把舊格式編號（E-00003…）一次改成 GB0001 格式：指定的 4 位照指定號碼，其他人接在後面 */
+const HR_FIXED_NO = {'黃健霖':1,'立花瑠菓':3,'LINYUNTING':4,'CHENSHAOFEI':5};
+let hrMigrating = false;
+async function hrMigrateEmpNo(){
+  if(hrMigrating) return;
+  const old = hrEmployees.filter(e=>!/^GB\d{4}$/.test(e.emp_no||''));
+  if(!old.length) return;
+  hrMigrating = true;
+  try{
+    const used = new Set(hrEmployees.filter(e=>/^GB\d{4}$/.test(e.emp_no||'')).map(e=>Number(e.emp_no_num)));
+    old.forEach(e=>{ const n = HR_FIXED_NO[String(e.name||'').replace(/\s+/g,'').toUpperCase()]; if(n && !used.has(n)){ e._newNo=n; used.add(n); } });
+    let next = Math.max(0, ...used)+1;
+    old.forEach(e=>{ if(!e._newNo){ e._newNo = next++; } });
+    const batch = trackerDB.batch();
+    old.forEach(e=> batch.update(trackerDB.collection('hr_employees').doc(e.id), { emp_no_num:e._newNo, emp_no:hrEmpNoText(e._newNo) }));
+    await batch.commit();
+  }catch(err){ console.error('員工編號轉換失敗', err); }
+  finally{ hrMigrating = false; }
 }
 function hrOpenHr(){ hrStartListener(); hrBackToList(); }
 function hrOpenPf(){
@@ -12178,7 +12201,7 @@ function hrRenderList(){
   const rows = hrEmployees.filter(e=>!f || e.status===f);
   const seed = document.getElementById('hrSeedBtn'); if(seed) seed.style.display = hrEmployees.length ? 'none' : '';
   if(!rows.length){ box.innerHTML = '<p style="color:#888;">目前沒有符合條件的員工。</p>'; return; }
-  box.innerHTML = '<table class="hr-table"><thead><tr><th>資料編號</th><th>員工名稱</th><th>部門</th><th>職稱</th><th>公司電話</th><th>分機</th><th>E-mail</th><th>在職狀態</th></tr></thead><tbody>'
+  box.innerHTML = '<table class="hr-table"><thead><tr><th>員工編號</th><th>員工名稱</th><th>部門</th><th>職稱</th><th>公司電話</th><th>分機</th><th>E-mail</th><th>在職狀態</th></tr></thead><tbody>'
    + rows.map(e=>`<tr class="hr-row" onclick="hrEdit('${e.id}')"><td>${hrEsc(e.emp_no)}</td><td>${hrEsc(e.name)}</td><td>${hrEsc(e.dept)}</td><td>${hrEsc(e.title)}</td><td>${hrEsc(e.company_tel)}</td><td>${hrEsc(e.ext)}</td><td>${hrEsc(e.email)}</td><td>${hrEsc(e.status)}</td></tr>`).join('')
    + '</tbody></table>';
 }
@@ -12188,12 +12211,40 @@ function hrBackToList(){
   document.getElementById('hrListView').style.display='';
   hrRenderList();
 }
+
+/* ---- 底薪紀錄（每筆：從哪一年哪個月開始、金額；調薪就再新增一筆，舊的保留） ---- */
+let hrSalaryDraft = [];
+function hrBaseFor(emp, ym){
+  const h = ((emp && emp.salary_history) || []).filter(x=>x && x.from && x.from<=ym).sort((a,b)=>a.from<b.from?-1:1);
+  if(h.length) return { amount:Number(h[h.length-1].amount)||0, fromHistory:true, since:h[h.length-1].from };
+  return { amount:HR_DEFAULT_RULE.base_salary, fromHistory:false, since:'' };
+}
+function hrRenderSalary(){
+  const box = document.getElementById('hr_salary_box'); if(!box) return;
+  const rows = hrSalaryDraft.map((r,i)=>`<tr><td><input type="month" value="${hrEsc(r.from||'')}" oninput="hrSalaryDraft[${i}].from=this.value"></td><td><input type="number" min="0" step="1000" style="width:150px;" value="${r.amount==null?'':r.amount}" oninput="hrSalaryDraft[${i}].amount=this.value===''?null:Number(this.value)"> 日圓／月</td><td><button type="button" class="btn small danger" onclick="hrSalaryDraft.splice(${i},1);hrRenderSalary()">✕</button></td></tr>`).join('');
+  box.innerHTML = `<table class="pf-table" style="max-width:560px;"><thead><tr><th>從哪一年哪個月開始</th><th>底薪</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="3" style="color:#888;">還沒有紀錄（業績表會暫時用預設底薪 18 萬）</td></tr>'}</tbody></table>
+    <button type="button" class="btn small secondary" style="margin-top:8px;" onclick="hrSalaryDraft.push({from:'',amount:null});hrRenderSalary()">＋ 新增一筆（新進／調薪）</button>`;
+}
+function hrCollectSalary(){
+  const out = [];
+  for(const r of hrSalaryDraft){
+    if(!r.from && (r.amount==null||r.amount==='')) continue;
+    if(!r.from){ alert('底薪紀錄有一筆沒選「從哪一年哪個月開始」。'); return null; }
+    if(r.amount==null||isNaN(Number(r.amount))){ alert(r.from+' 那一筆沒有填底薪金額。'); return null; }
+    out.push({from:r.from, amount:Number(r.amount)});
+  }
+  out.sort((a,b)=>a.from<b.from?-1:1);
+  for(let i=1;i<out.length;i++) if(out[i].from===out[i-1].from){ alert(out[i].from+' 重複了，同一個月只能有一筆。'); return null; }
+  return out;
+}
 function hrBuildForm(e){
   e = e || {};
   const staffNames = (typeof trackerStaffList!=='undefined' ? trackerStaffList : []).map(s=>s.name);
   let html = '', open = false;
   const flush = ()=>{ if(open){ html += '</div>'; open=false; } };
+  hrSalaryDraft = JSON.parse(JSON.stringify(e.salary_history||[]));
   HR_FIELDS.forEach(f=>{
+    if(f.special==='salary'){ html += '<div class="field wide"><div id="hr_salary_box"></div></div>'; return; }
     if(f.sec){ flush(); html += `<div class="hr-sec${f.light?' light':''}">${f.sec}</div><div class="row">`; open=true; return; }
     const id = 'hr_f_'+f.k;
     const val = e[f.k]==null ? '' : e[f.k];
@@ -12211,6 +12262,7 @@ function hrBuildForm(e){
   });
   flush();
   document.getElementById('hrFormBody').innerHTML = html;
+  hrRenderSalary();
   hrRecalcAuto();
 }
 function hrRecalcAuto(){
@@ -12223,7 +12275,7 @@ function hrRecalcAuto(){
 }
 function hrNew(){
   hrEditingId = null;
-  hrBuildForm({status:'在職', company_tel:'06-6734-5211', hire_date:new Date().toISOString().slice(0,10), emp_no:'（儲存後自動編號）'});
+  hrBuildForm({status:'在職', company_tel:'06-6734-5211', hire_date:new Date().toISOString().slice(0,10), emp_no:'（儲存後自動編號）', salary_history:[]});
   document.getElementById('hrFormTitle').textContent='新增員工';
   document.getElementById('hrDeleteBtn').style.display='none';
   document.getElementById('hrListView').style.display='none';
@@ -12242,7 +12294,7 @@ function hrNextEmpNo(){
   const mx = hrEmployees.reduce((m,e)=>Math.max(m, Number(e.emp_no_num)||0), 0);
   return mx+1;
 }
-function hrEmpNoText(n){ return 'E-'+String(n).padStart(5,'0'); }
+function hrEmpNoText(n){ return 'GB'+String(n).padStart(4,'0'); }
 async function hrSave(){
   if(!hrCanUse()) return;
   const data = {};
@@ -12250,6 +12302,8 @@ async function hrSave(){
   if(!data.name){ alert('請填寫姓名。'); return; }
   if(!data.hire_date){ alert('請填寫到職日期。'); return; }
   if(!data.gender){ alert('請選擇性別。'); return; }
+  const sal = hrCollectSalary(); if(sal===null) return;
+  data.salary_history = sal;
   data.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
   try{
     if(hrEditingId){
@@ -12271,10 +12325,10 @@ async function hrDelete(){
 async function hrSeedSample(){
   if(!confirm('要把 Ragic 人事資料表裡的 4 位員工（黃健霖、LIN YUN TING、CHEN SHAO FEI、立花 瑠菓）建立進來嗎？\n之後可以逐一補完整資料。')) return;
   const list = [
-    {no:3,name:'黃健霖',dept:'經營階層',title:'代表社員',email:'jack82372002@gmail.com',sales:'黃健霖'},
-    {no:4,name:'立花 瑠菓',dept:'法務部',title:'専任宅建士',email:'',sales:''},
-    {no:5,name:'LIN YUN TING',dept:'業務部',title:'',email:'',sales:'林韻庭'},
-    {no:6,name:'CHEN SHAO FEI',dept:'業務部',title:'',email:'',sales:'陳少妃'}
+    {no:1,name:'黃健霖',dept:'經營階層',title:'代表社員',email:'jack82372002@gmail.com',sales:'黃健霖'},
+    {no:3,name:'立花 瑠菓',dept:'法務部',title:'専任宅建士',email:'',sales:''},
+    {no:4,name:'LIN YUN TING',dept:'業務部',title:'',email:'',sales:'林韻庭'},
+    {no:5,name:'CHEN SHAO FEI',dept:'業務部',title:'',email:'',sales:'陳少妃'}
   ];
   try{
     const batch = trackerDB.batch();
@@ -12336,14 +12390,15 @@ function pfRender(){
     const perf = Math.round((buyer+seller)/1.1);
     const {emp, rule, custom} = pfRuleFor(name);
     const {bonus, rate} = pfCalcBonus(perf, rule);
-    const base = Number(rule.base_salary)||0;
-    rows.push({name, n:inMonth.length, buyer, seller, perf, rate, bonus, base, pay:base+bonus, custom, hasEmp:!!emp});
+    const bInfo = hrBaseFor(emp, ym);
+    const base = bInfo.amount;
+    rows.push({name, n:inMonth.length, buyer, seller, perf, rate, bonus, base, baseSet:bInfo.fromHistory, pay:base+bonus, custom, hasEmp:!!emp});
     if(inMonth.length) detail.push({name, list:inMonth});
   });
   rows.sort((a,b)=>b.perf-a.perf || a.name.localeCompare(b.name));
   const tot = rows.reduce((t,r)=>({n:t.n+r.n,buyer:t.buyer+r.buyer,seller:t.seller+r.seller,perf:t.perf+r.perf,bonus:t.bonus+r.bonus,base:t.base+r.base,pay:t.pay+r.pay}),{n:0,buyer:0,seller:0,perf:0,bonus:0,base:0,pay:0});
   sumBox.innerHTML = '<table class="pf-table"><thead><tr><th>業務</th><th class="num">案件數</th><th class="num">買方手續費</th><th class="num">賣方手續費</th><th class="num">總業績</th><th class="num">抽成</th><th class="num">業績獎金</th><th class="num">底薪</th><th class="num">本月薪資</th><th>抽成公式</th></tr></thead><tbody>'
-    + rows.map(r=>`<tr><td><b>${hrEsc(r.name)}</b></td><td class="num">${r.n}</td><td class="num">${hrYen(r.buyer)}</td><td class="num">${hrYen(r.seller)}</td><td class="num">${hrYen(r.perf)}</td><td class="num">${r.rate?r.rate+'%':'－'}</td><td class="num">${hrYen(r.bonus)}</td><td class="num">${hrYen(r.base)}</td><td class="num"><b>${hrYen(r.pay)}</b></td><td><button class="btn small secondary" data-name="${hrEsc(r.name)}" onclick="pfOpenRule(this.dataset.name)">${r.custom?'個人公式':'預設制度'}・設定</button></td></tr>`).join('')
+    + rows.map(r=>`<tr><td><b>${hrEsc(r.name)}</b></td><td class="num">${r.n}</td><td class="num">${hrYen(r.buyer)}</td><td class="num">${hrYen(r.seller)}</td><td class="num">${hrYen(r.perf)}</td><td class="num">${r.rate?r.rate+'%':'－'}</td><td class="num">${hrYen(r.bonus)}</td><td class="num">${hrYen(r.base)}${r.baseSet?'':'<br><span style="font-size:10px;color:#b35a00;">（預設，未設定）</span>'}</td><td class="num"><b>${hrYen(r.pay)}</b></td><td><button class="btn small secondary" data-name="${hrEsc(r.name)}" onclick="pfOpenRule(this.dataset.name)">${r.custom?'個人公式':'預設制度'}・設定</button></td></tr>`).join('')
     + `<tr class="pf-total"><td>合計</td><td class="num">${tot.n}</td><td class="num">${hrYen(tot.buyer)}</td><td class="num">${hrYen(tot.seller)}</td><td class="num">${hrYen(tot.perf)}</td><td></td><td class="num">${hrYen(tot.bonus)}</td><td class="num">${hrYen(tot.base)}</td><td class="num">${hrYen(tot.pay)}</td><td></td></tr></tbody></table>`;
   document.getElementById('pfWarn').textContent = noDate ? `有 ${noDate} 筆已填手續費的案件，沒有填「${basis==='handoverDate'?'交屋／入居日期':'簽約日期'}」，所以沒有歸入任何月份。` : '';
   document.getElementById('pfDetail').innerHTML = detail.length ? detail.map(d=>`<details open style="margin-bottom:10px;"><summary style="cursor:pointer;font-weight:700;">${hrEsc(d.name)}（${d.list.length} 筆）</summary><table class="pf-table"><thead><tr><th>物件</th><th>客戶</th><th>簽約日</th><th>交屋日</th><th class="num">買方手續費</th><th class="num">賣方手續費</th><th class="num">案件業績</th></tr></thead><tbody>`
@@ -12366,7 +12421,7 @@ function pfOpenRule(name, keepDraft){
   d.tiers = tiers;
   document.getElementById('pfRuleBody').innerHTML = `
     <div class="row">
-      <div class="field"><label>底薪（日圓／月）</label><input type="number" min="0" id="pf_r_base" value="${Number(d.base_salary)||0}" oninput="pfRuleDraft.base_salary=Number(this.value)||0"></div>
+      <div class="field"><label>底薪</label><div style="padding:8px 0;font-size:13px;color:#555;">請到「人事資料表」該員工的「底薪紀錄」設定（可記錄哪個月開始、哪個月調薪）。</div></div>
       <div class="field"><label>獎金計算方式</label>
         <select id="pf_r_mode" onchange="pfRuleDraft.mode=this.value"><option value="whole"${d.mode!=='progressive'?' selected':''}>整額：達到哪一級，整筆業績都套用該比例</option><option value="progressive"${d.mode==='progressive'?' selected':''}>累進：每一級只對「超過的部分」抽成</option></select>
       </div>
@@ -12374,7 +12429,7 @@ function pfOpenRule(name, keepDraft){
     <table class="pf-table" style="max-width:520px;"><thead><tr><th>業績「超過」多少日圓</th><th>抽成 %</th><th></th></tr></thead><tbody>
       ${tiers.map((t,i)=>`<tr><td><input type="number" min="0" style="width:150px;" value="${t.from}" oninput="pfRuleDraft.tiers[${i}].from=Number(this.value)||0"></td><td><input type="number" min="0" step="0.1" style="width:90px;" value="${t.rate}" oninput="pfRuleDraft.tiers[${i}].rate=Number(this.value)||0"> %</td><td><button class="btn small danger" onclick="pfRuleDraft.tiers.splice(${i},1);pfOpenRule(pfSelectedName,true)">✕</button></td></tr>`).join('')}
     </tbody></table>
-    <p style="font-size:12px;color:#666;line-height:1.7;">※業績沒有超過第一列的金額，就沒有獎金。想改成「固定抽成 X%」：只留一列，金額填 0。想「沒有獎金」：把所有列刪掉。<br>※預設制度（所有人）：底薪 18 萬；超過 30 萬 5%、超過 60 萬 10%、超過 120 萬 15%、超過 180 萬 20%、超過 240 萬 25%，整額套用。</p>
+    <p style="font-size:12px;color:#666;line-height:1.7;">※業績沒有超過第一列的金額，就沒有獎金。想改成「固定抽成 X%」：只留一列，金額填 0。想「沒有獎金」：把所有列刪掉。<br>※預設制度（所有人）：底薪預設 18 萬（未設定底薪紀錄時）；超過 30 萬 5%、超過 60 萬 10%、超過 120 萬 15%、超過 180 萬 20%、超過 240 萬 25%，整額套用。</p>
     <div class="toolbar no-print">
       <button class="btn small secondary" onclick="pfRuleDraft.tiers.push({from:0,rate:0});pfOpenRule(pfSelectedName,true)">＋ 新增一級</button>
       <button class="btn" onclick="pfSaveRule()">💾 儲存這位的公式</button>
@@ -12396,7 +12451,7 @@ async function pfSaveRule(){
   if(!pfSelectedName||!pfRuleDraft) return;
   try{
     const id = await pfEnsureEmployee(pfSelectedName); if(!id) return;
-    const rule = { base_salary:Number(pfRuleDraft.base_salary)||0, mode:pfRuleDraft.mode==='progressive'?'progressive':'whole',
+    const rule = { mode:pfRuleDraft.mode==='progressive'?'progressive':'whole',
       tiers:(pfRuleDraft.tiers||[]).map(t=>({from:Number(t.from)||0, rate:Number(t.rate)||0})) };
     await trackerDB.collection('hr_employees').doc(id).update({ comm_rule: rule, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
     pfRuleDraft = null; alert('已儲存。'); 
