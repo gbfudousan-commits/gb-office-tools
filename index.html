@@ -11612,7 +11612,6 @@ async function mrPdfBuildCustomerVector(customer, year, month, properties){
   mrPdfCover(doc, customer, year, month, properties);
   for(const prop of properties){ doc.addPage(); mrPdfPropertyPage(doc, customer, year, month, prop); }
   mrPdfCheckGlyphs(doc);
-  doc._mrVector = true;
   return doc;
 }
 /* ---- 年度收支一覽表（橫式，一個物件一頁）---- */
@@ -11901,29 +11900,16 @@ async function mrRptGenerateSingle(){
   const month = document.getElementById('mrRpt-month').value;
   if(!customerNo){ mrRptSetStatus('mrRpt-singleStatus','\u8acb\u5148\u9078\u64c7\u5ba2\u6236\uff08\u53ef\u4ee5\u76f4\u63a5\u6253\u5ba2\u6236\u7de8\u865f\u6216\u59d3\u540d\uff09', true); return; }
   mrRptSetStatus('mrRpt-singleStatus', '\u8b80\u53d6\u8cc7\u6599\u4e2d\u2026');
-  await mrEnsureAnnualData(Number(year)); // 月報後面會附年報：需要該年度資料＋去年 12 月
+  await mrEnsureMonth(Number(year), Number(month)); // 只需要這個月的報表
   const properties = mrRptFindReports(year, month, customerNo);
   if(!properties.length){ mrRptSetStatus('mrRpt-singleStatus', `\u627e\u4e0d\u5230\u5ba2\u6236 ${customerNo} \u5728 ${year}\u5e74${month}\u6708 \u7684\u6708\u6b21\u5831\u544a\u66f8\u8cc7\u6599`, true); return; }
   mrRptSetStatus('mrRpt-singleStatus', '\u7522\u751f\u4e2d\uff0c\u8acb\u7a0d\u5019\u2026');
   try{
     const customer = { customer_no: customerNo, customer_name: properties[0].customer_name };
-    let doc = await mrRptBuildCustomerPdf(customer, Number(year), Number(month), properties);
-    let annualNote = '';
-    if(doc._mrVector){
-      try{
-        const col = mrRptCollectAnnual(customerNo, Number(year), Number(month));
-        if(col.own.length) mrPdfAppendAnnual(doc, customer, Number(year), Number(month), col.byProperty);
-      }catch(annErr){
-        console.warn('附加年報失敗，只輸出月報：', annErr);
-        doc = await mrRptBuildCustomerPdf(customer, Number(year), Number(month), properties);
-        annualNote = '（年報部分產生失敗，這份只有月報。原因：'+((annErr&&annErr.message)||annErr)+'）';
-      }
-    }else{
-      annualNote = '（這次月報用了截圖版，沒有附上年報）';
-    }
+    const doc = await mrRptBuildCustomerPdf(customer, Number(year), Number(month), properties);
     const safe = `${customerNo}_${customer.customer_name}_${year}-${String(month).padStart(2,'0')}`.replace(/\//g,'_');
     doc.save(`\u6708\u6b21\u5831\u544a\u66f8_${safe}.pdf`);
-    mrRptSetStatus('mrRpt-singleStatus', '\u5df2\u7d93\u7522\u751f\u5b8c\u6210\uff08\u6708\u5831\u5f8c\u9762\u9644\u5e74\u5ea6\u5831\u8868\uff09\uff0c\u8acb\u67e5\u770b\u700f\u89bd\u5668\u7684\u4e0b\u8f09\u9805\u76ee\u3002'+annualNote, !!annualNote);
+    mrRptSetStatus('mrRpt-singleStatus', '\u5df2\u7d93\u7522\u751f\u5b8c\u6210\uff0c\u8acb\u67e5\u770b\u700f\u89bd\u5668\u7684\u4e0b\u8f09\u9805\u76ee\u3002');
   }catch(err){
     console.error(err);
     mrRptSetStatus('mrRpt-singleStatus', '\u7522\u751f\u5931\u6557\uff1a'+err.message, true);
@@ -11988,15 +11974,6 @@ function mrRptCollectAnnual(customerNo, year, uptoMonth){
   Object.keys(byProperty).forEach(k=>{ delete byProperty[k]; });
   sortedKeys.forEach(k=>{ byProperty[k] = sortedBP[k]; });
   return { own, byProperty };
-}
-function mrPdfAppendAnnual(doc, customer, year, uptoMonth, byProperty){
-  const balances = Object.keys(byProperty).map(k=>mrRptAnnualBalanceInfo(byProperty[k], uptoMonth, k));
-  for(const key of Object.keys(byProperty)){
-    doc.addPage('a4','landscape');
-    mrPdfAnnualPage(doc, customer, byProperty[key].address, year, uptoMonth, byProperty[key], balances);
-  }
-  if(balances.length > 1){ doc.addPage('a4','landscape'); mrPdfAnnualSummaryPage(doc, customer, year, uptoMonth, balances); }
-  mrPdfCheckGlyphs(doc);
 }
 async function mrRptGenerateAnnual(){
   const customerNo = mrRptSelectedCustomerNo();
