@@ -6722,7 +6722,7 @@ function renderFieldInput(f, rec, access){
   if(f.type==='serial'){
     const digits = f.serialDigits||5;
     if(editingIndex===null){
-      const preview = (f.serialPrefix||'')+String(f.serialNext||1).padStart(digits,'0');
+      const preview = (f.serialPrefix||'')+String(ppSerialNextEff(f)).padStart(digits,'0');
       return `<div class="field">
         <label>${f.label}</label>
         <input type="text" readonly value="${preview}" style="background:#f4f3ef;color:var(--pp-muted);">
@@ -6971,16 +6971,24 @@ async function saveForm(){
         const liveSerial = liveFieldConfig.find(f=>f.type==='serial');
         if(liveSerial && serialField){
           const digits = liveSerial.serialDigits || 5;
-          const nextNo = (liveSerial.serialPrefix||'') + String(liveSerial.serialNext||1).padStart(digits,'0');
+          // 從「設定檔的下一號」與「畫面上已存在的最大號+1」取較大者，再逐一確認該編號在資料庫真的沒人用
+          let n = Math.max(liveSerial.serialNext||1, ppSerialNextEff(serialField));
+          let nextNo = '';
+          for(let i=0;i<200;i++){
+            nextNo = (liveSerial.serialPrefix||'') + String(n).padStart(digits,'0');
+            const exist = await tx.get(trackerDB.collection('properties').doc(nextNo));
+            if(!exist.exists) break;
+            n++;
+          }
           rec[serialField.id] = nextNo;
           newDocId = nextNo;
-          liveSerial.serialNext = (liveSerial.serialNext||1) + 1;
+          liveSerial.serialNext = n + 1;
           tx.set(settingsRef, cfg);
         }
         const propRef = trackerDB.collection('properties').doc(newDocId || ('p_'+Date.now()));
         tx.set(propRef, rec);
       });
-      if(serialField) serialField.serialNext = (serialField.serialNext||1) + 1; // 讓畫面上的下一個編號預覽同步更新
+      if(serialField && rec[serialField.id]){ const mm = String(rec[serialField.id]).match(/(\d+)$/); if(mm) serialField.serialNext = Math.max(serialField.serialNext||1, parseInt(mm[1],10)+1); }
     }else{
       const oldDocId = records[editingIndex][serialField ? serialField.id : 'property_no'];
       const newDocId = serialField ? rec[serialField.id] : oldDocId;
@@ -7019,6 +7027,20 @@ async function saveForm(){
   }
 }
 
+/* 取得「真正的下一號」：設定檔記的號碼 與 目前已存在物件的最大號碼+1，取較大者，避免撞號 */
+function ppSerialNextEff(f){
+  let n = f.serialNext || 1;
+  try{
+    const pre = f.serialPrefix || '';
+    (records||[]).forEach(r=>{
+      const v = String(r[f.id]==null ? '' : r[f.id]);
+      if(pre && v.indexOf(pre)!==0) return;
+      const m = v.slice(pre.length).match(/^\d+$/);
+      if(m){ const k = parseInt(m[0],10); if(k+1>n) n = k+1; }
+    });
+  }catch(e){}
+  return n;
+}
 /* ---------------- 欄位設定頁（階層式：大分類 > 小分類 > 欄位） ---------------- */
 let settingsDirty = false;
 function markDirty(){
