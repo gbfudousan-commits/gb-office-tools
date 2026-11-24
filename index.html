@@ -9612,8 +9612,19 @@ function caRenderList(){
 
   const countEl = document.getElementById('ca-listCount');
   if(countEl){
-    countEl.textContent = totalCount === 0 ? '共 0 筆'
+    const leftText = totalCount === 0 ? '共 0 筆'
       : `共 ${totalCount} 筆，第 ${caCurrentPage} / ${totalPages} 頁（每頁 ${CA_PAGE_SIZE} 筆）`;
+    // 全部客戶餘額合計（不受搜尋、排序影響）；有搜尋時另外顯示搜尋結果小計
+    const allSum = customers.reduce((sum,c)=> sum + caCustomerTotal(c.customer_no), 0);
+    const filteredSum = filtered.reduce((sum,x)=> sum + x.total, 0);
+    const loading = (typeof ppMonthlyReportListLoaded !== 'undefined' && !ppMonthlyReportListLoaded) ? '<span style="font-size:11px;color:var(--ca-muted);margin-left:6px;">（報表載入中，數字會自動更新）</span>' : '';
+    countEl.style.display = 'flex'; countEl.style.justifyContent = 'space-between'; countEl.style.alignItems = 'flex-end'; countEl.style.gap = '12px'; countEl.style.flexWrap = 'wrap';
+    countEl.innerHTML = `<span>${leftText}</span>
+      <span style="text-align:right;line-height:1.5;">
+        <span style="font-size:12px;color:var(--ca-muted);">全部客戶餘額合計</span>
+        <b style="font-size:20px;color:${allSum<0?'#c0392b':'inherit'};margin-left:6px;">¥${allSum.toLocaleString('ja-JP')}</b>${loading}
+        ${kw ? `<br><span style="font-size:12px;color:var(--ca-muted);">搜尋結果小計：¥${filteredSum.toLocaleString('ja-JP')}</span>` : ''}
+      </span>`;
   }
 
   const body = document.getElementById('ca-listBody');
