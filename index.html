@@ -2754,6 +2754,11 @@
         <button class="btn" title="檢查並修正每份報表的上期餘額和結算合計" onclick="mrRecalcAllReports()">重算結算合計</button>
         <button class="btn primary" onclick="mrOpenForm(null)">＋ 新增報表</button>
       </div>
+      <div id="mr-winBar" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:4px 0 8px;padding:8px 12px;background:#f4f9fc;border:1px solid #cfe3ee;border-radius:8px;font-size:12px;color:#456;">
+        <span id="mr-winText" style="flex:1 1 320px;">目前已載入的報表：（載入中…）</span>
+        <select id="mr-winSel" style="width:auto;min-width:200px;"></select>
+        <button class="btn" id="mr-winBtn" onclick="mrLoadMoreClick()">載入</button>
+      </div>
       <div id="mr-filterBar" style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin:4px 0 14px;padding:12px;background:var(--mr-sub-bg);border:1px solid var(--mr-line);border-radius:var(--mr-radius);"></div>
       <div id="mr-listCount" style="font-size:12px;color:var(--mr-muted);margin-bottom:8px;"></div>
       <div style="overflow-x:auto;">
@@ -5017,6 +5022,14 @@ function initFirebaseTracker(){
       firebase.initializeApp(FIREBASE_CONFIG);
     }
     trackerDB = firebase.firestore();
+    /* 開啟本機快取（IndexedDB）：之後重新整理／重開頁面時，沒有被改過的資料直接從這台電腦讀，
+       不再重新向 Firebase 計費讀取（離線超過約 30 分鐘後才會重新完整讀一次）。
+       synchronizeTabs：同一台電腦開多個分頁也能共用同一份快取。失敗（舊瀏覽器、無痕模式）就照舊運作。 */
+    try{
+      if(typeof trackerDB.enablePersistence === 'function'){
+        trackerDB.enablePersistence({synchronizeTabs:true}).catch(e=>console.warn('本機快取未啟用：', e && e.code));
+      }
+    }catch(e){ console.warn('本機快取未啟用', e); }
     firebase.auth().onAuthStateChanged(user=>{
       if(user){
         trackerDB.collection('staffAccess').doc(user.email).get().then(doc=>{
@@ -5055,6 +5068,8 @@ function initFirebaseTracker(){
         if(typeof glUnsubMr === 'function'){ glUnsubMr(); glUnsubMr = null; }
         if(typeof notifUnsubLog === 'function'){ notifUnsubLog(); notifUnsubLog = null; }
         if(typeof hrUnsub !== 'undefined' && hrUnsub){ hrUnsub(); hrUnsub = null; hrEmployees = []; }
+        if(typeof mrWinReset === 'function') mrWinReset();
+        if(typeof glUnsubMr === 'function'){ glUnsubMr(); glUnsubMr = null; }
         const notifWrap = document.getElementById('notifWrap');
         if(notifWrap) notifWrap.style.display = 'none';
         if(typeof mrUnsubPropertyList === 'function'){ mrUnsubPropertyList(); mrUnsubPropertyList = null; }
@@ -6165,17 +6180,48 @@ let ppUnsubCustomerList = null;
 let ppMonthlyReportList = [];
 let ppMonthlyReportListLoaded = false;
 let ppUnsubMonthlyReportList = null;
-/* 找某個物件最新一期月次報告書的結算合計，找不到就回傳 null */
-function ppGetLatestBalance(propertyNo){
-  if(!propertyNo || !ppMonthlyReportListLoaded) return null;
+/* 找某個物件最新一期月次報告書的結算合計，找不到就回傳 null。
+   （省讀取量）1) 已經讀完全部報表（客戶帳戶開過）→ 直接用；2) 最近兩個月的資料裡有這個物件 → 那一筆就是最新；
+   3) 都沒有 → 只針對「這一個物件」向資料庫查一次（約十幾筆），結果記住，下次不再查。 */
+const ppBalCache = {};
+const ppBalInflight = {};
+function ppLatestFrom(list, propertyNo, minKey){
   let best = null, bestKey = -Infinity;
-  ppMonthlyReportList.forEach(r=>{
+  list.forEach(r=>{
     if(r.property_no !== propertyNo) return;
     const key = Number(r.year)*100 + Number(r.month);
     if(!isFinite(key)) return;
     if(key > bestKey){ bestKey = key; best = r; }
   });
-  return best ? (best.settle_total||0) : null;
+  if(best && bestKey >= (minKey||-Infinity)) return best.settle_total||0;
+  return null;
+}
+function ppGetLatestBalance(propertyNo){
+  if(!propertyNo) return null;
+  if(ppMonthlyReportListLoaded) return ppLatestFrom(ppMonthlyReportList, propertyNo);
+  const w = (typeof mrWindowKeys === 'function') ? mrWindowKeys() : null;
+  if(w && typeof mrRecords !== 'undefined'){
+    const hit = ppLatestFrom(mrRecords, propertyNo, w.prevKey);
+    if(hit !== null) return hit;
+  }
+  if(Object.prototype.hasOwnProperty.call(ppBalCache, propertyNo)) return ppBalCache[propertyNo];
+  ppFetchBalance(propertyNo);
+  return null;
+}
+function ppFetchBalance(pno){
+  if(ppBalInflight[pno]) return;
+  if(!(trackerCurrentUser && trackerCurrentUser.manageReports)) return;
+  if(typeof sharedMonthlyReportsUnsub !== 'undefined' && sharedMonthlyReportsUnsub) return; // 完整監聽啟動中，等它就好
+  ppBalInflight[pno] = true;
+  trackerDB.collection('monthly_reports').where('property_no','==',pno).get().then(snap=>{
+    let best = null, bk = -Infinity;
+    snap.docs.forEach(d=>{ const r = d.data(); const k = Number(r.year)*100 + Number(r.month); if(isFinite(k) && k > bk){ bk = k; best = r; } });
+    ppBalCache[pno] = best ? (best.settle_total||0) : null;
+    // 如果現在正開著這個物件的編輯畫面，把「目前餘額」欄位補上
+    const pnoEl = document.querySelector('#panel-properties [data-fid="property_no"]');
+    const balEl = document.querySelector('#panel-properties [data-fid="current_balance"]');
+    if(best && pnoEl && balEl && pnoEl.value === pno && document.activeElement !== balEl) balEl.value = ppBalCache[pno];
+  }).catch(err=>console.warn('查詢目前餘額失敗', err)).finally(()=>{ delete ppBalInflight[pno]; });
 }
 
 /* 目前登入者是否有「物件資料」的全權（對應 Firestore 規則的 manageProperties）*/
@@ -7195,8 +7241,12 @@ function ensureSharedMonthlyReportsListener(){
     const list = snapshot.docs.map(d=>d.data());
     ppMonthlyReportList = list;
     ppMonthlyReportListLoaded = true;
-    mrRecords = list;
+    mrFullDocs = list;
+    mrRebuildRecords();
+    if(typeof mrFullResolve === 'function'){ mrFullResolve(true); mrFullResolve = null; }
     if(typeof mrRenderList === 'function') mrRenderList();
+    const caPanel = document.getElementById('panel-customer-accounts');
+    if(caPanel && caPanel.classList.contains('active') && typeof caRenderList === 'function'){ try{ caRenderList(); }catch(e){} }
   }, err=>{
     console.error(err);
     alert('月次報告書讀取失敗，請確認 Firestore 規則或網路連線：' + err.message);
@@ -7241,9 +7291,8 @@ function ppInitData(){
 
   // 「目前餘額」自動抓最新一期月次報告書的結算合計——只有管理員（manageReports）才讀得到
   // 月次報告書，所以這裡只有管理員身分才會去監聽；其他人看到的目前餘額就是物件資料裡存的原值。
-  if(trackerCurrentUser && trackerCurrentUser.manageReports){
-    ppUnsubMonthlyReportList = ensureSharedMonthlyReportsListener();
-  }
+  // （省讀取量）不再為了「目前餘額」一次讀完全部月次報告書；見 ppGetLatestBalance()：
+  // 優先用已載入的最近兩個月，沒有才針對「這一個物件」單獨查詢。「客戶帳戶」才會讀完整份。
 }
 
 
@@ -8106,6 +8155,123 @@ function ccInitData(){
 let mrSections = [];
 let mrFieldConfig = [];
 let mrRecords = [];
+/* =========================================================================
+   月次報告書「省讀取量」載入：預設只即時載入「當月＋上個月」，更早的資料要按「載入」才讀。
+   mrWinSrc：各個資料來源（某個月 / 某一年）讀到的文件；mrFullDocs：完整監聽（客戶帳戶等）讀到的全部文件。
+   mrRecords 永遠是「目前已載入的全部來源」合併後的結果，其他功能照舊用 mrRecords。
+   ========================================================================= */
+let mrWinSrc = {}, mrWinUnsub = {}, mrWinPending = {}, mrFullDocs = null, mrWinFellBack = false;
+let mrFullResolve = null;
+let mrFullPromise = new Promise(r=>{ mrFullResolve = r; });
+function mrDocKey(r){ return String(r.report_no || (r.property_no+'-'+r.year+'-'+String(r.month).padStart(2,'0'))); }
+function mrRebuildRecords(){
+  const map = new Map();
+  Object.values(mrWinSrc).forEach(arr=>arr.forEach(r=>map.set(mrDocKey(r), r)));
+  if(mrFullDocs) mrFullDocs.forEach(r=>map.set(mrDocKey(r), r));
+  mrRecords = Array.from(map.values());
+  Object.keys(ppBalCache).forEach(k=>delete ppBalCache[k]);
+  mrUpdateWinBar();
+}
+function mrVariants(v, pad){
+  const n = Number(v); const set = new Set([n, String(n)]);
+  if(pad) set.add(String(n).padStart(2,'0'));
+  return Array.from(set);
+}
+function mrPrevYM(y, m){ return m>1 ? {y:y, m:m-1} : {y:y-1, m:12}; }
+function mrWindowKeys(){
+  const d = new Date(); const y = d.getFullYear(), m = d.getMonth()+1; const p = mrPrevYM(y, m);
+  return { cur:{y,m}, prev:p, curKey:y*100+m, prevKey:p.y*100+p.m };
+}
+function mrListen(key, buildQuery){
+  if(mrWinUnsub[key]) return mrWinPending[key];
+  mrWinPending[key] = new Promise(resolve=>{
+    let first = true;
+    mrWinUnsub[key] = buildQuery(trackerDB.collection('monthly_reports')).onSnapshot(snap=>{
+      mrWinSrc[key] = snap.docs.map(d=>d.data());
+      mrRebuildRecords();
+      if(typeof mrRenderList === 'function') mrRenderList();
+      if(first){ first = false; resolve(true); }
+    }, err=>{
+      console.error('月次報告書（'+key+'）讀取失敗', err);
+      if(first){ first = false; resolve(false); }
+      if(!mrWinFellBack){
+        mrWinFellBack = true;
+        console.warn('分段載入失敗，改回讀取全部月次報告書');
+        ensureSharedMonthlyReportsListener();
+      }
+    });
+  });
+  return mrWinPending[key];
+}
+function mrQueryYM(y, m){ return col=>col.where('year','in',mrVariants(y)).where('month','in',mrVariants(m,true)); }
+function mrQueryY(y){ return col=>col.where('year','in',mrVariants(y)); }
+function mrStartWindow(){
+  const w = mrWindowKeys();
+  mrListen('ym:'+w.cur.y+'-'+w.cur.m, mrQueryYM(w.cur.y, w.cur.m));
+  mrListen('ym:'+w.prev.y+'-'+w.prev.m, mrQueryYM(w.prev.y, w.prev.m));
+}
+function mrLoadAll(){ ensureSharedMonthlyReportsListener(); return mrFullPromise; }
+function mrEnsureYear(y){
+  y = Number(y);
+  if(mrFullDocs || mrWinSrc['y:'+y]) return Promise.resolve(true);
+  return mrListen('y:'+y, mrQueryY(y));
+}
+function mrMonthLoaded(y, m){ return !!(mrFullDocs || mrWinSrc['y:'+y] || mrWinSrc['ym:'+y+'-'+m]); }
+function mrPairLoaded(y, m){ const p = mrPrevYM(y, m); return mrMonthLoaded(y, m) && mrMonthLoaded(p.y, p.m); }
+function mrEnsureMonth(y, m){
+  y = Number(y); m = Number(m);
+  if(mrFullDocs) return Promise.resolve(true);
+  const tasks = [];
+  [{y,m}, mrPrevYM(y,m)].forEach(t=>{
+    if(!mrMonthLoaded(t.y, t.m)) tasks.push(mrListen('ym:'+t.y+'-'+t.m, mrQueryYM(t.y, t.m)));
+  });
+  return Promise.all(tasks).then(()=>true);
+}
+/* 年報需要：該年 1 月～所選月份，加上去年 12 月（上年度餘額） */
+function mrEnsureAnnualData(year){
+  year = Number(year);
+  return Promise.all([ mrEnsureYear(year), mrFullDocs ? true : mrEnsureMonth(year-1, 12) ]).then(()=>true);
+}
+function mrWinReset(){
+  try{ if(typeof sharedMonthlyReportsUnsub !== 'undefined' && sharedMonthlyReportsUnsub) sharedMonthlyReportsUnsub(); }catch(e){}
+  ppMonthlyReportList = []; ppMonthlyReportListLoaded = false;
+  Object.values(mrWinUnsub).forEach(fn=>{ try{ fn(); }catch(e){} });
+  mrWinSrc = {}; mrWinUnsub = {}; mrWinPending = {}; mrFullDocs = null; mrWinFellBack = false; mrRecords = [];
+  mrFullPromise = new Promise(r=>{ mrFullResolve = r; });
+}
+function mrUpdateWinBar(){
+  const el = document.getElementById('mr-winBar'); if(!el) return;
+  const txt = document.getElementById('mr-winText');
+  let label;
+  if(mrFullDocs) label = '全部年份';
+  else{
+    const parts = Object.keys(mrWinSrc).sort().map(k=> k.startsWith('y:') ? k.slice(2)+'年全年' : k.slice(3).replace('-','年')+'月');
+    label = parts.join('、') || '（載入中…）';
+  }
+  if(txt) txt.textContent = '目前已載入的報表：' + label + (mrFullDocs ? '' : '　（為了節省資料庫讀取量，更早的報表要按右邊「載入」才會讀取）');
+  const sel = document.getElementById('mr-winSel');
+  if(sel && !sel.dataset.filled){
+    const cy = new Date().getFullYear(); let o = '<option value="">選擇要載入的年份…</option>';
+    for(let y=cy; y>=2025; y--) o += `<option value="${y}">${y} 年全年</option>`;
+    o += '<option value="all">全部年份（讀取量最大）</option>';
+    sel.innerHTML = o; sel.dataset.filled = '1';
+  }
+  el.style.display = (mrFullDocs ? 'none' : 'flex');
+}
+async function mrLoadMoreClick(){
+  const sel = document.getElementById('mr-winSel'); if(!sel || !sel.value) { alert('請先選擇要載入的年份。'); return; }
+  const btn = document.getElementById('mr-winBtn'); if(btn){ btn.disabled = true; btn.textContent = '載入中…'; }
+  try{
+    if(sel.value === 'all') await mrLoadAll(); else await mrEnsureYear(Number(sel.value));
+  } finally { if(btn){ btn.disabled = false; btn.textContent = '載入'; } sel.value = ''; }
+}
+/* 表單開著時，如果「這個月＋上個月」還沒載入，背景載入後再重算一次 */
+const mrKicked = {};
+function mrKickEnsure(y, m, again){
+  y = Number(y); m = Number(m); if(!y || !m || mrPairLoaded(y, m)) return;
+  const k = y+'-'+m; if(mrKicked[k]) return; mrKicked[k] = true;
+  mrEnsureMonth(y, m).then(()=>{ delete mrKicked[k]; if(typeof again === 'function') again(); });
+}
 let mrEditingIndex = null;
 let mrFieldConfigLoaded = false;
 let mrUnsubProperties = null;
@@ -8182,6 +8348,7 @@ function mrRenderFilterBar(){
       if(f.id==='year'){
         const years = new Set();
         mrRecords.forEach(r=>{ if(r.year && Number(r.year)>=2025) years.add(Number(r.year)); });
+        for(let yy=new Date().getFullYear(); yy>=2025; yy--) years.add(yy);
         options = Array.from(years).sort((a,b)=>b-a);
       }else{
         options = Array.from({length:12},(_,i)=>i+1);
@@ -8227,6 +8394,7 @@ function mrSetFilterSelect(fieldId, val){
   else mrFilters[fieldId] = val;
   mrCurrentPage = 1;
   mrRenderList();
+  if(fieldId==='year' && val) mrEnsureYear(Number(val));  // 選了還沒載入的年份，自動讀那一年
 }
 function mrSetFilterRange(fieldId, key, val){
   const f = mrFieldConfig.find(x=>x.id===fieldId);
@@ -8351,6 +8519,7 @@ function mrBuildRecalcPlan(){
   return changes;
 }
 async function mrRecalcAllReports(){
+  await mrLoadAll(); // 要檢查全部報表，需要讀完整資料
   const changes = mrBuildRecalcPlan();
   if(!changes.length){ alert('檢查完畢：所有報表的「上期餘額」和「結算合計」都是正確的，不用修正。'); return; }
   const preview = changes.slice(0,12).map(c=>`${c.rec.report_no}　結算合計 ${c.oldSettle.toLocaleString()} → ${c.newSettle.toLocaleString()}`).join('\n');
@@ -8534,6 +8703,7 @@ function mrCheckExistingReport(){
   const getVal = (fid)=>{ const el = container.querySelector(`[data-fid="${fid}"]`); return el ? el.value : ''; };
   const pno = getVal('property_no'), y = Number(getVal('year')), m = Number(getVal('month'));
   if(!pno || !y || !m) return;
+  if(!mrPairLoaded(y, m)){ mrEnsureMonth(y, m).then(()=>mrCheckExistingReport()); return; }
   const idx = mrRecords.findIndex(r => r.property_no===pno && Number(r.year)===y && Number(r.month)===m);
   if(idx < 0 || idx === mrEditingIndex){ mrRememberYM(); return; }
   const label = `${pno}　${y} 年 ${m} 月`;
@@ -9019,6 +9189,7 @@ function mrRecalcAutoFields(){
   const propertyNo = getVal('property_no');
   const year = getVal('year');
   const month = getVal('month');
+  mrKickEnsure(year, month, mrRecalcAutoFields);
 
   const tempRec = {income_items: mrCurrentSubtableData.income_items || [], expense_items: mrCurrentSubtableData.expense_items || []};
   const totals = mrComputeTotals(tempRec);
@@ -9061,6 +9232,7 @@ async function mrSaveForm(){
 
   if(!rec.property_no){ alert('請先填寫物件編號。'); return; }
   if(!rec.year || !rec.month){ alert('請填寫報表年份與報表月份。'); return; }
+  await mrEnsureMonth(Number(rec.year), Number(rec.month)); // 確保這個月與上個月已載入，上期餘額／重複檢查才準
 
   const totals = mrComputeTotals(rec);
   rec.income_total = totals.income_total;
@@ -9374,8 +9546,8 @@ function mrInitData(){
     alert('月次報告書的欄位設定讀取失敗：' + err.message);
   });
 
-  // 跟「物件管理」的「目前餘額」查詢共用同一份月次報告書監聽，見 ensureSharedMonthlyReportsListener()
-  mrUnsubProperties = ensureSharedMonthlyReportsListener();
+  // （省讀取量）預設只載入「當月＋上個月」，更早的報表由列表上方的「載入」按鈕讀取
+  mrStartWindow();
 
   // 「物件編號」自動完成用的物件清單：跟「物件管理」本體共用同一份監聽，見 ensureSharedPropertiesListener()
   mrUnsubPropertyList = ensureSharedPropertiesListener();
@@ -9570,9 +9742,10 @@ function glInitData(){
     if(analysisPanel && analysisPanel.classList.contains('active')) glRenderAnalysis();
   }, err=>{ console.error(err); });
 
-  // 收支分析的「客戶貢獻度排名」要用月次報告書資料，這裡獨立訂閱一份，
-  // 不依賴使用者是否也有「月次報告書」模組的權限
-  if(typeof glUnsubMr === 'function') glUnsubMr();
+  // （省讀取量）收支分析的「客戶貢獻度排名」才需要月次報告書，改成第一次打開「收支分析」才訂閱（見 glEnsureMr）
+}
+function glEnsureMr(){
+  if(glUnsubMr) return;
   glUnsubMr = trackerDB.collection('monthly_reports').onSnapshot(snapshot=>{
     glMrRecords = snapshot.docs.map(d=>d.data());
     const analysisPanel = document.getElementById('gl-panel-analysis');
@@ -10488,6 +10661,7 @@ function glAnRenderAdjustmentsTable(){
     </tr>`).join('');
 }
 function glRenderAnalysis(){
+  glEnsureMr();
   glAnPopulateFilters();
   const {sy,sm,ey,em} = glAnGetRange();
   const startYM = sy*12+sm, endYM = ey*12+em;
@@ -11661,6 +11835,7 @@ async function mrRptBuildCustomerPdfImage(customer, year, month, properties){
 /* ---- \u4f7f\u7528\u8005\u4ecb\u9762\uff1a\u5ba2\u6236\u641c\u5c0b\u3001\u5e74\u6708\u9078\u64c7 ---- */
 function mrRptCustomerList(){
   const map = {};
+  (typeof ccRecords !== 'undefined' ? ccRecords : []).forEach(c=>{ if(c && c.customer_no) map[c.customer_no] = c.customer_name || ''; });
   mrRecords.forEach(r=>{ if(r.customer_no) map[r.customer_no] = r.customer_name || map[r.customer_no] || ''; });
   return Object.entries(map).map(([no,name])=>({customer_no:no, customer_name:name})).sort((a,b)=>String(a.customer_no).localeCompare(String(b.customer_no)));
 }
@@ -11669,6 +11844,7 @@ function mrRptFindReports(year, month, customerNo){
 }
 function mrRptYearOptions(){
   const years = new Set();
+  for(let yy=new Date().getFullYear(); yy>=2025; yy--) years.add(yy);
   mrRecords.forEach(r=>{ if(r.year) years.add(Number(r.year)); });
   years.add(new Date().getFullYear());
   return [...years].sort((a,b)=>b-a);
@@ -11724,6 +11900,8 @@ async function mrRptGenerateSingle(){
   const year = document.getElementById('mrRpt-year').value;
   const month = document.getElementById('mrRpt-month').value;
   if(!customerNo){ mrRptSetStatus('mrRpt-singleStatus','\u8acb\u5148\u9078\u64c7\u5ba2\u6236\uff08\u53ef\u4ee5\u76f4\u63a5\u6253\u5ba2\u6236\u7de8\u865f\u6216\u59d3\u540d\uff09', true); return; }
+  mrRptSetStatus('mrRpt-singleStatus', '\u8b80\u53d6\u8cc7\u6599\u4e2d\u2026');
+  await mrEnsureAnnualData(Number(year)); // 月報後面會附年報：需要該年度資料＋去年 12 月
   const properties = mrRptFindReports(year, month, customerNo);
   if(!properties.length){ mrRptSetStatus('mrRpt-singleStatus', `\u627e\u4e0d\u5230\u5ba2\u6236 ${customerNo} \u5728 ${year}\u5e74${month}\u6708 \u7684\u6708\u6b21\u5831\u544a\u66f8\u8cc7\u6599`, true); return; }
   mrRptSetStatus('mrRpt-singleStatus', '\u7522\u751f\u4e2d\uff0c\u8acb\u7a0d\u5019\u2026');
@@ -11754,6 +11932,8 @@ async function mrRptGenerateSingle(){
 async function mrRptGenerateLatest(){
   const customerNo = mrRptSelectedCustomerNo();
   if(!customerNo){ mrRptSetStatus('mrRpt-singleStatus','\u8acb\u5148\u9078\u64c7\u5ba2\u6236', true); return; }
+  mrRptSetStatus('mrRpt-singleStatus', '\u8b80\u53d6\u5168\u90e8\u5831\u8868\u4e2d\u2026');
+  await mrLoadAll(); // 要找「最新一份」，需要讀完整資料
   const own = mrRecords.filter(r=>r.customer_no===customerNo);
   if(!own.length){ mrRptSetStatus('mrRpt-singleStatus', `\u5ba2\u6236 ${customerNo} \u76ee\u524d\u6c92\u6709\u4efb\u4f55\u5831\u8868\u7d00\u9304`, true); return; }
   let best = own[0];
@@ -11823,6 +12003,8 @@ async function mrRptGenerateAnnual(){
   const year = Number(document.getElementById('mrRpt-year').value);
   const uptoMonth = Number(document.getElementById('mrRpt-month').value);
   if(!customerNo){ mrRptSetStatus('mrRpt-singleStatus','\u8acb\u5148\u9078\u64c7\u5ba2\u6236', true); return; }
+  mrRptSetStatus('mrRpt-singleStatus', '\u8b80\u53d6\u8cc7\u6599\u4e2d\u2026');
+  await mrEnsureAnnualData(year);
   const own = mrRecords.filter(r=> r.customer_no===customerNo && Number(r.year)===year && Number(r.month)<=uptoMonth);
   if(!own.length){ mrRptSetStatus('mrRpt-singleStatus', `\u5ba2\u6236 ${customerNo} \u5728 ${year}\u5e74 1\uff5e${uptoMonth}\u6708 \u6c92\u6709\u4efb\u4f55\u5831\u8868\u8cc7\u6599`, true); return; }
   mrRptSetStatus('mrRpt-singleStatus', '\u7522\u751f\u5e74\u5ea6\u5831\u8868\u4e2d\uff0c\u8acb\u7a0d\u5019\u2026');
@@ -11880,6 +12062,8 @@ function mrRptCheckMissing(){
 async function mrRptBatchZip(){
   const year = Number(document.getElementById('mrRpt-batchYear').value);
   const month = Number(document.getElementById('mrRpt-batchMonth').value);
+  mrRptSetStatus('mrRpt-batchStatus', '\u8b80\u53d6\u8cc7\u6599\u4e2d\u2026');
+  await mrEnsureMonth(year, month);
   const groups = {};
   mrRecords.filter(r=>Number(r.year)===year && Number(r.month)===month).forEach(r=>{
     if(!groups[r.customer_no]) groups[r.customer_no] = { customer_no:r.customer_no, customer_name:r.customer_name, properties:[] };
