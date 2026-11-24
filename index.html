@@ -5201,6 +5201,7 @@ function addStaffMember(){
   if(!name){ alert('請輸入姓名。'); return; }
   if(trackerStaffList.some(s => s.name === name)){ alert('這個名字已經存在名單裡了。'); return; }
   trackerDB.collection('staffList').add({ name }).then(()=>{
+    notifLog('tr','create', `擔當人員名單：新增「${name}」`);
     document.getElementById('staff_new_name').value = '';
   }).catch(err=>alert('新增失敗：' + err.message));
 }
@@ -5210,6 +5211,7 @@ function renameStaffMember(id, oldName){
   const newName = prompt('修改姓名：', oldName);
   if(!newName || newName.trim() === '' || newName === oldName) return;
   trackerDB.collection('staffList').doc(id).update({ name: newName.trim() })
+    .then(()=>notifLog('tr','update', `擔當人員名單：「${oldName}」改名為「${newName.trim()}」`))
     .catch(err=>alert('修改失敗：' + err.message));
 }
 
@@ -5217,6 +5219,7 @@ function deleteStaffMember(id, name){
   if(!trackerCurrentUser || !trackerCurrentUser.manageStaff){ alert('您沒有管理擔當人員名單的權限。'); return; }
   if(!confirm(`確定要刪除「${name}」嗎？已經指定給這個人的舊案子不會被刪除，但下拉選單裡不會再看到這個名字。`)) return;
   trackerDB.collection('staffList').doc(id).delete()
+    .then(()=>notifLog('tr','delete', `擔當人員名單：刪除「${name}」`))
     .catch(err=>alert('刪除失敗：' + err.message));
 }
 
@@ -5446,10 +5449,12 @@ function saveCaseToTracker(){
     alert('請至少填寫物件或客戶姓名。');
     return;
   }
+  const caseOld = editingCaseId ? (trackerCasesCache.find(x=>x.id===editingCaseId) || null) : null;
   const promise = editingCaseId
     ? trackerDB.collection('cases').doc(editingCaseId).update(data)
     : trackerDB.collection('cases').add({...data, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
   promise.then(()=>{
+    notifLogCase(caseOld ? 'update' : 'create', caseOld, data);
     resetTrackerForm();
   }).catch(err=>{
     alert('儲存失敗：' + err.message);
@@ -5490,7 +5495,25 @@ function editCase(id){
 
 function deleteCase(id){
   if(!confirm('確定要刪除這筆案子嗎？刪除後無法復原，所有同事都看不到這筆資料了。')) return;
-  trackerDB.collection('cases').doc(id).delete();
+  const old = trackerCasesCache.find(x=>x.id===id);
+  trackerDB.collection('cases').doc(id).delete().then(()=>{
+    if(old) notifLog('tr', 'delete', `${old.property||''}${old.client ? '／'+old.client : ''}（擔當：${old.staff||'—'}）`);
+  });
+}
+const CASE_FIELD_LABELS = { type:'類型', subtype:'用途', property:'物件', client:'客戶姓名', customerNo:'客戶編號', staff:'擔當人員', scrivener:'司法書士',
+  explainDate:'講解契約日期', signDate:'簽約日期', handoverDate:'交屋／入居日期', payment:'款項到帳狀況', docs:'客戶資料是否收齊',
+  completed:'標記為完成', amount:'案件金額', buyerFee:'買方仲介手續費', sellerFee:'賣方仲介手續費', note:'備註' };
+function notifLogCase(action, oldC, newC){
+  const head = `${newC.property||''}${newC.client ? '／'+newC.client : ''}`;
+  if(action==='create'){ notifLog('tr','create', `${head}（擔當：${newC.staff||'—'}，${newC.type||''}）`); return; }
+  const ch = [];
+  const fmt = (k,v)=>{ if(v===true) return '是'; if(v===false) return '否'; if(v==null||v==='') return '（空白）'; if(['amount','buyerFee','sellerFee'].includes(k)) return '¥'+Number(v).toLocaleString(); const t=String(v); return t.length>30?t.slice(0,30)+'…':t; };
+  Object.keys(CASE_FIELD_LABELS).forEach(k=>{
+    const a = oldC ? oldC[k] : undefined, b = newC[k];
+    const na = (a==null||a===''||a===0||a===false) ? '' : String(a), nb = (b==null||b===''||b===0||b===false) ? '' : String(b);
+    if(na !== nb) ch.push(`${CASE_FIELD_LABELS[k]}：${fmt(k,a)} → ${fmt(k,b)}`);
+  });
+  notifLog('tr','update', head + '　' + (ch.length ? ch.join('；') : '（沒有修改任何欄位）'));
 }
 
 function monthGroupKey(c){
@@ -6230,9 +6253,8 @@ function ppCanManageAll(){
 }
 /* 目前這筆物件，登入者是否能編輯（全權者皆可；業務只能編自己「客戶擔當」的物件）*/
 function ppCanEditRecord(rec){
-  if(ppCanManageAll()) return true;
-  if(!trackerCurrentUser || !rec) return false;
-  return rec.staff_in_charge === trackerCurrentUser.name;
+  // 現在任何登入的員工都能新增／編輯任何物件資料（修改紀錄會寫進通知）；只有欄位設定仍限管理者
+  return !!trackerCurrentUser;
 }
 
 /* ---------------- 分頁切換 ---------------- */
@@ -6437,10 +6459,7 @@ let currentSubtableData = {}; // { sectionId: [ {欄id:值,...}, ... ] } 目前�
 
 /* 依權限決定：這次打開表單能不能編輯、要不要隱藏「客戶擔當」欄位 */
 function ppFormAccessInfo(rec){
-  if(ppCanManageAll()) return {readOnly:false, hideStaff:false};
-  if(rec===null) return {readOnly:false, hideStaff:false}; // 新增自己的案子：正常填寫，擔當儲存時會自動鎖定成自己
-  const isOwn = trackerCurrentUser && rec.staff_in_charge === trackerCurrentUser.name;
-  return {readOnly:!isOwn, hideStaff:!isOwn};
+  return {readOnly:false, hideStaff:false}; // 所有員工皆可編輯、查看全部欄位
 }
 
 function openForm(idx){ editingIndex = idx; currentSubtableData = {}; renderForm(); switchTab('form'); }
@@ -6884,6 +6903,34 @@ async function ppQuickAddCustomerByName(itemEl){
   box.innerHTML = '';
 }
 
+
+/* ---- 物件資料修改紀錄（寫進通知）：列出「哪個欄位 舊值 → 新值」 ---- */
+function ppNormVal(v){
+  if(v==null || v==='' || v===0 || v==='0') return '';
+  if(Array.isArray(v) || typeof v==='object') return JSON.stringify(v);
+  return String(v).trim();
+}
+function ppShortVal(v){
+  if(v==null || v==='') return '（空白）';
+  if(Array.isArray(v)) return v.length ? v.join('、') : '（空白）';
+  const t = String(v);
+  return t.length>30 ? t.slice(0,30)+'…' : t;
+}
+function ppGenericDescribe(fcfg, secs, oldRec, newRec){
+  const lines = [];
+  (fcfg||[]).forEach(f=>{
+    if(f.type==='formula' || f.type==='serial') return;
+    const x = oldRec[f.id], y = newRec[f.id];
+    if(ppNormVal(x) !== ppNormVal(y)) lines.push(`${f.label}：${ppShortVal(x)} → ${ppShortVal(y)}`);
+  });
+  (secs||[]).filter(sec=>sec.type==='subtable').forEach(sec=>{
+    const nz = arr=>(arr||[]).filter(r=>Object.values(r).some(v=>v!==''&&v!=null));
+    const x = nz(oldRec[sec.id]), y = nz(newRec[sec.id]);
+    if(JSON.stringify(x) !== JSON.stringify(y)) lines.push(`「${sec.name}」明細有變更（${x.length}列 → ${y.length}列）`);
+  });
+  return lines;
+}
+function ppDescribeChange(oldRec, newRec){ return ppGenericDescribe(fieldConfig, sections, oldRec, newRec); }
 async function saveForm(){
   const rec = {};
   document.querySelectorAll('#pp-formSections [data-fid]').forEach(el=>{
@@ -6905,11 +6952,10 @@ async function saveForm(){
 
   // 業務人員新增物件時，「客戶擔當」強制鎖定為自己的名字，避免新增到別人名下
   // （這裡是畫面上的防呆；資料庫規則那邊也有同樣的檢查，雙重保險）
-  if(!ppCanManageAll() && trackerCurrentUser){
-    rec.staff_in_charge = trackerCurrentUser.name;
-  }
+  // （已取消）以前業務新增物件時會強制把「客戶擔當」鎖成自己，現在任何人都能自由填寫。
 
   const serialField = fieldConfig.find(f=>f.type==='serial');
+  const ppOldRec = editingIndex===null ? null : JSON.parse(JSON.stringify(records[editingIndex]));
 
   try{
     let ppNotifAction = 'update';
@@ -6954,7 +7000,18 @@ async function saveForm(){
       }
     }
     currentSubtableData = {};
-    notifLog('pp', ppNotifAction, rec.address || (serialField && rec[serialField.id]) || '物件資料');
+    {
+      const no = (serialField && rec[serialField.id]) || '';
+      const head = `${no}${rec.address ? '（'+rec.address+'）' : ''}`;
+      let detail;
+      if(ppNotifAction === 'create'){
+        detail = `${head}　客戶擔當：${rec.staff_in_charge || '（未填）'}`;
+      }else{
+        const changes = ppDescribeChange(ppOldRec || {}, rec);
+        detail = `${head}　` + (changes.length ? changes.join('；') : '（沒有修改任何欄位）');
+      }
+      notifLog('pp', ppNotifAction, detail);
+    }
     ppBackAfterForm();
   }catch(err){
     console.error(err);
@@ -7811,6 +7868,7 @@ async function ccSaveForm(){
   });
 
   const serialField = ccFieldConfig.find(f=>f.type==='serial');
+  const ccOldRec = ccEditingIndex===null ? null : JSON.parse(JSON.stringify(ccRecords[ccEditingIndex]));
 
   try{
     let ccNotifAction = 'update';
@@ -7855,7 +7913,12 @@ async function ccSaveForm(){
       }
     }
     ccCurrentSubtableData = {};
-    notifLog('cc', ccNotifAction, rec.customer_name || (serialField && rec[serialField.id]) || '客戶資料');
+    {
+      const head = `${(serialField && rec[serialField.id]) || ''}${rec.customer_name ? '（'+rec.customer_name+'）' : ''}`;
+      const detail = ccNotifAction==='create' ? head
+        : (()=>{ const ch = ppGenericDescribe(ccFieldConfig, ccSections, ccOldRec||{}, rec); return head + '　' + (ch.length ? ch.join('；') : '（沒有修改任何欄位）'); })();
+      notifLog('cc', ccNotifAction, detail);
+    }
     ccSwitchTab('list');
   }catch(err){
     console.error(err);
@@ -9247,6 +9310,7 @@ async function mrSaveForm(){
   const newDocId = `${rec.property_no}-${rec.year}-${String(rec.month).padStart(2,'0')}`;
   rec.report_no = newDocId;
 
+  const mrOldRec = mrEditingIndex===null ? null : JSON.parse(JSON.stringify(mrRecords[mrEditingIndex]));
   try{
     let mrNotifAction = 'update';
     if(mrEditingIndex===null){
@@ -9274,7 +9338,27 @@ async function mrSaveForm(){
       }
     }
     mrCurrentSubtableData = {};
-    notifLog('mr', mrNotifAction, `物件 ${rec.property_no}（${rec.year}年${rec.month}月報表）`);
+    {
+      const head = `物件 ${rec.property_no}（${rec.year}年${rec.month}月報表）`;
+      const yen = v=>'¥'+(Number(v)||0).toLocaleString();
+      let detail;
+      if(mrNotifAction==='create'){
+        detail = `${head}　收入 ${yen(rec.income_total)}、支出 ${yen(rec.expense_total)}、結算合計 ${yen(rec.settle_total)}`;
+      }else{
+        const o = mrOldRec || {}; const ch = [];
+        [['income_total','收入合計'],['expense_total','支出合計'],['settle_total','結算合計']].forEach(([k,l])=>{ if((Number(o[k])||0)!==(Number(rec[k])||0)) ch.push(`${l}：${yen(o[k])} → ${yen(rec[k])}`); });
+        const itemTxt = r=>`${r.item||r.name||r.title||'項目'} ${yen(r.amount)}`;
+        ['income_items','expense_items'].forEach(k=>{
+          const label = k==='income_items' ? '收入' : '支出';
+          const oldArr = (o[k]||[]).filter(r=>r && (r.amount||r.item)), newArr = (rec[k]||[]).filter(r=>r && (r.amount||r.item));
+          const oldSet = oldArr.map(r=>JSON.stringify(r)), newSet = newArr.map(r=>JSON.stringify(r));
+          newArr.forEach((r,i)=>{ if(!oldSet.includes(newSet[i])) ch.push(`${label}項目 新增／修改：${itemTxt(r)}`); });
+          oldArr.forEach((r,i)=>{ if(!newSet.includes(oldSet[i])) ch.push(`${label}項目 刪除／修改前：${itemTxt(r)}`); });
+        });
+        detail = head + '　' + (ch.length ? ch.join('；') : '（沒有修改金額）');
+      }
+      notifLog('mr', mrNotifAction, detail);
+    }
     mrSwitchTab('list');
   }catch(err){
     console.error(err);
@@ -12204,11 +12288,12 @@ function menuInit(){
    通知中心（跨模組：物件資料／客戶資料／月次報告書／總帳 任何新增・修改・刪除
    都會寫一筆到 activity_log，這裡負責畫小鈴鐺、未讀數字跟下拉清單）
    ========================================================================= */
-const NOTIF_PERMISSION_MAP = { pp:'manageProperties', cc:'manageCustomers', mr:'manageReports', gl:'manageFinance' };
-const NOTIF_MODULE_LABEL = { pp:'物件資料', cc:'客戶資料', mr:'月次報告書', gl:'總帳' };
+const NOTIF_PERMISSION_MAP = { pp:'manageProperties', cc:'manageCustomers', mr:'manageReports', gl:'manageFinance', tr:null, hr:'manageFinance' };
+const NOTIF_MODULE_LABEL = { pp:'物件資料', cc:'客戶資料', mr:'月次報告書', gl:'總帳', tr:'進度追蹤', hr:'人事資料表' };
 let notifItems = [];
 let notifUnsubLog = null;
 let notifLastReadAt = 0;
+let notifError = '';
 
 function notifEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -12218,17 +12303,27 @@ async function notifLog(module, action, summary){
   if(!trackerDB) return;
   try{
     await trackerDB.collection('activity_log').add({
-      module, action, summary: String(summary||'').slice(0,200),
+      module, action, summary: String(summary||'').slice(0,600),
       permission: NOTIF_PERMISSION_MAP[module] || null,
       userEmail: (trackerCurrentUser && trackerCurrentUser.email) || '',
       userName: (trackerCurrentUser && trackerCurrentUser.name) || '',
       ts: Date.now()
     });
-  }catch(err){ console.error('notifLog failed', err); }
+  }catch(err){
+    console.error('notifLog failed', err);
+    if(!window.__notifWarned){ window.__notifWarned = true; alert('注意：這次的修改已經儲存，但「通知紀錄」寫入失敗，同事不會收到通知。\n（通常是 Firebase 規則沒開放 activity_log 的寫入）\n錯誤：' + (err && err.message)); }
+  }
 }
 function notifUserCanSee(item){
-  if(!item.permission) return true;
-  return !!(trackerCurrentUser && trackerCurrentUser[item.permission]);
+  // 看得到該模組的人才收到該模組的通知：
+  // 物件資料／客戶資料／進度追蹤：所有登入帳號；月次報告書：manageReports；總帳・人事資料表：manageFinance。
+  const u = trackerCurrentUser;
+  if(!u) return false;
+  const need = NOTIF_PERMISSION_MAP[item.module];
+  if(need === undefined) return true;
+  if(need === null) return true;
+  if(item.module==='pp' || item.module==='cc') return true;
+  return !!u[need];
 }
 function notifTimeLabel(ts){
   if(!ts) return '';
@@ -12247,15 +12342,31 @@ function notifRender(){
   const unread = visible.filter(it=> (it.ts||0) > notifLastReadAt);
   if(unread.length>0){ badge.style.display = 'inline-block'; badge.textContent = unread.length>99 ? '99+' : String(unread.length); }
   else{ badge.style.display = 'none'; }
-  if(!visible.length){ body.innerHTML = '<div class="notif-empty">目前沒有通知。</div>'; return; }
-  body.innerHTML = visible.slice(0,50).map(it=>{
+  const errHtml = notifError ? `<div style="background:#fdecea;color:#b71c1c;padding:8px 10px;font-size:12px;line-height:1.5;word-break:break-all;">⚠ 通知讀取失敗：${notifEsc(notifError)}<br>（多半是 Firebase 規則沒開放 activity_log 的讀取，或還沒按「公開」）</div>` : '';
+  const testHtml = `<div style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right;"><button type="button" onclick="notifSendTest();return false;" style="font-size:12px;cursor:pointer;">發送測試通知</button></div>`;
+  if(!visible.length){ body.innerHTML = testHtml + errHtml + '<div class="notif-empty">目前沒有通知。</div>'; return; }
+  body.innerHTML = testHtml + errHtml + visible.slice(0,50).map(it=>{
     const isUnread = (it.ts||0) > notifLastReadAt;
     const modLabel = NOTIF_MODULE_LABEL[it.module] || it.module;
+    const who = it.userName || it.userEmail || '（不明帳號）';
+    const verb = it.action==='create' ? '新增了' : it.action==='delete' ? '刪除了' : '修改了';
     return `<div class="notif-item${isUnread?' unread':''}">
-      <span class="notif-mod">${modLabel}</span>${notifActionLabel(it.action)}：${notifEsc(it.summary)}
-      <span class="notif-time">${notifEsc(it.userName || it.userEmail || '')}・${notifTimeLabel(it.ts)}</span>
+      <div><b>${notifEsc(who)}</b> ${verb} <span class="notif-mod">${modLabel}</span></div>
+      <div style="margin:3px 0;line-height:1.5;word-break:break-all;">${notifEsc(it.summary)}</div>
+      <span class="notif-time">${notifTimeLabel(it.ts)}${it.userEmail ? '・'+notifEsc(it.userEmail) : ''}</span>
     </div>`;
   }).join('');
+}
+async function notifSendTest(){
+  try{
+    await trackerDB.collection('activity_log').add({
+      module:'pp', action:'update', summary:'【測試通知】這是由 '+((trackerCurrentUser&&trackerCurrentUser.email)||'')+' 發送的測試，確認通知功能正常。',
+      permission:'manageProperties', userEmail:(trackerCurrentUser&&trackerCurrentUser.email)||'', userName:(trackerCurrentUser&&trackerCurrentUser.name)||'', ts:Date.now()
+    });
+    alert('測試通知寫入成功！如果下拉清單看到這則，代表寫入與讀取都正常。請同事也打開看看。');
+  }catch(err){
+    alert('測試通知寫入失敗：'+(err&&err.message)+'\n請檢查 Firebase 規則 activity_log 是否已「公開」。');
+  }
 }
 function notifToggleDropdown(){
   const dd = document.getElementById('notifDropdown');
@@ -12286,9 +12397,10 @@ function notifInit(){
     notifRender();
   }).catch(()=>{});
   notifUnsubLog = trackerDB.collection('activity_log').orderBy('ts','desc').limit(50).onSnapshot(snapshot=>{
+    notifError = '';
     notifItems = snapshot.docs.map(d=>({...d.data(), _docId:d.id}));
     notifRender();
-  }, err=>{ console.error('activity_log 讀取失敗', err); });
+  }, err=>{ console.error('activity_log 讀取失敗', err); notifError = (err && (err.code||'')+' '+(err.message||'')) ; notifRender(); });
 }
 
 
@@ -12484,6 +12596,7 @@ async function hrSave(){
       const n = hrNextEmpNo();
       await trackerDB.collection('hr_employees').add({...data, emp_no_num:n, emp_no:hrEmpNoText(n), createdAt: firebase.firestore.FieldValue.serverTimestamp()});
     }
+    notifLog('hr', hrEditingId ? 'update' : 'create', `員工「${data.name}」的人事資料`);
     hrBackToList();
   }catch(err){ alert('儲存失敗：'+err.message); }
 }
