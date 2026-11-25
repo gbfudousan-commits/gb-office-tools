@@ -7436,8 +7436,7 @@ async function ccQuickCreateCustomer(name){
         n++;
       }
       rec[liveSerial.id] = newDocId;
-      liveSerial.serialNext = Math.max(liveSerial.serialNext||1, n+1);
-      tx.set(settingsRef, cfg);
+      // 補空號模式不再需要更新設定檔的計數器（也避免沒有設定權限的帳號寫入失敗）
     }else{
       newDocId = 'c_'+Date.now();
     }
@@ -7937,8 +7936,7 @@ async function ccSaveForm(){
           }
           rec[serialField.id] = nextNo;
           newDocId = nextNo;
-          liveSerial.serialNext = Math.max(liveSerial.serialNext||1, n+1);
-          tx.set(settingsRef, cfg);
+          // 補空號模式不再需要更新設定檔的計數器（也避免沒有設定權限的帳號寫入失敗）
         }
         const propRef = trackerDB.collection('customers').doc(newDocId || ('c_'+Date.now()));
         tx.set(propRef, rec);
