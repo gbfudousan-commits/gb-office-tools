@@ -6972,7 +6972,7 @@ async function saveForm(){
         if(liveSerial && serialField){
           const digits = liveSerial.serialDigits || 5;
           // 從「設定檔的下一號」與「畫面上已存在的最大號+1」取較大者，再逐一確認該編號在資料庫真的沒人用
-          let n = Math.max(liveSerial.serialNext||1, ppSerialNextEff(serialField));
+          let n = ppSerialNextEff(serialField);
           let nextNo = '';
           for(let i=0;i<200;i++){
             nextNo = (liveSerial.serialPrefix||'') + String(n).padStart(digits,'0');
@@ -6982,7 +6982,7 @@ async function saveForm(){
           }
           rec[serialField.id] = nextNo;
           newDocId = nextNo;
-          liveSerial.serialNext = n + 1;
+          liveSerial.serialNext = Math.max(liveSerial.serialNext||1, n+1);
           tx.set(settingsRef, cfg);
         }
         const propRef = trackerDB.collection('properties').doc(newDocId || ('p_'+Date.now()));
@@ -7029,16 +7029,18 @@ async function saveForm(){
 
 /* 取得「真正的下一號」：設定檔記的號碼 與 目前已存在物件的最大號碼+1，取較大者，避免撞號 */
 function ppSerialNextEff(f){
-  let n = f.serialNext || 1;
+  // 補空號：從 1 開始找第一個沒被用到的號碼
+  const pre = f.serialPrefix || '';
+  const used = new Set();
   try{
-    const pre = f.serialPrefix || '';
     (records||[]).forEach(r=>{
       const v = String(r[f.id]==null ? '' : r[f.id]);
       if(pre && v.indexOf(pre)!==0) return;
       const m = v.slice(pre.length).match(/^\d+$/);
-      if(m){ const k = parseInt(m[0],10); if(k+1>n) n = k+1; }
+      if(m) used.add(parseInt(m[0],10));
     });
   }catch(e){}
+  let n = 1; while(used.has(n)) n++;
   return n;
 }
 /* ---------------- 欄位設定頁（階層式：大分類 > 小分類 > 欄位） ---------------- */
@@ -7399,6 +7401,19 @@ function ccCanManageAll(){
 /* 從「物件管理」「進度追蹤」等地方快速新增一位客戶（只填姓名），
    跟「客戶資料」模組的正式新增共用同一套流水號交易邏輯，確保不會跟別人同時新增時撞號；
    新客戶存進 Firestore 後，因為 ccRecords／ppCustomerList 都是即時監聽，會自動同步出現在「客戶資料」列表裡。 */
+/* 客戶編號「補洞」：找出從 1 開始第一個沒被用到的號碼（例如 68、70 有人、69 被刪掉，就先補 69） */
+function ccSerialGapNext(f){
+  const pre = f.serialPrefix || '';
+  const used = new Set();
+  (ccRecords||[]).forEach(r=>{
+    const v = String(r[f.id]==null ? '' : r[f.id]);
+    if(pre && v.indexOf(pre)!==0) return;
+    const m = v.slice(pre.length).match(/^\d+$/);
+    if(m) used.add(parseInt(m[0],10));
+  });
+  let n = 1; while(used.has(n)) n++;
+  return n;
+}
 async function ccQuickCreateCustomer(name){
   name = (name||'').trim();
   if(!name) throw new Error('客戶姓名不能是空的');
@@ -7413,9 +7428,15 @@ async function ccQuickCreateCustomer(name){
     const rec = {customer_name: name};
     if(liveSerial){
       const digits = liveSerial.serialDigits || 5;
-      newDocId = (liveSerial.serialPrefix||'') + String(liveSerial.serialNext||1).padStart(digits,'0');
+      let n = ccSerialGapNext(liveSerial);
+      for(let i=0;i<500;i++){
+        newDocId = (liveSerial.serialPrefix||'') + String(n).padStart(digits,'0');
+        const exist = await tx.get(trackerDB.collection('customers').doc(newDocId));
+        if(!exist.exists) break;
+        n++;
+      }
       rec[liveSerial.id] = newDocId;
-      liveSerial.serialNext = (liveSerial.serialNext||1) + 1;
+      liveSerial.serialNext = Math.max(liveSerial.serialNext||1, n+1);
       tx.set(settingsRef, cfg);
     }else{
       newDocId = 'c_'+Date.now();
@@ -7821,7 +7842,7 @@ function ccRenderFieldInput(f, rec, access){
   if(f.type==='serial'){
     const digits = f.serialDigits||5;
     if(ccEditingIndex===null){
-      const preview = (f.serialPrefix||'')+String(f.serialNext||1).padStart(digits,'0');
+      const preview = (f.serialPrefix||'')+String(ccSerialGapNext(f)).padStart(digits,'0');
       return `<div class="field">
         <label>${f.label}</label>
         <input type="text" readonly value="${preview}" style="background:#f4f3ef;color:var(--cc-muted);">
@@ -7906,16 +7927,23 @@ async function ccSaveForm(){
         const liveSerial = liveFieldConfig.find(f=>f.type==='serial');
         if(liveSerial && serialField){
           const digits = liveSerial.serialDigits || 5;
-          const nextNo = (liveSerial.serialPrefix||'') + String(liveSerial.serialNext||1).padStart(digits,'0');
+          let n = ccSerialGapNext(liveSerial);
+          let nextNo = '';
+          for(let i=0;i<500;i++){
+            nextNo = (liveSerial.serialPrefix||'') + String(n).padStart(digits,'0');
+            const exist = await tx.get(trackerDB.collection('customers').doc(nextNo));
+            if(!exist.exists) break;
+            n++;
+          }
           rec[serialField.id] = nextNo;
           newDocId = nextNo;
-          liveSerial.serialNext = (liveSerial.serialNext||1) + 1;
+          liveSerial.serialNext = Math.max(liveSerial.serialNext||1, n+1);
           tx.set(settingsRef, cfg);
         }
         const propRef = trackerDB.collection('customers').doc(newDocId || ('c_'+Date.now()));
         tx.set(propRef, rec);
       });
-      if(serialField) serialField.serialNext = (serialField.serialNext||1) + 1; // 讓畫面上的下一個編號預覽同步更新
+      if(serialField) serialField.serialNext = Math.max(serialField.serialNext||1, 1); // 預覽由 ccSerialGapNext 依現有客戶即時計算
     }else{
       const oldDocId = ccRecords[ccEditingIndex][serialField ? serialField.id : 'customer_no'];
       const newDocId = serialField ? rec[serialField.id] : oldDocId;
