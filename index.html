@@ -2918,7 +2918,7 @@
   <!-- ============ 金流帳本 ============ -->
   <section class="gl-panel active" id="gl-panel-cashflow">
     <div class="card">
-      <div class="note-box">記錄公司每一筆資金異動：現金／GMO銀行／SBI銀行／預り金（代收代付）四個帳戶的進出，還有這筆是不是算公司真正的「收益」或「費用」。金額欄位留空表示這筆沒有異動。跟 Excel 一樣可以直接在最下面那一列輸入，打完按 Tab／點別的地方離開這一列就會自動存檔，並且自動多出下一個空白列，可以一直往下打。最右邊的「檢查值」欄位＝利益＋預り金餘額－GMO餘額－SBI餘額－現金餘額，這個數字在帳打對的情況下每一列都應該一樣，跟你原本Excel最後那欄-20000是同一個檢查邏輯；如果某一列的檢查值突然跟其他列不一樣，那一列會自動變成紅底，代表那一列可能打錯或漏打了。「分類」欄位選「客人帳」代表這筆是客人的錢，跟公司收支無關，「收支分析」的所有統計都不會把它算進去；選「（未分類）」則還是會照樣算進總額，只是排名裡會顯示成「（未分類）」提醒你之後補上分類。</div>
+      <div class="note-box">記錄公司每一筆資金異動：現金／GMO銀行／SBI銀行／PAYPAY／預り金（代收代付）五個帳戶的進出，還有這筆是不是算公司真正的「收益」或「費用」。金額欄位留空表示這筆沒有異動。跟 Excel 一樣可以直接在最下面那一列輸入，打完按 Tab／點別的地方離開這一列就會自動存檔，並且自動多出下一個空白列，可以一直往下打。最右邊的「檢查值」欄位＝利益＋預り金餘額－GMO餘額－SBI餘額－PAYPAY餘額－現金餘額，這個數字在帳打對的情況下每一列都應該一樣，跟你原本Excel最後那欄-20000是同一個檢查邏輯；如果某一列的檢查值突然跟其他列不一樣，那一列會自動變成紅底，代表那一列可能打錯或漏打了。「分類」欄位選「客人帳」代表這筆是客人的錢，跟公司收支無關，「收支分析」的所有統計都不會把它算進去；選「（未分類）」則還是會照樣算進總額，只是排名裡會顯示成「（未分類）」提醒你之後補上分類。</div>
       <div id="gl-balanceBar" class="gl-balance-bar"></div>
       <div class="list-toolbar">
         <select id="gl-cfYear"></select>
@@ -2934,9 +2934,9 @@
       <div style="overflow-x:auto;max-height:560px;overflow-y:auto;">
         <table class="list-table">
           <thead><tr>
-            <th>日期</th><th class="num">收益</th><th class="num">費用</th><th class="num">現金入</th><th class="num">GMO入</th><th class="num">SBI入</th><th class="num">預り金入</th>
-            <th class="num">GMO出</th><th class="num">SBI出</th><th class="num">預り金出</th><th class="num">現金出</th><th>支付先</th><th style="width:460px;">摘要</th><th style="width:90px;">分類</th>
-            <th class="num">利益</th><th class="num">現金餘額</th><th class="num">GMO餘額</th><th class="num">SBI餘額</th><th class="num">預り金餘額</th><th class="num">檢查值</th><th></th>
+            <th>日期</th><th class="num">收益</th><th class="num">費用</th><th class="num">現金入</th><th class="num">GMO入</th><th class="num">SBI入</th><th class="num">PAYPAY入</th><th class="num">預り金入</th>
+            <th class="num">GMO出</th><th class="num">SBI出</th><th class="num">PAYPAY出</th><th class="num">預り金出</th><th class="num">現金出</th><th>支付先</th><th style="width:460px;">摘要</th><th style="width:90px;">分類</th>
+            <th class="num">利益</th><th class="num">現金餘額</th><th class="num">GMO餘額</th><th class="num">SBI餘額</th><th class="num">PAYPAY餘額</th><th class="num">預り金餘額</th><th class="num">檢查值</th><th></th>
           </tr></thead>
           <tbody id="gl-cfListBody"></tbody>
         </table>
@@ -9922,7 +9922,7 @@ let glEntries = [];
 let glExtraItems = [];
 let glUnsubEntries = null;
 let glUnsubExtra = null;
-let glOpening = {cash:0, gmo:0, sbi:0, deposit:0};
+let glOpening = {cash:0, gmo:0, sbi:0, paypay:0, deposit:0};
 let glEditingEntryId = null;
 let glEditingExtraId = null;
 let glImportWorkbook = null;
@@ -9960,7 +9960,7 @@ function glInitData(){
   }, err=>{ console.error(err); alert('額外收入讀取失敗：'+err.message); });
 
   trackerDB.collection('settings').doc('ledger_opening_balances').get().then(doc=>{
-    if(doc.exists) glOpening = Object.assign({cash:0,gmo:0,sbi:0,deposit:0}, doc.data());
+    if(doc.exists) glOpening = Object.assign({cash:0,gmo:0,sbi:0,paypay:0,deposit:0}, doc.data());
     glRenderAll();
   }).catch(()=>{});
 
@@ -10072,17 +10072,18 @@ function glSortedEntries(){
 }
 function glComputeRunning(){
   const sorted = glSortedEntries();
-  let cash=Number(glOpening.cash)||0, gmo=Number(glOpening.gmo)||0, sbi=Number(glOpening.sbi)||0, deposit=Number(glOpening.deposit)||0, profit=0;
+  let cash=Number(glOpening.cash)||0, gmo=Number(glOpening.gmo)||0, sbi=Number(glOpening.sbi)||0, paypay=Number(glOpening.paypay)||0, deposit=Number(glOpening.deposit)||0, profit=0;
   return sorted.map(e=>{
     cash += (Number(e.cash_in)||0) - (Number(e.cash_out)||0);
     gmo  += (Number(e.gmo_in)||0)  - (Number(e.gmo_out)||0);
     sbi  += (Number(e.sbi_in)||0)  - (Number(e.sbi_out)||0);
+    paypay += (Number(e.paypay_in)||0) - (Number(e.paypay_out)||0);
     deposit += (Number(e.deposit_in)||0) - (Number(e.deposit_out)||0);
     profit += (Number(e.income)||0) - (Number(e.expense)||0);
-    /* 檢查值：跟 Excel 舊帳一樣的驗算邏輯（利益＋預り金餘額－GMO餘額－SBI餘額－現金餘額），
+    /* 檢查值：跟 Excel 舊帳一樣的驗算邏輯（利益＋預り金餘額－GMO餘額－SBI餘額－PAYPAY餘額－現金餘額），
        只要每一筆都打對，這個數字從頭到尾都應該一樣；哪一列突然不一樣，那一列就有問題。 */
-    const check = profit + deposit - gmo - sbi - cash;
-    return {...e, _cash:cash, _gmo:gmo, _sbi:sbi, _deposit:deposit, _profit:profit, _check:check};
+    const check = profit + deposit - gmo - sbi - paypay - cash;
+    return {...e, _cash:cash, _gmo:gmo, _sbi:sbi, _paypay:paypay, _deposit:deposit, _profit:profit, _check:check};
   });
 }
 function glCheckBaselineOf(running){
@@ -10168,9 +10169,11 @@ function glFieldRowHtml(e, isBlank){
       <td class="num">${moneyInput('cash_in', e.cash_in)}</td>
       <td class="num">${moneyInput('gmo_in', e.gmo_in)}</td>
       <td class="num">${moneyInput('sbi_in', e.sbi_in)}</td>
+      <td class="num">${moneyInput('paypay_in', e.paypay_in)}</td>
       <td class="num">${moneyInput('deposit_in', e.deposit_in)}</td>
       <td class="num">${moneyInput('gmo_out', e.gmo_out)}</td>
       <td class="num">${moneyInput('sbi_out', e.sbi_out)}</td>
+      <td class="num">${moneyInput('paypay_out', e.paypay_out)}</td>
       <td class="num">${moneyInput('deposit_out', e.deposit_out)}</td>
       <td class="num">${moneyInput('cash_out', e.cash_out)}</td>
       <td><input type="text" data-fid="payee" value="${esc(e.payee)}"></td>
@@ -10180,6 +10183,7 @@ function glFieldRowHtml(e, isBlank){
       <td class="num gl-plain">${isBlank?'':glMoney(e._cash)}</td>
       <td class="num gl-plain">${isBlank?'':glMoney(e._gmo)}</td>
       <td class="num gl-plain">${isBlank?'':glMoney(e._sbi)}</td>
+      <td class="num gl-plain">${isBlank?'':glMoney(e._paypay)}</td>
       <td class="num gl-plain">${isBlank?'':glMoney(e._deposit)}</td>
       <td class="num gl-plain${(!isBlank && glCheckBaseline!==null && Math.abs(e._check-glCheckBaseline)>0.5) ? ' gl-check-bad':''}">${isBlank?'':glMoney(e._check)}</td>
       <td class="gl-plain">${isBlank?'':`<button class="gl-row-del" title="刪除這筆" onmousedown="glArmRowDelete(this)" onclick="glDeleteEntryInline('${docId}', this)">✕</button>`}</td>
@@ -10218,11 +10222,12 @@ function glRenderCashflow(){
   }
 
   const last = running[running.length-1];
-  const bal = last || {_cash:glOpening.cash,_gmo:glOpening.gmo,_sbi:glOpening.sbi,_deposit:glOpening.deposit,_profit:0};
+  const bal = last || {_cash:glOpening.cash,_gmo:glOpening.gmo,_sbi:glOpening.sbi,_paypay:glOpening.paypay,_deposit:glOpening.deposit,_profit:0};
   document.getElementById('gl-balanceBar').innerHTML = `
     <div class="gl-balance-tile"><div class="lbl">現金餘額</div><div class="val">${glMoney(bal._cash)}</div></div>
     <div class="gl-balance-tile"><div class="lbl">GMO餘額</div><div class="val">${glMoney(bal._gmo)}</div></div>
     <div class="gl-balance-tile"><div class="lbl">SBI餘額</div><div class="val">${glMoney(bal._sbi)}</div></div>
+    <div class="gl-balance-tile"><div class="lbl">PAYPAY餘額</div><div class="val">${glMoney(bal._paypay)}</div></div>
     <div class="gl-balance-tile"><div class="lbl">預り金餘額</div><div class="val">${glMoney(bal._deposit)}</div></div>
     <div class="gl-balance-tile"><div class="lbl">累計利益</div><div class="val">${glMoney(bal._profit)}</div></div>`;
 }
@@ -10231,8 +10236,8 @@ document.getElementById('gl-cfMonth').addEventListener('change', glRenderCashflo
 document.getElementById('gl-cfCategory').addEventListener('change', glRenderCashflow);
 
 function glRowHasContent(rec){
-  return !!(rec.income||rec.expense||rec.cash_in||rec.gmo_in||rec.sbi_in||rec.deposit_in||
-    rec.gmo_out||rec.sbi_out||rec.deposit_out||rec.cash_out||(rec.payee&&rec.payee.trim())||(rec.memo&&rec.memo.trim()));
+  return !!(rec.income||rec.expense||rec.cash_in||rec.gmo_in||rec.sbi_in||rec.paypay_in||rec.deposit_in||
+    rec.gmo_out||rec.sbi_out||rec.paypay_out||rec.deposit_out||rec.cash_out||(rec.payee&&rec.payee.trim())||(rec.memo&&rec.memo.trim()));
 }
 function glPatchRowDisplayAfterSave(tr, docId, rec){
   // 存檔剛完成的當下，先把這筆資料暫時併入現有資料重算一次餘額，
@@ -10246,16 +10251,17 @@ function glPatchRowDisplayAfterSave(tr, docId, rec){
   if(!match) return;
   glCheckBaseline = glCheckBaselineOf(running);
   const cells = tr.querySelectorAll('td.gl-plain');
-  if(cells.length < 7) return;
+  if(cells.length < 8) return;
   cells[0].innerHTML = glMoney(match._profit);
   cells[1].innerHTML = glMoney(match._cash);
   cells[2].innerHTML = glMoney(match._gmo);
   cells[3].innerHTML = glMoney(match._sbi);
-  cells[4].innerHTML = glMoney(match._deposit);
+  cells[4].innerHTML = glMoney(match._paypay);
+  cells[5].innerHTML = glMoney(match._deposit);
   const bad = glCheckBaseline!==null && Math.abs(match._check-glCheckBaseline)>0.5;
-  cells[5].innerHTML = glMoney(match._check);
-  cells[5].classList.toggle('gl-check-bad', bad);
-  cells[6].innerHTML = `<button class="gl-row-del" title="刪除這筆" onmousedown="glArmRowDelete(this)" onclick="glDeleteEntryInline('${docId}', this)">✕</button>`;
+  cells[6].innerHTML = glMoney(match._check);
+  cells[6].classList.toggle('gl-check-bad', bad);
+  cells[7].innerHTML = `<button class="gl-row-del" title="刪除這筆" onmousedown="glArmRowDelete(this)" onclick="glDeleteEntryInline('${docId}', this)">✕</button>`;
 }
 async function glHandleRowChange(tr){
   if(tr.dataset.saving === '1' || tr.dataset.deleting === '1') return;
@@ -10502,6 +10508,7 @@ function glOpenOpeningBalanceForm(){
       <div class="field"><label>現金期初餘額</label><input type="text" inputmode="decimal" data-fid="cash" data-money="1" value="${glMoneyInputFmt(glOpening.cash||0)}"></div>
       <div class="field"><label>GMO期初餘額</label><input type="text" inputmode="decimal" data-fid="gmo" data-money="1" value="${glMoneyInputFmt(glOpening.gmo||0)}"></div>
       <div class="field"><label>SBI期初餘額</label><input type="text" inputmode="decimal" data-fid="sbi" data-money="1" value="${glMoneyInputFmt(glOpening.sbi||0)}"></div>
+      <div class="field"><label>PAYPAY期初餘額</label><input type="text" inputmode="decimal" data-fid="paypay" data-money="1" value="${glMoneyInputFmt(glOpening.paypay||0)}"></div>
       <div class="field"><label>預り金期初餘額</label><input type="text" inputmode="decimal" data-fid="deposit" data-money="1" value="${glMoneyInputFmt(glOpening.deposit||0)}"></div>
     </div>`;
 }
@@ -10993,8 +11000,8 @@ function glRenderAnalysis(){
   /* ---- 四個帳戶資金分布（目前時點的餘額，不受日期篩選影響）---- */
   const running = glComputeRunning();
   const lastRec = running[running.length-1];
-  const bal = lastRec || {_cash:glOpening.cash||0,_gmo:glOpening.gmo||0,_sbi:glOpening.sbi||0,_deposit:glOpening.deposit||0};
-  const fundPairs = [['現金',bal._cash],['GMO',bal._gmo],['SBI',bal._sbi],['預り金',bal._deposit]].sort((a,b)=>b[1]-a[1]);
+  const bal = lastRec || {_cash:glOpening.cash||0,_gmo:glOpening.gmo||0,_sbi:glOpening.sbi||0,_paypay:glOpening.paypay||0,_deposit:glOpening.deposit||0};
+  const fundPairs = [['現金',bal._cash],['GMO',bal._gmo],['SBI',bal._sbi],['PAYPAY',bal._paypay],['預り金',bal._deposit]].sort((a,b)=>b[1]-a[1]);
   const fundTotal = fundPairs.reduce((s,p)=>s+Math.max(0,p[1]),0);
   document.getElementById('gl-anFunds').innerHTML = glBarListHtml(fundPairs, fundTotal, 4);
 
@@ -11036,15 +11043,15 @@ async function glExportExcel(){
     const [ay,am]=a.split('-').map(Number), [by,bm]=b.split('-').map(Number);
     return ay-by || am-bm;
   });
-  const headerLabels = ['日付','','収益','費用','現金入金額','GMO口座入金額','SBI口座入金額','預かり金','GMO口座支払','SBI口座支払','預かり金支払','小口/現金支払','利益','GMO口座の残高','SBI口座の残高','預かり金の残高','現金の残高','支払先','摘要(メモ)'];
+  const headerLabels = ['日付','','収益','費用','現金入金額','GMO口座入金額','SBI口座入金額','PAYPAY口座入金額','預かり金','GMO口座支払','SBI口座支払','PAYPAY口座支払','預かり金支払','小口/現金支払','利益','GMO口座の残高','SBI口座の残高','PAYPAY口座の残高','預かり金の残高','現金の残高','支払先','摘要(メモ)'];
   ymKeys.forEach(key=>{
     const [y,m] = key.split('-').map(Number);
     const rows = byYM[key];
     const sheet = wb.addWorksheet(`${y}-${m}月`);
     sheet.addRow(headerLabels);
     rows.forEach(e=>{
-      sheet.addRow([e.date,'',e.income||'',e.expense||'',e.cash_in||'',e.gmo_in||'',e.sbi_in||'',e.deposit_in||'',
-        e.gmo_out||'',e.sbi_out||'',e.deposit_out||'',e.cash_out||'',e._profit,e._gmo,e._sbi,e._deposit,e._cash,
+      sheet.addRow([e.date,'',e.income||'',e.expense||'',e.cash_in||'',e.gmo_in||'',e.sbi_in||'',e.paypay_in||'',e.deposit_in||'',
+        e.gmo_out||'',e.sbi_out||'',e.paypay_out||'',e.deposit_out||'',e.cash_out||'',e._profit,e._gmo,e._sbi,e._paypay,e._deposit,e._cash,
         e.payee||'',e.memo||'']);
     });
     sheet.getRow(1).font = {bold:true};
@@ -11202,10 +11209,35 @@ async function glStartImport(){
       let headerRow = null;
       ws.eachRow((row, rn)=>{ if(!headerRow && glCellText(row.getCell(1)).trim()==='日付') headerRow=rn; });
       if(!headerRow){ errors.push(`分頁「${name}」找不到「日付」標題列，已略過。`); return; }
+      // 欄位位置改成從標題列文字動態判斷，不再寫死欄號：
+      // 有些分頁後來多插入了「PAYPAY」欄，導致後面欄位全部往右移一格，
+      // 固定欄號在那些分頁上會整組算錯，所以改成找標題文字對應到哪一欄。
+      const hRowForMap = ws.getRow(headerRow);
+      const norm = (s)=> s.replace(/[\s\n\r]+/g,'');
+      const colMap = {};
+      for(let c=1;c<=25;c++){
+        const t = norm(glCellText(hRowForMap.getCell(c)));
+        if(t==='収益') colMap.income=c;
+        else if(t==='費用') colMap.expense=c;
+        else if(t==='現金入金額') colMap.cashIn=c;
+        else if(t==='GMO口座入金額') colMap.gmoIn=c;
+        else if(t==='SBI口座入金額') colMap.sbiIn=c;
+        else if(t==='PAYPAY口座入金額') colMap.paypayIn=c;
+        else if(t==='預かり金') colMap.depositIn=c;
+        else if(t==='GMO口座支払') colMap.gmoOut=c;
+        else if(t==='SBI口座支払') colMap.sbiOut=c;
+        else if(t==='PAYPAY口座支払') colMap.paypayOut=c;
+        else if(t==='預かり金支払') colMap.depositOut=c;
+        else if(t==='小口/現金支払') colMap.cashOut=c;
+        else if(t==='支払先') colMap.payee=c;
+        else if(t==='摘要(メモ)') colMap.memo=c;
+      }
+      const mappedCols = Object.values(colMap).filter(Boolean);
+      const maxMappedCol = mappedCols.length ? Math.max(...mappedCols) : 13;
       let lastDate = null;
       let started = false;
       const isRowFullyBlank = (row)=>{
-        for(let c=1;c<=13;c++){
+        for(let c=1;c<=maxMappedCol;c++){
           const v = row.getCell(c).value;
           if(v!==null && v!==undefined && v!=='') return false;
         }
@@ -11225,17 +11257,19 @@ async function glStartImport(){
         if(glIsDateCell(aCell)) dateVal = aCell.value;
         else if(typeof aCell.value === 'number') dateVal = new Date(Date.UTC(1899,11,30) + aCell.value*86400000);
         if(dateVal) lastDate = dateVal;
-        const get = (c)=>{ const v = row.getCell(c).value; return typeof v==='number' ? v : null; };
-        const income=get(3), expense=get(4), cashIn=get(5), gmoIn=get(6), sbiIn=get(7), depositIn=get(8),
-              gmoOut=get(9), sbiOut=get(10), depositOut=get(11), cashOut=get(12);
-        const hasContent = [income,expense,cashIn,gmoIn,sbiIn,depositIn,gmoOut,sbiOut,depositOut,cashOut].some(v=>typeof v==='number' && v!==0);
+        const get = (c)=>{ if(!c) return null; const v = row.getCell(c).value; return typeof v==='number' ? v : null; };
+        const income=get(colMap.income), expense=get(colMap.expense), cashIn=get(colMap.cashIn), gmoIn=get(colMap.gmoIn),
+              sbiIn=get(colMap.sbiIn), paypayIn=get(colMap.paypayIn), depositIn=get(colMap.depositIn),
+              gmoOut=get(colMap.gmoOut), sbiOut=get(colMap.sbiOut), paypayOut=get(colMap.paypayOut),
+              depositOut=get(colMap.depositOut), cashOut=get(colMap.cashOut);
+        const hasContent = [income,expense,cashIn,gmoIn,sbiIn,paypayIn,depositIn,gmoOut,sbiOut,paypayOut,depositOut,cashOut].some(v=>typeof v==='number' && v!==0);
         if(!hasContent || !lastDate) continue;
         started = true;
         batchOps.push({col:'ledger_entries', rec:{
           date: lastDate.toISOString().slice(0,10), year: lastDate.getFullYear(), month: lastDate.getMonth()+1, seq: Date.now()+cfCount,
-          income, expense, cash_in: cashIn, gmo_in: gmoIn, sbi_in: sbiIn, deposit_in: depositIn,
-          gmo_out: gmoOut, sbi_out: sbiOut, deposit_out: depositOut, cash_out: cashOut,
-          payee: glCellText(row.getCell(18)), memo: glCellText(row.getCell(19))
+          income, expense, cash_in: cashIn, gmo_in: gmoIn, sbi_in: sbiIn, paypay_in: paypayIn, deposit_in: depositIn,
+          gmo_out: gmoOut, sbi_out: sbiOut, paypay_out: paypayOut, deposit_out: depositOut, cash_out: cashOut,
+          payee: colMap.payee ? glCellText(row.getCell(colMap.payee)) : '', memo: colMap.memo ? glCellText(row.getCell(colMap.memo)) : ''
         }});
         cfCount++;
       }
