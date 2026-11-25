@@ -2588,6 +2588,16 @@
         <div id="pfWarn" style="font-size:12px;color:#b35a00;margin:6px 0;"></div>
         <div id="pfSummary" style="overflow-x:auto;"></div>
       </fieldset>
+      <fieldset>
+        <legend>全公司業績統計（可選期間）</legend>
+        <p style="font-size:12px;color:#555;line-height:1.7;">統計期間內所有案件的總業績，以及每位業務的案件數、金額貢獻與占比。「案件歸入哪個月份」「計入範圍」沿用上方的選擇。</p>
+        <div class="row" style="align-items:flex-end;">
+          <div class="field" style="max-width:180px;"><label>從（年月）</label><input type="month" id="pf_from" onchange="pfRenderTotal()"></div>
+          <div class="field" style="max-width:180px;"><label>到（年月）</label><input type="month" id="pf_to" onchange="pfRenderTotal()"></div>
+          <div class="field" style="max-width:260px;"><button type="button" class="btn small secondary" onclick="pfQuickRange('fy')">今年 1月～12月</button> <button type="button" class="btn small secondary" onclick="pfQuickRange('12')">近 12 個月</button></div>
+        </div>
+        <div id="pfTotalBox" style="margin-top:8px;"></div>
+      </fieldset>
       <fieldset id="pfRuleBox" style="display:none;">
         <legend id="pfRuleTitle">抽成公式設定</legend>
         <div id="pfRuleBody"></div>
@@ -12737,7 +12747,84 @@ function pfRender(){
   document.getElementById('pfDetail').innerHTML = detail.length ? detail.map(d=>`<details open style="margin-bottom:10px;"><summary style="cursor:pointer;font-weight:700;">${hrEsc(d.name)}（${d.list.length} 筆）</summary><table class="pf-table"><thead><tr><th>物件</th><th>客戶</th><th>簽約日</th><th>交屋日</th><th class="num">買方手續費</th><th class="num">賣方手續費</th><th class="num">案件業績</th></tr></thead><tbody>`
     + d.list.map(c=>`<tr><td>${hrEsc(c.property)}</td><td>${hrEsc(c.client)}</td><td>${hrEsc(c.signDate||'－')}</td><td>${hrEsc(c.handoverDate||'－')}</td><td class="num">${hrYen(c.buyerFee)}</td><td class="num">${hrYen(c.sellerFee)}</td><td class="num">${hrYen(((Number(c.buyerFee)||0)+(Number(c.sellerFee)||0))/1.1)}</td></tr>`).join('')
     + '</tbody></table></details>').join('') : '<p style="color:#888;">這個月沒有符合條件的案件。</p>';
+  try{ pfRenderTotal(); }catch(e){ console.error(e); }
   if(pfSelectedName) pfOpenRule(pfSelectedName, true);
+}
+/* ---- 全公司業績統計（自選期間＋圓餅圖） ---- */
+const PF_COLORS = ['#2f80ed','#27ae60','#f2994a','#9b51e0','#eb5757','#00a6a6','#c9a227','#6c757d','#e84393','#4b7bec'];
+function pfQuickRange(kind){
+  const ym = document.getElementById('pf_month').value || (new Date().toISOString().slice(0,7));
+  const y = Number(ym.slice(0,4)), m = Number(ym.slice(5,7));
+  const pad = n=>String(n).padStart(2,'0');
+  if(kind==='fy'){ document.getElementById('pf_from').value = y+'-01'; document.getElementById('pf_to').value = y+'-12'; }
+  else{
+    let fy=y, fm=m-11; while(fm<1){ fm+=12; fy--; }
+    document.getElementById('pf_from').value = fy+'-'+pad(fm); document.getElementById('pf_to').value = y+'-'+pad(m);
+  }
+  pfRenderTotal();
+}
+function pfPieSvg(items, key, size){
+  const tot = items.reduce((t,i)=>t+i[key],0);
+  const r = size/2 - 4, cx = size/2, cy = size/2;
+  if(tot<=0) return '<div style="color:#888;font-size:13px;">（沒有資料）</div>';
+  const live = items.filter(i=>i[key]>0);
+  if(live.length===1){
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${cx}" cy="${cy}" r="${r}" fill="${live[0].color}"><title>${hrEsc(live[0].name)} 100%</title></circle></svg>`;
+  }
+  let ang = -Math.PI/2, out='';
+  live.forEach(i=>{
+    const frac = i[key]/tot, a2 = ang + frac*2*Math.PI;
+    const x1=cx+r*Math.cos(ang), y1=cy+r*Math.sin(ang), x2=cx+r*Math.cos(a2), y2=cy+r*Math.sin(a2);
+    out += `<path d="M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${frac>0.5?1:0} 1 ${x2.toFixed(2)},${y2.toFixed(2)} Z" fill="${i.color}" stroke="#fff" stroke-width="1.5"><title>${hrEsc(i.name)}　${(frac*100).toFixed(1)}%</title></path>`;
+    if(frac>=0.06){
+      const mid=(ang+a2)/2;
+      out += `<text x="${(cx+r*0.62*Math.cos(mid)).toFixed(1)}" y="${(cy+r*0.62*Math.sin(mid)).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="700" fill="#fff">${(frac*100).toFixed(1)}%</text>`;
+    }
+    ang = a2;
+  });
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${out}</svg>`;
+}
+function pfRenderTotal(){
+  const box = document.getElementById('pfTotalBox'); if(!box) return;
+  const fromEl = document.getElementById('pf_from'), toEl = document.getElementById('pf_to');
+  if(!fromEl.value || !toEl.value){
+    const ym = document.getElementById('pf_month').value || new Date().toISOString().slice(0,7);
+    if(!fromEl.value || !toEl.value){ pfQuickRange('12'); return; }
+  }
+  let from = fromEl.value, to = toEl.value;
+  if(from>to){ const t=from; from=to; to=t; }
+  const basis = document.getElementById('pf_basis').value;
+  const doneOnly = document.getElementById('pf_scope').value==='done';
+  const cases = (typeof trackerCasesCache!=='undefined' ? trackerCasesCache : []).filter(c=>c.type!=='賃貸' && (c.buyerFee!=null || c.sellerFee) && (!doneOnly || c.completed));
+  const inRange = cases.filter(c=>c[basis] && String(c[basis]).slice(0,7)>=from && String(c[basis]).slice(0,7)<=to);
+  const map = {};
+  inRange.forEach(c=>{
+    const nm = c.staff || '（未指定擔當）';
+    const o = map[nm] || (map[nm]={name:nm,n:0,buyer:0,seller:0});
+    o.n++; o.buyer += Number(c.buyerFee)||0; o.seller += Number(c.sellerFee)||0;
+  });
+  const items = Object.values(map).map(o=>({...o, perf:Math.round((o.buyer+o.seller)/1.1)})).sort((a,b)=>b.perf-a.perf||b.n-a.n);
+  items.forEach((i,k)=>{ i.color = PF_COLORS[k%PF_COLORS.length]; });
+  const tot = items.reduce((t,i)=>({n:t.n+i.n,buyer:t.buyer+i.buyer,seller:t.seller+i.seller,perf:t.perf+i.perf}),{n:0,buyer:0,seller:0,perf:0});
+  const pct = (v,t)=> t>0 ? (v/t*100).toFixed(1)+'%' : '－';
+  const dot = c=>`<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};margin-right:6px;"></span>`;
+  const nm = from.replace('-','年')+'月 ～ '+to.replace('-','年')+'月';
+  let noDate = (typeof trackerCasesCache!=='undefined' ? trackerCasesCache : []).filter(c=>c.type!=='賃貸' && (c.buyerFee!=null || c.sellerFee) && !c[basis]).length;
+  box.innerHTML = `
+    <div style="display:flex;gap:28px;flex-wrap:wrap;margin-bottom:10px;">
+      <div><div style="font-size:12px;color:#666;">期間：${nm}</div><div style="font-size:12px;color:#666;margin-top:6px;">公司總業績</div><div style="font-size:26px;font-weight:800;">${hrYen(tot.perf)}</div></div>
+      <div><div style="font-size:12px;color:#666;margin-top:20px;">總案件數</div><div style="font-size:26px;font-weight:800;">${tot.n} 件</div></div>
+      <div><div style="font-size:12px;color:#666;margin-top:20px;">買方手續費／賣方手續費</div><div style="font-size:15px;font-weight:700;margin-top:8px;">${hrYen(tot.buyer)}／${hrYen(tot.seller)}</div></div>
+    </div>
+    ${noDate?`<div style="font-size:12px;color:#b35a00;margin-bottom:6px;">另有 ${noDate} 筆已填手續費但沒有填「${basis==='handoverDate'?'交屋／入居日期':'簽約日期'}」的案件，未納入統計。</div>`:''}
+    ${items.length ? `
+    <div style="display:flex;gap:30px;flex-wrap:wrap;align-items:flex-start;">
+      <div style="text-align:center;"><div style="font-weight:700;font-size:13px;margin-bottom:4px;">業績金額占比</div>${pfPieSvg(items,'perf',230)}</div>
+      <div style="text-align:center;"><div style="font-weight:700;font-size:13px;margin-bottom:4px;">案件數占比</div>${pfPieSvg(items,'n',230)}</div>
+      <div style="flex:1;min-width:380px;overflow-x:auto;"><table class="pf-table"><thead><tr><th>業務</th><th class="num">案件數</th><th class="num">案件占比</th><th class="num">總業績</th><th class="num">金額貢獻占比</th></tr></thead><tbody>`
+      + items.map(i=>`<tr><td>${dot(i.color)}<b>${hrEsc(i.name)}</b></td><td class="num">${i.n}</td><td class="num">${pct(i.n,tot.n)}</td><td class="num">${hrYen(i.perf)}</td><td class="num"><b>${pct(i.perf,tot.perf)}</b></td></tr>`).join('')
+      + `<tr class="pf-total"><td>合計</td><td class="num">${tot.n}</td><td class="num">100%</td><td class="num">${hrYen(tot.perf)}</td><td class="num">100%</td></tr></tbody></table></div>
+    </div>` : '<p style="color:#888;">這段期間沒有符合條件的案件。</p>'}`;
 }
 /* ---- 個別抽成公式編輯 ---- */
 let pfRuleDraft = null;
