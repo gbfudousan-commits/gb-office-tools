@@ -2423,6 +2423,11 @@
         已登入：<b id="trackerCurrentUserLabel"></b>
       </div>
 
+      <div id="trImportBar" class="no-print" style="display:none;margin-bottom:10px;">
+        <button type="button" class="btn small secondary" onclick="document.getElementById('trImportFile').click()">📥 從 Excel 匯入案件</button>
+        <input type="file" id="trImportFile" accept=".xlsx" style="display:none;" onchange="trImportFromExcel(this)">
+        <span style="font-size:12px;color:#666;">（僅限有總帳權限的帳號；需要有「擔當人員」「交屋／入居日」「仲介手續費」三項才會匯入，已存在的案件會自動略過）</span>
+      </div>
       <fieldset id="trackerFormBox" style="display:none;">
 
         <legend id="trackerFormTitle">新增案子</legend>
@@ -2466,7 +2471,7 @@
           </div>
         </div>
         <div class="row" id="tr_fee_row">
-          <div class="field"><label>案件金額（日圓）</label><input id="tr_amount" type="number" min="0" step="1" placeholder="例：9900000" oninput="trAutoBuyerFee()"></div>
+          <div class="field" id="tr_amount_field"><label>案件金額（日圓）</label><input id="tr_amount" type="number" min="0" step="1" placeholder="例：9900000" oninput="trAutoBuyerFee()"></div>
           <div class="field"><label>買方仲介手續費（可修改） <button type="button" class="menu-manage-btn" onclick="trAutoBuyerFee(true)">依金額重新計算</button></label><input id="tr_buyer_fee" type="number" min="0" step="1" oninput="this.dataset.manual='1'"></div>
           <div class="field"><label>賣方仲介手續費（可修改）</label><input id="tr_seller_fee" type="number" min="0" step="1" value="0"></div>
         </div>
@@ -5122,6 +5127,7 @@ function applyCurrentUserUI(){
 
   // 進度追蹤パネル
   document.getElementById('trackerFormBox').style.display = 'block';
+  { const ib = document.getElementById('trImportBar'); if(ib) ib.style.display = (trackerCurrentUser && trackerCurrentUser.manageFinance) ? '' : 'none'; }
   document.getElementById('trackerListBox').style.display = 'block';
   document.getElementById('trackerStaffMgmtBox').style.display = trackerCurrentUser.manageStaff ? 'block' : 'none';
   document.getElementById('trackerLoggedInBar').style.display = 'block';
@@ -5327,12 +5333,82 @@ function trAutoBuyerFee(force){
   if(!fee) return;
   if(force===true) delete fee.dataset.manual;
   if(fee.dataset.manual === '1') return;
+  if($('tr_type') === '賃貸') return; // 賃貸的仲介手續費由人工輸入，不自動計算
   fee.value = trCalcBuyerFee(document.getElementById('tr_amount').value);
+}
+
+/* ---- 從 Excel 匯入案件（只匯入「擔當人員」「交屋／入居日」「買方／賣方仲介手續費」都有填的列） ---- */
+function trImportCell(v){
+  if(v==null) return '';
+  if(v instanceof Date) return v.toISOString().slice(0,10);
+  if(typeof v==='object'){ if(v.result!=null) return trImportCell(v.result); if(v.text!=null) return String(v.text); if(v.richText) return v.richText.map(x=>x.text).join(''); }
+  return String(v).trim();
+}
+function trImportDate(v){
+  const t = trImportCell(v);
+  const m = t.match(/(20\d\d)[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+  return m ? `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}` : '';
+}
+async function trImportFromExcel(inp){
+  const file = inp.files && inp.files[0]; inp.value = '';
+  if(!file) return;
+  if(!(trackerCurrentUser && trackerCurrentUser.manageFinance)){ alert('沒有權限匯入。'); return; }
+  try{
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await file.arrayBuffer());
+    const ws = wb.worksheets[0];
+    const head = {}; ws.getRow(1).eachCell((c,i)=>{ head[trImportCell(c.value)] = i; });
+    const need = ['類型','物件','擔當人員','交屋／入居日','買方手續費'];
+    const miss = need.filter(k=>!head[k]);
+    if(miss.length){ alert('Excel 欄位名稱不對，缺少：' + miss.join('、') + '\n請使用我提供的「案件匯入草稿」格式。'); return; }
+    const get = (row,k)=> head[k] ? row.getCell(head[k]).value : null;
+    const toNum = v=>{ const t = trImportCell(v).replace(/[,\s¥]/g,''); return t==='' || isNaN(Number(t)) ? null : Number(t); };
+    const exist = new Set((trackerCasesCache||[]).map(c=>[c.property,c.client,c.handoverDate].join('|')));
+    const good = [], skipped = [], dup = [];
+    for(let r=2; r<=ws.rowCount; r++){
+      const row = ws.getRow(r);
+      const prop = trImportCell(get(row,'物件')), client = trImportCell(get(row,'客戶姓名'));
+      if(!prop && !client) continue;
+      const staff = trImportCell(get(row,'擔當人員')), hd = trImportDate(get(row,'交屋／入居日'));
+      let bf = toNum(get(row,'買方手續費')), sf = toNum(get(row,'賣方手續費'));
+      const hasFee = (bf!=null && bf>0) || (sf!=null && sf>0);
+      const label = `第${r}列 ${prop.slice(0,18)}`;
+      if(!staff || !hd || !hasFee){
+        skipped.push(label + '（缺：' + [!staff?'擔當':'', !hd?'交屋日':'', !hasFee?'手續費':''].filter(Boolean).join('、') + '）'); continue;
+      }
+      const typ = trImportCell(get(row,'類型')) === '賃貸' ? '賃貸' : '売買';
+      const key = [prop, client, hd].join('|');
+      if(exist.has(key)){ dup.push(label); continue; }
+      exist.add(key);
+      good.push({
+        type: typ, subtype: typ==='賃貸' ? '' : trImportCell(get(row,'用途')),
+        property: prop, client, customerNo: '', staff, scrivener: trImportCell(get(row,'司法書士')),
+        explainDate: trImportDate(get(row,'講解契約日')), signDate: trImportDate(get(row,'簽約日')), handoverDate: hd,
+        payment: trImportCell(get(row,'款項到帳狀況')) || '未到帳', docs: trImportCell(get(row,'客戶資料')) || '未收齊',
+        completed: trImportCell(get(row,'標記完成')) === '是',
+        amount: typ==='賃貸' ? null : toNum(get(row,'案件金額')), buyerFee: bf, sellerFee: sf==null ? 0 : sf,
+        note: trImportCell(get(row,'備註'))
+      });
+    }
+    if(!good.length){ alert('沒有可以匯入的案件。\n' + (skipped.length ? '略過：\n'+skipped.join('\n') : '') + (dup.length ? '\n已存在：\n'+dup.join('\n') : '')); return; }
+    const msg = `準備匯入 ${good.length} 筆案件。\n` + (dup.length ? `已存在而略過：${dup.length} 筆\n` : '') + (skipped.length ? `資料不足而略過：${skipped.length} 筆\n` : '') + '\n確定要匯入嗎？';
+    if(!confirm(msg)) return;
+    for(let i=0; i<good.length; i+=400){
+      const batch = trackerDB.batch();
+      good.slice(i,i+400).forEach(c=>{
+        batch.set(trackerDB.collection('cases').doc(), {...c, updatedAt: firebase.firestore.FieldValue.serverTimestamp(), createdAt: firebase.firestore.FieldValue.serverTimestamp()});
+      });
+      await batch.commit();
+    }
+    notifLog('tr','create', `從 Excel 匯入 ${good.length} 筆案件（${file.name}）`);
+    alert(`匯入完成：${good.length} 筆。\n` + (dup.length ? `已存在略過：${dup.length} 筆\n` : '') + (skipped.length ? '資料不足略過：\n' + skipped.join('\n') : ''));
+  }catch(err){ console.error(err); alert('匯入失敗：' + (err && err.message)); }
 }
 function toggleTrackerType(){
   const isRental = $('tr_type') === '賃貸';
   const feeRow = document.getElementById('tr_fee_row');
-  if(feeRow) feeRow.style.display = isRental ? 'none' : '';
+  if(feeRow) feeRow.style.display = '';
+  const amtField = document.getElementById('tr_amount_field'); if(amtField) amtField.style.display = isRental ? 'none' : '';
   const subtypeField = document.getElementById('tr_subtype_field');
   const scrivenerField = document.getElementById('tr_scrivener_field');
   if(subtypeField) subtypeField.style.display = isRental ? 'none' : '';
@@ -5450,8 +5526,8 @@ function saveCaseToTracker(){
     docs: $('tr_docs'),
     completed: $('tr_completed') === '是',
     amount: isRental ? null : (document.getElementById('tr_amount').value === '' ? null : Number($('tr_amount'))),
-    buyerFee: isRental ? null : (document.getElementById('tr_buyer_fee').value === '' ? null : Number($('tr_buyer_fee'))),
-    sellerFee: isRental ? null : (document.getElementById('tr_seller_fee').value === '' ? 0 : Number($('tr_seller_fee'))),
+    buyerFee: (document.getElementById('tr_buyer_fee').value === '' ? null : Number($('tr_buyer_fee'))),
+    sellerFee: (document.getElementById('tr_seller_fee').value === '' ? 0 : Number($('tr_seller_fee'))),
     note: $('tr_note'),
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
@@ -12718,7 +12794,7 @@ function pfRender(){
   const ym = document.getElementById('pf_month').value;
   const basis = document.getElementById('pf_basis').value;
   const doneOnly = document.getElementById('pf_scope').value==='done';
-  const cases = (typeof trackerCasesCache!=='undefined' ? trackerCasesCache : []).filter(c=>c.type!=='賃貸' && (c.buyerFee!=null || c.sellerFee));
+  const cases = (typeof trackerCasesCache!=='undefined' ? trackerCasesCache : []).filter(c=>(c.buyerFee!=null || c.sellerFee));
   const names = new Set((typeof trackerStaffList!=='undefined'?trackerStaffList:[]).map(s=>s.name));
   hrEmployees.forEach(e=>{ if(e.sales_name) names.add(e.sales_name); });
   cases.forEach(c=>{ if(c.staff) names.add(c.staff); });
@@ -12795,7 +12871,7 @@ function pfRenderTotal(){
   if(from>to){ const t=from; from=to; to=t; }
   const basis = document.getElementById('pf_basis').value;
   const doneOnly = document.getElementById('pf_scope').value==='done';
-  const cases = (typeof trackerCasesCache!=='undefined' ? trackerCasesCache : []).filter(c=>c.type!=='賃貸' && (c.buyerFee!=null || c.sellerFee) && (!doneOnly || c.completed));
+  const cases = (typeof trackerCasesCache!=='undefined' ? trackerCasesCache : []).filter(c=>(c.buyerFee!=null || c.sellerFee) && (!doneOnly || c.completed));
   const inRange = cases.filter(c=>c[basis] && String(c[basis]).slice(0,7)>=from && String(c[basis]).slice(0,7)<=to);
   const map = {};
   inRange.forEach(c=>{
@@ -12809,7 +12885,7 @@ function pfRenderTotal(){
   const pct = (v,t)=> t>0 ? (v/t*100).toFixed(1)+'%' : '－';
   const dot = c=>`<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};margin-right:6px;"></span>`;
   const nm = from.replace('-','年')+'月 ～ '+to.replace('-','年')+'月';
-  let noDate = (typeof trackerCasesCache!=='undefined' ? trackerCasesCache : []).filter(c=>c.type!=='賃貸' && (c.buyerFee!=null || c.sellerFee) && !c[basis]).length;
+  let noDate = (typeof trackerCasesCache!=='undefined' ? trackerCasesCache : []).filter(c=>(c.buyerFee!=null || c.sellerFee) && !c[basis]).length;
   box.innerHTML = `
     <div style="display:flex;gap:28px;flex-wrap:wrap;margin-bottom:10px;">
       <div><div style="font-size:12px;color:#666;">期間：${nm}</div><div style="font-size:12px;color:#666;margin-top:6px;">公司總業績</div><div style="font-size:26px;font-weight:800;">${hrYen(tot.perf)}</div></div>
