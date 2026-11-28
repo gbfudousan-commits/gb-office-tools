@@ -2479,7 +2479,8 @@
         <div class="toolbar no-print">
           <button class="btn" onclick="saveCaseToTracker()">💾 儲存這筆案子</button>
           <button class="btn secondary" id="trackerCancelBtn" onclick="resetTrackerForm()" style="display:none;">取消編輯</button>
-        </div>
+          </div>
+          <div style="font-size:12px;color:#666;margin-top:6px;width:100%;">売買的新案子存檔後，系統會自動新增「物件資料」和「客戶資料」（已經輸入過的不會重複新增）。</div>
       </fieldset>
 
       <fieldset id="trackerStaffMgmtBox" style="display:none;">
@@ -5508,6 +5509,191 @@ function resetTrackerForm(){
   toggleTrackerType();
 }
 
+/* =========================================================================
+   進度追蹤 → 自動建立「物件資料」「客戶資料」（只限売買的新案子）
+   - 物件已經有人手動輸入 → 什麼都不新增
+   - 很像但不能確定 → 跳出視窗讓使用者選
+   - 確定是新物件 → 新增物件；客戶沒有才新增客戶
+   ========================================================================= */
+function trArText(s){
+  return String(s==null?'':s).normalize('NFKC').toLowerCase()
+    .replace(/[\s,、，。.・･]/g,'').replace(/黃/g,'黄').replace(/髙/g,'高').replace(/﨑/g,'崎').replace(/[邊邉]/g,'辺').replace(/[齋齊斎]/g,'斉').replace(/[澤]/g,'沢').replace(/[濱濵]/g,'浜').replace(/廣/g,'広');
+}
+function trArName(s){ return trArText(s).replace(/(様|樣|さま|先生|小姐)$/,''); }
+/* 把物件字串拆成：base（到番地為止的地址）、room（房號）、name（建物名） */
+function trArAddr(s){
+  const kan = {'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
+  let t = String(s==null?'':s).normalize('NFKC').trim()
+    .replace(/([一二三四五六七八九十])丁目/g,(m,k)=>kan[k]+'丁目')
+    .replace(/(\d)\s*(?:丁目|番地の|番地|番(?!館)|の(?=\d))\s*/g,'$1-')
+    .replace(/(\d)\s*[‐‑‒–—―−ー─-]\s*(?=\d)/g,'$1-')
+    .replace(/(\d-\d+)号(?!室|棟|館)/g,'$1 ')
+    .replace(/-(?!\d)/g,' ');
+  t = t.replace(/^(?:〒?\d{3}-\d{4})\s*/,'').replace(/^(北海道|東京都|京都府|大阪府|.{2,3}県)(?=.)/,'');
+  const m = t.match(/^(\D*?\d+(?:-\d+)*)(.*)$/);
+  const base = trArText(m ? m[1] : t);
+  let rest = m ? m[2].trim() : '';
+  let room = '';
+  const r = rest.match(/(\d{2,5})\s*(?:号室|号棟|号|室)?$/);
+  if(r){ room = r[1]; rest = rest.slice(0, r.index); }
+  return { base, room, name: trArText(rest).replace(/-/g,'') };
+}
+/* 回傳 'same'（地址確定相同）／'maybe'（很像）／''（不同） */
+function trArCompare(a, b){
+  const x = trArAddr(a), y = trArAddr(b);
+  if(!x.base || !y.base) return '';
+  const sameName = x.name.length>=4 && y.name.length>=4 && (x.name.includes(y.name) || y.name.includes(x.name));
+  const hasNum = /\d/.test(x.base) && /\d/.test(y.base);
+  if(x.base === y.base){
+    if(x.room && y.room) return x.room===y.room ? (hasNum?'same':'maybe') : '';
+    return (x.room===y.room && x.name===y.name) ? 'same' : 'maybe';
+  }
+  if(x.room && y.room && x.room!==y.room) return '';
+  const [s,l] = x.base.length<=y.base.length ? [x.base,y.base] : [y.base,x.base];
+  if(hasNum && l.startsWith(s+'-')) return 'maybe';              // 例：4-39 與 4-39-305
+  if(hasNum && s.length>=5 && l.endsWith(s) && !/\d/.test(l.charAt(l.length-s.length-1))) return 'maybe'; // 一邊省略了市區
+  if(sameName && (x.room===y.room || !x.room || !y.room)) return 'maybe'; // 建物名相同、地址寫法不同
+  return '';
+}
+function trArPropText(p, cfg){
+  const extra = (cfg||[]).filter(f=>f.id!=='address' && /物件名|建物名|マンション名|大樓名|房號|部屋|号室|號室/.test(f.label||'')).map(f=>p[f.id]).filter(Boolean);
+  const addr = String(p.address||'');
+  return [addr].concat(extra.filter(v=>!addr.includes(String(v)))).join(' ').trim();
+}
+function trArFindProperties(caseData, props, cfg){
+  const same = [], maybe = [];
+  props.forEach(p=>{
+    const full = trArPropText(p, cfg);
+    let r = trArCompare(caseData.property, full);
+    const r2 = trArCompare(caseData.property, p.address);
+    if(r2==='same' || (!r && r2)) r = r2;
+    if(!r) return;
+    const owner = trArName(p.customer_name);
+    const ownerOk = (!owner && !p.customer_no) || (caseData.customerNo && p.customer_no===caseData.customerNo) || owner===trArName(caseData.client);
+    // 地址相同但屋主不同（例如以前經手過、現在換屋主）→ 讓使用者決定
+    (r==='same' && ownerOk ? same : maybe).push(p);
+  });
+  return { same, maybe };
+}
+/* 選擇視窗：回傳按鈕的 value；按「先不處理」回傳 null */
+function trArAsk(title, message, options){
+  return new Promise(resolve=>{
+    const mask = document.createElement('div');
+    mask.className = 'tr-ar-mask';
+    mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#fff;border-radius:10px;padding:20px;width:560px;max-width:100%;max-height:85vh;overflow:auto;color:#222;';
+    const h = document.createElement('div'); h.style.cssText = 'font-weight:700;font-size:17px;margin-bottom:8px;'; h.textContent = title; box.appendChild(h);
+    const m = document.createElement('div'); m.style.cssText = 'font-size:14px;line-height:1.7;white-space:pre-wrap;margin-bottom:12px;'; m.textContent = message; box.appendChild(m);
+    options.concat([{label:'先不處理（下次編輯這個案子存檔時再問）', value:null, plain:true}]).forEach(o=>{
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = o.label;
+      b.style.cssText = 'display:block;width:100%;text-align:left;margin-top:8px;padding:10px 12px;border-radius:6px;cursor:pointer;font-size:14px;border:1px solid '+(o.plain?'#ccc':'#17a2d4')+';background:'+(o.primary?'#17a2d4':'#fff')+';color:'+(o.primary?'#fff':'#222')+';';
+      b.onclick = ()=>{ mask.remove(); resolve(o.value); };
+      box.appendChild(b);
+    });
+    mask.appendChild(box); document.body.appendChild(mask);
+  });
+}
+function trArToast(text){
+  const el = document.createElement('div');
+  el.className = 'tr-ar-toast';
+  el.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:99998;background:#1f6f43;color:#fff;padding:14px 40px 14px 16px;border-radius:8px;font-size:14px;line-height:1.7;white-space:pre-wrap;max-width:min(460px,calc(100% - 32px));cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.25);';
+  el.textContent = text + '　✕';
+  el.onclick = ()=>el.remove();
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 15000);
+}
+async function trArCreateProperty(rec, props){
+  const settingsRef = trackerDB.collection('settings').doc('properties_field_config');
+  let newNo = '';
+  await trackerDB.runTransaction(async (tx)=>{
+    const cfg = (await tx.get(settingsRef)).data() || {};
+    const serial = (cfg.fieldConfig||[]).find(f=>f.type==='serial');
+    if(!serial) throw new Error('讀不到物件編號的欄位設定');
+    const pre = serial.serialPrefix || '', digits = serial.serialDigits || 5;
+    const used = new Set(props.map(p=>String(p[serial.id]==null?'':p[serial.id])));
+    let found = false;
+    for(let n=1, tries=0; tries<200; n++){
+      newNo = pre + String(n).padStart(digits,'0');
+      if(used.has(newNo)) continue;
+      tries++;
+      if(!(await tx.get(trackerDB.collection('properties').doc(newNo))).exists){ found = true; break; }
+    }
+    if(!found) throw new Error('找不到可用的物件編號');
+    tx.set(trackerDB.collection('properties').doc(newNo), {...rec, [serial.id]: newNo});
+  });
+  return newNo;
+}
+async function trArRun(caseId, c){
+  const caseRef = trackerDB.collection('cases').doc(caseId);
+  const finish = no => caseRef.update(no && !c.customerNo ? {autoRegPending:false, customerNo:no} : {autoRegPending:false});
+  if(!(c.property||'').trim() || !(c.client||'').trim()){
+    trArToast('物件或客戶姓名還沒填，暫時沒有自動新增。\n之後編輯這個案子補齊並存檔時會再處理。'); return;
+  }
+  // 每次都向資料庫讀最新資料，避免漏看同事剛剛手動輸入的物件
+  const [pSnap, cSnap, cfgSnap] = await Promise.all([
+    trackerDB.collection('properties').get(),
+    trackerDB.collection('customers').get(),
+    trackerDB.collection('settings').doc('properties_field_config').get()
+  ]);
+  const props = pSnap.docs.map(d=>d.data()), custs = cSnap.docs.map(d=>d.data());
+  const cfg = (cfgSnap.data()||{}).fieldConfig || [];
+  const { same, maybe } = trArFindProperties(c, props, cfg);
+  const desc = p => `${p.property_no||''}　${trArPropText(p,cfg)}　／${p.customer_name||'（沒填客戶）'}`;
+  if(same.length){
+    await finish(same[0].customer_no);
+    trArToast(`物件資料裡已經有這個物件，沒有重複新增。\n${desc(same[0])}`); return;
+  }
+  if(maybe.length){
+    const pick = await trArAsk('這個物件是不是已經輸入過了？',
+      `進度追蹤的新案子：\n${c.property}　／${c.client}\n\n物件資料裡有很像的物件，請選擇：`,
+      maybe.slice(0,8).map(p=>({label:'已經有了，就是這一筆 → '+desc(p), value:{p}}))
+        .concat([{label:'以上都不是，這是新物件（自動新增）', value:{isNew:true}, primary:true}]));
+    if(!pick) return;
+    if(pick.p){ await finish(pick.p.customer_no); trArToast('好的，沒有新增物件。'); return; }
+  }
+  // --- 客戶 ---
+  const target = trArName(c.client);
+  let cust = c.customerNo ? custs.find(x=>x.customer_no===c.customerNo && trArName(x.customer_name)===target) : null;
+  let created = false;
+  if(!cust){
+    const exact = custs.filter(x=>trArName(x.customer_name)===target);
+    if(exact.length===1) cust = exact[0];
+    else{
+      const near = exact.length ? exact : custs.filter(x=>{ const n = trArName(x.customer_name); return n.length>=2 && target.length>=2 && (n.includes(target) || target.includes(n)); });
+      if(near.length){
+        const pick = await trArAsk('客戶是不是同一個人？',
+          `新案子的客戶：「${c.client}」\n客戶資料裡有${exact.length?'同名':'名字很像'}的客戶，請選擇：`,
+          near.slice(0,8).map(x=>({label:`是這位 → ${x.customer_no||''}　${x.customer_name||''}`, value:{x}}))
+            .concat([{label:'都不是，新增新客戶', value:{isNew:true}, primary:true}]));
+        if(!pick) return;
+        cust = pick.x || null;
+      }
+    }
+  }
+  if(!cust){
+    if(!sharedCustomersUnsub) ccRecords = custs; // 讓客戶編號從正確的號碼開始補
+    cust = await ccQuickCreateCustomer(c.client);
+    created = true;
+  }
+  // --- 物件 ---
+  const rec = { address: c.property.trim(), customer_no: cust.customer_no||'', customer_name: cust.customer_name||c.client, staff_in_charge: c.staff||'' };
+  const no = await trArCreateProperty(rec, props);
+  notifLog('pp', 'create', `${no}（${rec.address}）　客戶擔當：${rec.staff_in_charge||'（未填）'}（由進度追蹤自動新增）`);
+  await finish(cust.customer_no);
+  trArToast(`已自動新增\n物件資料：${no}　${rec.address}\n客戶資料：${cust.customer_no||''}　${cust.customer_name}${created?'（新客戶）':'（原本就有，沿用）'}`);
+}
+let trArQueue = Promise.resolve();
+function trAutoRegister(caseId, c){
+  // 排隊執行：連續存兩個案子時，第二個看得到第一個剛建好的資料
+  trArQueue = trArQueue.then(()=>trArRun(caseId, c)).catch(err=>{
+    console.error(err);
+    alert('案子已經存好了，但自動新增物件／客戶資料失敗：' + (err && err.message) + '\n請編輯這個案子再按一次儲存，系統會重試。');
+  });
+  return trArQueue;
+}
+
 function saveCaseToTracker(){
   if(!trackerDB){ alert('資料庫尚未連線，請確認 Firebase 設定。'); return; }
   const isRental = $('tr_type') === '賃貸';
@@ -5536,12 +5722,17 @@ function saveCaseToTracker(){
     return;
   }
   const caseOld = editingCaseId ? (trackerCasesCache.find(x=>x.id===editingCaseId) || null) : null;
+  // 売買的新案子（或之前還沒處理完的）→ 存檔後自動建立物件資料／客戶資料
+  const needAutoReg = data.type === '売買' && (!editingCaseId || !!(caseOld && caseOld.autoRegPending));
+  if(needAutoReg) data.autoRegPending = true;
+  const savedId = editingCaseId;
   const promise = editingCaseId
     ? trackerDB.collection('cases').doc(editingCaseId).update(data)
     : trackerDB.collection('cases').add({...data, createdAt: firebase.firestore.FieldValue.serverTimestamp()});
-  promise.then(()=>{
+  promise.then(ref=>{
     notifLogCase(caseOld ? 'update' : 'create', caseOld, data);
     resetTrackerForm();
+    if(needAutoReg) trAutoRegister(savedId || ref.id, data);
   }).catch(err=>{
     alert('儲存失敗：' + err.message);
   });
